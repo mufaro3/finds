@@ -1,5 +1,25 @@
-numpy
-pandas
-matplotlib
+# standard
 dataclasses
+
+# math/plotting
+numpy
+matplotlib
 numba
+
+# documentation
+sphinx
+sphinx_rtd_theme
+sphinx-autobuild
+sphinxcontrib-bibtex
+
+# linting and formatting
+flake8
+black
+isort
+
+# type checking
+mypy
+
+# testing
+pytest
+pytest-cov

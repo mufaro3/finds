@@ -79,7 +79,7 @@ There is also this paper for generating Octrees:
 
 [Cornerstone: Octree Construction Algorithms for Scalable Particle Simulations](https://arxiv.org/abs/2307.06345)
 
-**June 2, 2026**
+## June 2, 2026
 
 Yesterday, I began by trying to write out codes for performing the simulation. I spent about 6 hours working, and I was unable to complete the code. It was also object-oriented, and this is very slow and memory-consuming. What I'll be moving on to doing is switching to the `numba` library and building the base system today using a more mathematical array-based method.
 
@@ -134,3 +134,25 @@ $$y(t_0 + \delta t) \approx y_0 + y'_{t_0} \delta t.$$
 **RK4, Applied to the Project**
 
 RK4 is best applied for this project by treating $\mathbf{X}$ as $y$ and the process described above as $f(\mathbf{X},t)$.
+
+## June 3
+
+Today, I started out with Mohamed telling me about why my previous calculation,
+$$\mathbf{v}_{\alpha,i} = U \left( \hat{n}_i + \ell^2 \sum_{j \neq i}^N \mathbf{h}_{\alpha,ij} \right)$$
+was incorrect. As it turns out, $\sigma$ is normally a property associated with each fish, but we assumed that $\ell$ and $\sigma$ are the same for each fish. In a more complex/realistic model, each fish $\mathbf{s}_i$ would be described by the parameters
+\begin{equation}
+\mathbf{s}_i := ( \sigma_i, \ell_i, \mathbf{x}_{c,i}(t), \hat{n}_{i}(t) )
+\end{equation}
+where $\mathbf{x}_c$ and $\hat{n}$ are both time-dependent, and the full state is defined as
+\begin{equation}
+\mathbf{X} := [\mathbf{s}_1, \mathbf{s}_2, \dots, \mathbf{s}_N].
+\end{equation}
+Then, the self-propelled speed $U_i$ is a property of each fish, calculated with
+\begin{equation}
+	U_i = \frac{\sigma_i}{4\pi \ell^2}
+\end{equation}
+and the velocity of a feature $\alpha$ is computed as
+\begin{equation}
+\mathbf{v}_{\alpha,i} = U_i \hat{n}_i + \sum_{j\neq i}^N \frac{\sigma_j}{4\pi} \mathbf{h}_{\alpha,ij}
+\end{equation}
+where $\mathbf{h}_{\alpha,ij}$ is the interaction vector for feature $\alpha$ between fish $i$ and $j$. Interaction vectors have units of 1/distance$^2$ and are different for the sources and sinks.

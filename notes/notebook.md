@@ -78,3 +78,59 @@ the three-dimensional Barnes-Hut algorithm applied to fish would work as follows
 There is also this paper for generating Octrees:
 
 [Cornerstone: Octree Construction Algorithms for Scalable Particle Simulations](https://arxiv.org/abs/2307.06345)
+
+**June 2, 2026**
+
+Yesterday, I began by trying to write out codes for performing the simulation. I spent about 6 hours working, and I was unable to complete the code. It was also object-oriented, and this is very slow and memory-consuming. What I'll be moving on to doing is switching to the `numba` library and building the base system today using a more mathematical array-based method.
+
+I'd also like to rework the mathematical notation for the far-field fish model proposed by Dr. Floryan to simplify the Python code. As before, the fish are defined with length $\ell$, a center-of-mass position $\mathbf{x}_{c,i}$, and orientation vector $\mathbf{n}_{i}$ in a body of water with volumetric flow rate $\sigma$. Together, the entire school of fish for any instant in time can be called the "system state" and represented with the vector $\mathbf{X}_t$. The fish move at a self-propelled speed
+$$U = \frac{\sigma}{4\pi \ell^2}$$
+and the front/head (source) $\mathbf{x}_{f,i}$ and back/tail (sink) $\mathbf{b,i}$ of each fish are located at 
+$$\mathbf{x}_{f,i}=\mathbf{x}_{c,i}+\mathbf{\delta}_{i}$$ 
+and 
+$$\mathbf{x}_{b,i}=\mathbf{x}_{c,i}-\mathbf{\delta}_i$$ 
+respectively, where 
+$$\mathbf{\delta}_i = \frac{1}{2} \ell \mathbf{n}_i.$$
+Then, the head and the tail move at velocities $\mathbf{v}_{f,i}$ and $\mathbf{v}_{b,i}$ respectively, and each is defined as
+$$\mathbf{v}_{\alpha,i} = U \mathbf{n}_{i} + \frac{\sigma}{4\pi} \sum_{j \neq i}^N \mathbf{h}_{\alpha,i,j}$$
+where $\mathbf{h}_{\alpha,i,j}$ represents the \textit{interaction vector} from fish $j$ to fish $i$ at $\alpha$ (the front or the back of the fish). The first term, $U \mathbf{n}_i$, represents the effect of the front and back (source and sink) of fish $i$ on each other, and the second term represents the pairwise interactions between fish $i$ and all other fish $j$, to both their sources and sinks.
+
+An interaction vector is defined as the difference between two "Coulombic Force-Distance Vectors" (a general vector for the distance-contribution of the Coulomb-like hydrodynamic force), and the Coulombic force vector represents the mathematical drop-off of force strength by distance, with units of distance$^{-2}$. Each force-distance (FD) vector $\mathbf{c}_{\alpha\beta}$ is defined as
+$$\mathbf{c}_{\alpha\beta} = \frac{\mathbf{d}_{\alpha\beta}}{||\mathbf{d}_{\alpha\beta}||^3}$$
+where $\mathbf{d}_{\alpha\beta}$ is the displacement vector between feature $\alpha$ (front/back) of fish $i$ and feature $\beta$ of fish $j$, defined as
+$$\mathbf{d}_{\alpha\beta} = \mathbf{x}_{\alpha,i}-\mathbf{x}_{\beta,j}$$
+
+There are two types of interaction vectors: the front (or source) interaction vector $\mathbf{h}_{f,i,j}$ defined as 
+$$\mathbf{h}_{f,i,j} = \mathbf{c}_{ff} - \mathbf{c}_{fb}$$
+and the back (or sink) interaction vector $\mathbf{h}_{b,i,j}$ defined as
+$$\mathbf{h}_{b,i,j} = \mathbf{c}_{bf} - \mathbf{c}_{bb}.$$
+We can prove that this formulation makes sense more rigorously, but it is easiest to understand by thinking of the source/sink interactions more generally and how they contribute to the final hydrodynamic force.
+
+Then, we can compute the translational $\dot{\mathbf{x}}_{c,i}$ and rotational $\dot{\mathbf{n}}_i$ derivatives for each fish, the full set of which forms the full state derivative for our school, $\dot{\mathbf{X}}$, and this is
+$$\dot{\mathbf{x}}_{c,i} = \frac{\mathbf{v}_{f,i} + \mathbf{v}_{b,i}}{2}$$
+and
+$$\dot{\mathbf{n}}_i = \frac{\Delta \mathbf{v}_{f-b,i} + 2\lambda_i \mathbf{n}_i}{\ell}$$
+where $\lambda_i$ is a lagrange multiplier that ensures that $\ell$ is kept constant
+$$\lambda_i = \frac{-\Delta \mathbf{v}_{f-b,i} \cdot \mathbf{n}_i}{2}$$
+and $\Delta \mathbf{v}_{f-b,i}$ is the difference in velocity between the head and tail 
+$$\Delta \mathbf{v}_{f-b,i} = \mathbf{v}_{f,i} - \mathbf{v}_{b,i}.$$
+
+**Runge-Kutta Fourth Order**
+
+Fourth-order Runge Kutta (RK4) is defined for ordinary differential equations of the form
+$$y'(t) = f(y,t)$$
+given a time-step $\delta t$ and subsequent half-step $\delta t_{1/2} = \delta t/2$, and is calculated by computing the following values, starting from $y(t_0) = y_0$:
+\begin{align*}
+y'_1 &= f(y_0, t_0) & y_1 &= y_0 + y'_1 \delta t_{1/2} \\
+y'_2 &= f(y_1, t_0 + \delta t_{1/2}) & y_2 &= y_0 + y'_2 \delta t_{1/2} \\
+y'_3 &= f(y_2, t_0 + \delta t_{1/2}) & y_3 &= y_0 + y'_3 \delta t \\
+y'_4 &= f(y_3, t_0 + \delta t)
+\end{align*}
+Then, the final derivative for $t=t_0$ is approximated using the weighted sum of each of these points
+$$y'_{t_0} = \frac{y'_1 + 2 y'_2 + 2 y'_3 + y'_4}{6}.$$
+The final value can then be approximated best as
+$$y(t_0 + \delta t) \approx y_0 + y'_{t_0} \delta t.$$
+
+**RK4, Applied to the Project**
+
+RK4 is best applied for this project by treating $\mathbf{X}$ as $y$ and the process described above as $f(\mathbf{X},t)$.

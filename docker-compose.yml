@@ -1,0 +1,7 @@
+services:
+  main:
+    build: .
+    volumes:
+      - .:/build
+    working_dir: /src
+    command: python3 src/main.py

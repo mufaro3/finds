@@ -49,6 +49,6 @@ viewdocs: docs
 	@zathura docs/build/fish.pdf &
 
 test:
-	@docker compose run --rm main pytest
+	@docker compose run --rm main pytest --tb=line
 
 all: build docs test

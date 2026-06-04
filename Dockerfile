@@ -8,7 +8,7 @@ RUN apt-get install -y make \
 RUN rm -rf /var/lib/apt/lists/*
 
 # ---- working directory = project root ----
-WORKDIR /app
+WORKDIR /fish
 
 # ---- install python dependencies ----
 COPY requirements.txt .
@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # ---- make src importable (important for Sphinx + runtime) ----
-ENV PYTHONPATH="/app/src"
+ENV PYTHONPATH="/fish"
 
 # ---- default runtime command ----
-CMD ["python", "src/main.py"]
+CMD ["python", "-m", "src.main"]

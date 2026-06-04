@@ -14,6 +14,8 @@ Documentation for the Fish Particle Simulation
    api/calculations
    api/fish
    api/util
-
+   api/tests
+   api/postprocessing
+   
 .. bibliography::
    :cited:

@@ -1,4 +1,4 @@
-from calculations import *
+from .calculations import *
 
 from numba import jit, njit
 import numpy as np
@@ -7,6 +7,8 @@ from numpy.typing import NDArray, ArrayLike
 import time
 from pathlib import Path
 from datetime import datetime
+
+from .postprocessing import generate_animation_from_file
 
 @jit(forceobj=True)
 def serialize_to_file(system: NDArray, time: float, output_filename: Path) -> None:
@@ -37,6 +39,9 @@ def calculate_update_rk4(system: NDArray, time_step: float) -> NDArray:
 
     :param time_step: The differential time-step for the calculation, :math:`\delta t`
     :type  time_step: float
+
+    :returns: The updated state after one time-step.
+    :rtype: NDArray
     
     We define :math:`f(\mathbf{X})` as
     :py:func:`src.calculations.calculate_system_derivative`
@@ -49,10 +54,10 @@ def calculate_update_rk4(system: NDArray, time_step: float) -> NDArray:
         :nowrap:
     
         \begin{align}
-        \dot{\mathbf{X}}_1 &= f(\mathbf{X}_0) & \mathbf{X}_1 &= \mathbf{X}_0 + \dot{\mathbf{X}}_1 \delta t_{1/2} \\
-        \dot{\mathbf{X}}_2 &= f(\mathbf{X}_1) & \mathbf{X}_2 &= \mathbf{X}_0 + \dot{\mathbf{X}}_2 \delta t_{1/2} \\
-        \dot{\mathbf{X}}_3 &= f(\mathbf{X}_2) & \mathbf{X}_3 &= \mathbf{X}_0 + \dot{\mathbf{X}}_3 \delta t \\
-        \dot{\mathbf{X}}_4 &= f(\mathbf{X}_3) & \mathbf{X}_4 &= \text{unused} 
+        \dot{\mathbf{X}}_1 &= f(\mathbf{X}_0)  \\
+        \dot{\mathbf{X}}_2 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_1 \delta t_{1/2}) \\
+        \dot{\mathbf{X}}_3 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_2 \delta t_{1/2}) \\
+        \dot{\mathbf{X}}_4 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_3 \delta t) 
         \end{align}
 
     Then, the final derivative :math:`\dot{\mathbf{X}}` is computed as
@@ -82,15 +87,6 @@ def calculate_update_rk4(system: NDArray, time_step: float) -> NDArray:
     Xt = n(X0 + k * dt)
 
     return Xt
-
-def generate_animation_from_file(csv_filepath: Path) -> None:
-    """
-    Generates an animation from the CSV filepath specified.
-
-    :param csv_filepath: The CSV filepath to write the simulation result to.
-    :type  csv_filepath: Path
-    """
-    pass
 
 def perform_simulation(
         initial_state: NDArray,

@@ -1,22 +1,40 @@
-from src.calculations import *
-from src.fish import *
+from finds.calculations import *
+from finds.fish import *
+from .common import *
+from finds.constants import FISH_LENGTH
 
 def test_calculate_feature_positions():
     r"""
     For an input shape of :math:`(N,6)`:
 
-    1. The output shape should be `(N,6)`.
-    2. The norm of the difference between the head and tail of a fish
+    1. The output should not be NoneType
+    2. The output shape should be `(N,6)`.
+    3. The norm of the difference between the head and tail of a fish
        should always be equal to the standard fish length, :math:`\ell`.
     """
     NUMBER_OF_TESTS = 10
 
     for _ in range(NUMBER_OF_TESTS):
-        N = np.random.randint(10,int(1e3))
-        random_matrix = generate_system(N)
+        N, random_matrix = generate_random_matrix()
+        feature_positions = calculate_feature_positions(random_matrix)
 
-        feature_positions = 
+        # TEST 1
+        assert feature_positions is not None, \
+            f'calculate_feature_positions produced a NoneType object.'
+        
+        # TEST 2
+        assert feature_positions.shape == (N,6), \
+            f'Feature positions should have shape ({N},6) '+\
+            f'but has shape {feature_positions.shape}'
 
+        # TEST 3
+        head_positions = feature_positions[:, :3]
+        tail_positions = feature_positions[:, 3:]
+        distances      = np.linalg.norm(head_positions - tail_positions, axis=1)
+
+        assert np.allclose(distances, FISH_LENGTH), \
+            'Head and tail positions are not FISH_LENGTH apart.'
+        
 def test_barnes_hut_simplify():
     r"""
     For an input shape of :math:`(N,6)`:

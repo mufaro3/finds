@@ -1,7 +1,7 @@
 Utility Functions
 =================
 
-.. automodule:: src.util
+.. automodule:: finds.util
    :members:
    :undoc-members:
    :show-inheritance:

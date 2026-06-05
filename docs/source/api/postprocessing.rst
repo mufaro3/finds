@@ -1,7 +1,7 @@
 Post-Processing
 ===============
 
-.. automodule:: src.postprocessing
+.. automodule:: finds.postprocessing
    :members:
    :undoc-members:
    :show-inheritance:

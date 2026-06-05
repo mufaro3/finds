@@ -1,59 +1,77 @@
-from src.fish import *
+from finds.fish import *
+from finds.util import *
+from .common import *
 
 def test_positions_and_orientations():
     r"""
     For an input shape of :math:`(N,6)`,
 
-    1. Both should return an output shape of :math:`(N,3)`
-    2. They should not be identical.
-    3. Put together, they should produce the original matrix.
+    1. Neither should be NoneType
+    2. Both should return an output shape of :math:`(N,3)`
+    3. They should not be identical.
+    4. Put together, they should produce the original matrix.
     """
     NUMBER_OF_TESTS = 10
 
     for _ in range(NUMBER_OF_TESTS):
-        N = np.random.randint(10,int(1e3))
-        random_matrix = generate_system(N)
-        positions = positions(random_matrix)
-        orientations = orientations(random_matrix)
+        N, random_matrix = generate_random_matrix()
+        pos = positions(random_matrix)
+        ori = orientations(random_matrix)
 
         # TEST 1
-        assert positions.shape == (N,3), \
-            f'Positions should have shape ({N},3) but has shape {positions.shape}'.
-        assert orientations.shape == (N,3), \
-            f'Positions should have shape ({N},3) but has shape {orientations.shape}'.
-
+        assert pos is not None, \
+            'Positions produced NoneType object.'
+        assert ori is not None, \
+            'Orientations prodced NoneType object.'
+        
         # TEST 2
-        assert not np.allclose(positions, orientations), \
-            'Positions and orientations should not be identical!'
+        assert pos.shape == (N,3), \
+            f'Positions should have shape ({N},3) but has shape {pos.shape}.'
+        assert ori.shape == (N,3), \
+            f'Positions should have shape ({N},3) but has shape {ori.shape}.'
 
         # TEST 3
-        recombined = np.hstack((positions, orientations))
+        assert not np.allclose(pos, ori), \
+            'Positions and orientations should not be identical!'
+
+        # TEST 4
+        recombined = np.hstack((pos, ori))
         assert np.allclose(recombined, random_matrix), \
             'Positions and orientations combined together do not '+\
             'form the original matrix'
         
 def test_generate_fish():
     r"""
-    1. Should have a length of 6.
-    2. The position should be within bounds.
-    3. The orientation should be within the angular perturbation maximum.
-    4. The orientation should be a unit vector.
+    1. Should not be a NoneType object.
+    2. Should have a length of 6.
+    3. The orientation should be a unit vector.
+    4. The position should be within bounds.
+    5. The orientation should be within the angular perturbation maximum.
     """
     NUMBER_OF_TESTS = 20
 
     for _ in range(NUMBER_OF_TESTS):
         bounds = np.random.uniform(0.5, 1e3, 3)
-        angle_delta = np.random.uniform(0, np.pi, 2)
+        angle_delta = np.random.uniform(0, np.pi)
         random_fish = generate_fish(bounds, angle_delta)
-
-        position = positions(random_fish)
-        orientation = orientations(random_fish)
+        
+        position = random_fish[:3]
+        orientation = random_fish[3:]
         
         # TEST 1
+        assert random_fish is not None, \
+            'generate_fish produced a NoneType object.'
+        
+        # TEST 2
         assert random_fish.shape == (6,), \
             f'Fish should have shape (6,) but has shape {random_fish.shape}.'
 
-        # TEST 2
+        # TEST 3
+        norm = np.linalg.norm(orientation)
+        assert np.isclose(norm, 1), \
+            f'Orientation is not a unit vector, has norm {norm}.'
+        
+        # TEST 4
         def in_bounds(point, bounds):
             for dim in range(3):
                 if not (-bounds[dim] <= point[dim] <= bounds[dim]):
@@ -63,17 +81,14 @@ def test_generate_fish():
         assert in_bounds(position, bounds), \
             f'Fish at {position} is not within bounds of {-bounds} to {bounds}.'
 
-        # TEST 3
+        # TEST 5
         theta, phi = cartesian_to_spherical(orientation)
         assert 0 <= theta < angle_delta, \
-            f'Theta not within angular perturbation: theta={theta}, angle_delta={angle_delta}.'
+            f'Theta not within angular perturbation: '+\
+            f'theta={theta}, angle_delta={angle_delta}.'
         assert 0 <= phi <= np.pi, \
-            f'Phi not within angular perturbation: phi={phi}, angle_delta={angle_delta}'
-
-        # TEST 4
-        norm = np.linalg.norm(orientation)
-        assert np.isclose(norm, 1), \
-            f'Orientation is not a unit vector, has norm {norm}.'
+            f'Phi not within angular perturbation: '+\
+            f'phi={phi}, angle_delta={angle_delta}'
 
 def test_generate_system():
     r"""
@@ -83,9 +98,8 @@ def test_generate_system():
     NUMBER_OF_TESTS = 10
 
     for _ in range(NUMBER_OF_TESTS):
-        N = np.random.randint(10,int(1e3))
-        random_matrix = generate_system(N)
-
+        N, random_matrix = generate_random_matrix()
+        
         # TEST 1
         assert random_matrix.shape == (N,6), \
             f'Matrix should have shape ({N},6) but has shape {random_matrix.shape}.'
@@ -100,23 +114,27 @@ def test_generate_system():
 def test_normalize_orientation_vectors():
     r"""
     For an input shape of :math:`(N,6)`:
-    
-    1. The output should have an identical shape.
-    2. All of the orientation vectors should be unit vectors.
+
+    1. Normalization should not produce a NoneType object.
+    2. The output should have an identical shape.
+    3. All of the orientation vectors should be unit vectors.
     """
     NUMBER_OF_TESTS = 10
 
     for _ in range(NUMBER_OF_TESTS):
-        N = np.random.randint(10,int(1e3))
-        random_matrix = generate_system(N)
-
-        normalized_matrix = normalize_orientation_vectors(random_matrix)
+        N, random_matrix = generate_random_matrix()
+        normalized_matrix = normalize_orientation_vectors(
+            random_matrix)
 
         # TEST 1
+        assert normalized_matrix is not None, \
+            'Normalization produced NoneType!'
+        
+        # TEST 2
         assert random_matrix.shape == normalized_matrix.shape, \
             f'Normalized matrix should have shape {random_matrix.shape} but has shape {normalized_matrix.shape}.'
 
-        # TEST 2
-        norms = np.linalg.norm(orientations(normalized_matrix), axis=2)
+        # TEST 3
+        norms = np.linalg.norm(orientations(normalized_matrix), axis=1)
         assert np.allclose(np.full_like(norms, 1), norms), \
             f'Normalized matrix does not contain only unit vectors!'

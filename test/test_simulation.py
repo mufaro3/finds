@@ -1,3 +1,5 @@
+from finds.simulation import *
+
 def test_serialize_to_file():
     r"""
     For an input shape of :math:`(N,6)`:

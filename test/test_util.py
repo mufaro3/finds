@@ -1,5 +1,5 @@
 import pytest
-from src.util import * 
+from finds.util import * 
 
 def test_iterate_excluding_self():
     r"""
@@ -87,15 +87,15 @@ def test_spherical_to_cartesian():
         
         # theta tests
         with pytest.raises(ValueError) as e:
-            spherical_to_cartesian([under_zero, 0])
+            spherical_to_cartesian((under_zero, 0))
 
         with pytest.raises(ValueError) as e:
-            spherical_to_cartesian([over_2pi,   0])
+            spherical_to_cartesian((over_2pi,   0))
 
         # phi tests
         with pytest.raises(ValueError) as e:
-            spherical_to_cartesian([0, under_zero])
+            spherical_to_cartesian((0, under_zero))
             
         with pytest.raises(ValueError) as e:
-            spherical_to_cartesian([0, over_pi])
+            spherical_to_cartesian((0, over_pi))
         

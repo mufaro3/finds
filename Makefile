@@ -46,7 +46,7 @@ docs:
 	@docker compose run --rm main make -C docs latexpdf
 
 viewdocs: docs
-	@zathura docs/build/fish.pdf &
+	@zathura docs/build/finds.pdf &
 
 test:
 	@docker compose run --rm main pytest --tb=line

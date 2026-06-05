@@ -2,6 +2,6 @@ services:
   main:
     build: .
     volumes:
-      - .:/fish
-    working_dir: /fish
-    command: python3 -m src.main
+      - .:/finds
+    working_dir: /finds
+    command: python3 -m finds.main

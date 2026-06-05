@@ -4,7 +4,7 @@ from numpy.typing import NDArray, ArrayLike
 
 from .fish import *
 from .util import * 
-from .constants import Constants
+from .constants import *
 
 @njit
 def calculate_feature_positions(system: NDArray) -> NDArray:
@@ -29,11 +29,14 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
     :rtype: NDArray
     """
 
-    delta = orientations(system) * Constants.FISH_LENGTH / 2
-    heads = positions(system) + delta
-    tails = positions(system) - delta
+    ori = orientations(system)
+    pos = positions(system)
+    
+    delta = ori * FISH_LENGTH / 2
+    heads = pos + delta
+    tails = pos - delta
 
-    pass
+    return np.hstack((heads, tails))
 
 @njit
 def barnes_hut_simplify(fish: NDArray, other_fish: NDArray, bh_ratio: float):
@@ -254,7 +257,7 @@ def calculate_feature_velocities(
         \mathbf{u} = \frac{\sigma}{4\pi} \frac{\mathbf{r}}{r^3}.
         \end{align}
     """
-    internal_contrib = Constants.FISH_SELF_PROPELLED_SPEED * orientations
+    internal_contrib = FISH_SELF_PROPELLED_SPEED * orientations
     pairwise_interactions_sum = \
         compute_pairwise_interactions(
             school,
@@ -262,7 +265,7 @@ def calculate_feature_velocities(
             use_barnes_hut
         )
     
-    external_contrib = Constants.VOLUMETRIC_FLOW_RATE / (4 * np.pi) *\
+    external_contrib = VOLUMETRIC_FLOW_RATE / (4 * np.pi) *\
         pairwise_interactions_sums
     return internal_contrib + external_contrib
     

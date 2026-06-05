@@ -1,10 +1,11 @@
 from numba import jit, njit
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
+from .util import spherical_to_cartesian
 
 @njit
 def positions(system: NDArray) -> NDArray:
-    """
+    r"""
     :returns: The positions of all of the fish in the system.
     :rtype: NDArray
     
@@ -13,11 +14,11 @@ def positions(system: NDArray) -> NDArray:
 
     :rtype: NDArray
     """
-    pass
+    return system[:, :3]
 
 @njit
 def orientations(system: NDArray) -> NDArray:
-    """
+    r"""
     :returns: All of the orientations of the fish in the system.
     :rtype: NDArray
 
@@ -26,21 +27,26 @@ def orientations(system: NDArray) -> NDArray:
 
     :rtype: NDArray
     """
-    pass 
+    return system[:, 3:]
     
 @njit
 def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:
-    """
+    r"""
     Generates a fish with a random position with :code:`bounds` and a random
     angular perturbation as specified by :code:`angle_delta`.
 
-    :param bounds: The cartesian bounds (in meters) for which to generate fish. Supplied in form :math:`(x_b,y_b,z_b)`, and means that the fish will be generated at position :math:`(x,y,z)` where :math:`x \in (-x_b, x_b), y \in (-x_b, y_b)`, and :math:`z \in (-z_b, z_b)`.
+    :param bounds: The cartesian bounds (in meters) for which to generate fish.
+      Supplied in form :math:`(x_b,y_b,z_b)`, and means that the fish will be
+      generated at position :math:`(x,y,z)` where :math:`x \in (-x_b, x_b), y
+      \in (-x_b, y_b)`, and :math:`z \in (-z_b, z_b)`.
     :type bounds: ArrayLike
 
-    :param angle_delta: The maximum random angular perturbation for a given fish in radians.
+    :param angle_delta: The maximum random angular perturbation for a given
+      fish in radians.
     :type angle_delta: float
 
-    :returns: An array in form :math:`[x, y, z, n_x, n_y, n_z]` storing the position and orientation of the fish.
+    :returns: An array in form :math:`[x, y, z, n_x, n_y, n_z]` storing the
+      position and orientation of the fish.
     :rtype: NDArray
     """
     if angle_delta >= np.pi:
@@ -49,15 +55,18 @@ def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:
     
     bounds = np.asarray(bounds)
 
-    position = np.empty(bounds.shape[0], dtype=np.float64)
+    position = np.zeros(bounds.shape[0], dtype=np.float64)
     for i in range(bounds.shape[0]):
         position[i] = np.random.uniform(-bounds[i], bounds[i])
         
-    orientation = np.random.uniform(-angle_delta, angle_delta, 2)
-
-    new_fish = np.empty(6, dtype=np.float64)
+    orientation = np.zeros(2, dtype=np.float64)
+    for i in range(2):
+        orientation[i] = np.random.uniform(0, angle_delta)
+    orientation_cartes = spherical_to_cartesian(orientation)
+        
+    new_fish = np.zeros(6, dtype=np.float64)
     new_fish[:3] = position
-    new_fish[4:] = orientation
+    new_fish[3:] = orientation_cartes
     
     return new_fish
 
@@ -69,7 +78,10 @@ def generate_system(n: int, bounds: ArrayLike, angle_delta: float = 0) -> NDArra
     :param n: The number of fish to include in the system.
     :type n: int
 
-    :param bounds: The cartesian bounds (in meters) for which to generate fish. Supplied in form :math:`(x_b,y_b,z_b)`, and means that the fish will be generated at position :math:`(x,y,z)` where :math:`x \in (-x_b, x_b), y \in (-x_b, y_b)`, and :math:`z \in (-z_b, z_b)`.
+    :param bounds: The cartesian bounds (in meters) for which to generate fish.
+      Supplied in form :math:`(x_b,y_b,z_b)`, and means that the fish will be
+      generated at position :math:`(x,y,z)` where :math:`x \in (-x_b, x_b),
+      y \in (-x_b, y_b)`, and :math:`z \in (-z_b, z_b)`.
     :type bounds: ArrayLike
 
     :param angle_delta: The maximum random angular perturbation for all fish in radians.
@@ -96,4 +108,11 @@ def normalize_orientation_vectors(system: NDArray) -> NDArray:
     :returns: The system, with normalized orientation vectors.
     :rtype:   NDArray
     """
-    pass
+    pos   = positions(system)
+    ori   = orientations(system)
+    norms = np.sqrt(np.sum(ori**2, axis=1))
+
+    normalized = ori / norms[:, np.newaxis]
+    recombined = np.hstack((pos, normalized))
+    
+    return recombined

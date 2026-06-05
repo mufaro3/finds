@@ -1,0 +1,36 @@
+All that is required to install FInDS is Docker and GNU Make. For
+Windows users, I highly recommend using WSL[1] and following the Linux
+instructions to keep your life simple, but this program can be run
+purely on windows regardless due to containerization.
+
+DOCKER - LINUX
+
+All that is needed is the Docker CLI. Follow the instructions here:
+
+  <https://docs.docker.com/engine/install/>
+
+DOCKER - WINDOWS AND MACOS
+
+You probably will need Docker Desktop. Follow the instructions here:
+
+  <https://docs.docker.com/desktop/>
+
+GNU MAKE - LINUX AND MACOS
+
+Your system likely comes with Make preinstalled, but if not, follow
+the instructions provided by the GNU foundation (ideally, download it
+via your package manager):
+
+  <https://www.gnu.org/software/make/>
+
+GNU MAKE - WINDOWS
+
+Alternative packagers like Chocolatey[2] or Scoop[3] for PowerShell
+can be used to install Make.
+
+
+[1] https://learn.microsoft.com/en-us/windows/wsl/install
+[2] https://chocolatey.org/
+[3] https://scoop.sh/
+
+

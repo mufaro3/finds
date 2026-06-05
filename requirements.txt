@@ -2,6 +2,7 @@
 dataclasses
 
 # math/plotting
+scipy
 numpy
 matplotlib
 numba

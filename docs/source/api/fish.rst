@@ -13,9 +13,9 @@ For this simulation, the system of fish are stored the following format:
    \end{bmatrix}
 
 This module consists of fish management functions that aren't specified in papers
-:cite:t:`mabrouk2024` and :cite:t:`mabrouk2025`, such as :py:func:`src.fish.positions`, :py:func:`src.fish.orientations`, and :py:func:`src.fish.normalize_orientation_vectors` alongside fish/system generation functions.
+:cite:t:`mabrouk2024` and :cite:t:`mabrouk2025`, such as :py:func:`finds.fish.positions`, :py:func:`finds.fish.orientations`, and :py:func:`finds.fish.normalize_orientation_vectors` alongside fish/system generation functions.
 
-.. automodule:: src.fish
+.. automodule:: finds.fish
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
 Simulation Functions
 ====================
 
-.. automodule:: src.simulation
+.. automodule:: finds.simulation
    :members:
    :undoc-members:
    :show-inheritance:

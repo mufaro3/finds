@@ -3,19 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for the Fish Particle Simulation
-==============================================
+FInDS: The Fish Interaction and Dynamics Simulator
+==================================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   api/constants
    api/simulation
    api/calculations
    api/fish
    api/util
-   api/tests
    api/postprocessing
+   api/tests
    
 .. bibliography::
    :cited:

@@ -48,14 +48,8 @@ def test_spherical_to_cartesian():
     r"""
     1. Input shape :math:`(2)` maps to output shape :math:`(3)`.
     2. The cartesian output should be a unit vector.
-    3. We should be able to recover :math:`\theta` and :math:`\phi` from the output as
-
-    .. math::
-        \begin{aligned}
-          \theta &= \arctan(y/x) \\
-          \phi &= \arctan\left(\frac{\sqrt{x^2 + y^2}}{z}\right)
-        \end{aligned}
-    
+    3. :py:func:`src.util.spherical_to_cartesian` and :py:func:`src.util.cartesian_to_spherical`
+       should be exactly inverse operations.
     4. We should get an exception if :math:`\theta \not\in [0,2\pi)` or
        :math:`\phi \not\in [0,\pi]`. 
     """
@@ -80,21 +74,8 @@ def test_spherical_to_cartesian():
                'Cartesian vector is not a unit vector! Norm is '+ \
                str(norm)
 
-        x = cartesian[0]
-        y = cartesian[1]
-        z = cartesian[2]
-
-        recovered_theta = np.atan2(y, x)
-        recovered_phi   = np.atan2( np.sqrt( x ** 2 + y ** 2 ), z )
-
-        # normalize back into bounds
-        normalized_theta = np.mod(recovered_theta, 2 * np.pi)
-        normalized_phi   = np.mod(recovered_phi,   np.pi)
-        
-        recovered_spherical = np.array([ normalized_theta, normalized_phi ])
-
         # TEST 3
-        assert np.allclose( recovered_spherical, spherical ), \
+        assert np.allclose( cartesian_to_spherical(cartesian), spherical ), \
                'Recovered spherical vector doesn\'t match the '+\
                'original spherical vector!'
 

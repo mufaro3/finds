@@ -1,3 +1,6 @@
+from src.calculations import *
+from src.fish import *
+
 def test_calculate_feature_positions():
     r"""
     For an input shape of :math:`(N,6)`:
@@ -6,7 +9,13 @@ def test_calculate_feature_positions():
     2. The norm of the difference between the head and tail of a fish
        should always be equal to the standard fish length, :math:`\ell`.
     """
-    pass
+    NUMBER_OF_TESTS = 10
+
+    for _ in range(NUMBER_OF_TESTS):
+        N = np.random.randint(10,int(1e3))
+        random_matrix = generate_system(N)
+
+        feature_positions = 
 
 def test_barnes_hut_simplify():
     r"""

@@ -15,6 +15,40 @@ def iterate_excluding_self(array: NDArray):
         yield item, others
 
 @jit(forceobj=True)
+def cartesian_to_spherical(vec_cartesian: ArrayLike) -> NDArray:
+    r"""
+    Converts  a 3D cartesian unit vector to a 2D spherical vector
+    using the spherical to cartesian formulas
+
+    .. math::
+        :nowrap:
+    
+        \begin{align}
+          \theta &= \arctan(y/x) \\
+          \phi &= \arctan\left(\frac{\sqrt{x^2 + y^2}}{z}\right)
+        \end{align}
+    """
+    vec_cartesian = np.asarray(vec_cartesian)
+    norm = np.linalg.norm(vec_cartesian)
+    if not np.isclose(norm, 1):
+        raise ValueError('Vector ' + str(vec_cartesian) + ' is not a unit vector, '+
+                         'norm = ' + str(norm))
+
+    x = vec_cartesian[0]
+    y = vec_cartesian[1]
+    z = vec_cartesian[2]
+
+    recovered_theta = np.atan2(y, x)
+    recovered_phi   = np.atan2( np.sqrt( x ** 2 + y ** 2 ), z )
+
+    # normalize back into bounds
+    normalized_theta = np.mod(recovered_theta, 2 * np.pi)
+    normalized_phi   = np.mod(recovered_phi,   np.pi)
+
+    return np.array([normalized_theta, normalized_phi])
+    
+        
+@jit(forceobj=True)
 def spherical_to_cartesian(vec_spherical: ArrayLike) -> NDArray:
     r"""
     Converts a 2D spherical unit vector to a 3D cartesian vector

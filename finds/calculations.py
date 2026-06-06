@@ -9,8 +9,8 @@ from .constants import *
 @njit
 def calculate_feature_positions(system: NDArray) -> NDArray:
     r"""
-    Computes the front/head/source and back/tail/sink positions for
-    each fish in the system, returned in the following format:
+    Computes the front and back positions for each fish in the
+    system, returned in the following format:
 
     .. math::
 
@@ -25,18 +25,42 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
     :param system: The system.
     :type system: NDArray
 
-    :returns: The matrix storing the head and tail positions for each fish.
+    :returns: The matrix storing the head and tail positions for
+      each fish.
     :rtype: NDArray
+
+    The position of the front :math:`\mathbf{x}_{f}` and the position
+    of the back :math:`\mathbf{x}_{b}` for each fish are computed using
+    the center-of-mass position :math:`\mathbf{x}_c` and the orientation
+    :math:`\mathbf{n}` using the following formulas
+
+    .. math::
+        :nowrap:
+    
+        \begin{align}
+         \mathbf{v}_f &= \mathbf{x}_c + \vec{\delta} \\
+         \mathbf{v}_b &= \mathbf{x}_c - \vec{\delta}
+        \end{align}
+
+    where
+
+    .. math::
+        :nowrap:
+    
+        \begin{align}
+          \vec{\delta} = \frac{1}{2} \ell \mathbf{n}
+        \end{align}
+
+    is a half-length vector in the direction of the orientation.
     """
 
-    ori = orientations(system)
-    pos = positions(system)
+    pos, ori = split(system)
     
     delta = ori * FISH_LENGTH / 2
     heads = pos + delta
     tails = pos - delta
 
-    return np.hstack((heads, tails))
+    return rejoin(pos, ori)
 
 @njit
 def barnes_hut_simplify(fish: NDArray, other_fish: NDArray, bh_ratio: float):

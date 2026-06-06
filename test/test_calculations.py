@@ -28,9 +28,8 @@ def test_calculate_feature_positions():
             f'but has shape {feature_positions.shape}'
 
         # TEST 3
-        head_positions = feature_positions[:, :3]
-        tail_positions = feature_positions[:, 3:]
-        distances      = np.linalg.norm(head_positions - tail_positions, axis=1)
+        head_positions, tail_positions = split(feature_positions)
+        distances = np.linalg.norm(head_positions - tail_positions, axis=1)
 
         assert np.allclose(distances, FISH_LENGTH), \
             'Head and tail positions are not FISH_LENGTH apart.'
@@ -49,11 +48,35 @@ def test_compute_pairwise_interactions():
     r"""
     For an input shape of :math:`(N,6)`:
 
-    1. The output shape should be :math:`(N,3)`.
-    2. The norm of all rows in the output matrix should be greater than 0. 
+    1. The output should not produce NoneType
+    2. The output shape should be :math:`(N,3)`.
+    3. The norm of all rows in the output matrix should be greater than 0.
+       (All interactions are non-zero in magnitude by definition.)
     """
-    pass
+    NUMBER_OF_TESTS = 10
 
+    for _ in range(NUMBER_OF_TESTS):
+        N, system = generate_random_matrix()
+        feature_positions = calculate_feature_positions(system)
+        interactions = compute_pairwise_interactions(
+            system, feature_positions, use_barnes_hut=False)
+
+
+        # TEST 1
+        assert interactions is not None, \
+            'compute_pairwise_interactions produced NoneType.'
+
+        # TEST 2
+        assert interactions.shape == (N,3), \
+            f'Interactions matrix requires shape ({N},3) but obtained shape '+\
+            f'{interactions.shape}'
+
+        # TEST 3
+        norms = np.linalg.norm(interactions, axis=1)
+        assert not np.any(np.isclose(norms, 0)), \
+            'Interactions matrix computed a zero-valued interaction.'
+            
+    
 def test_calculate_feature_velocities():
     r"""
     For an input shape of :math:`(N,6)`:

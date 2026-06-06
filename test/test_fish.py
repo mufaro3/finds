@@ -15,9 +15,8 @@ def test_positions_and_orientations():
 
     for _ in range(NUMBER_OF_TESTS):
         N, random_matrix = generate_random_matrix()
-        pos = positions(random_matrix)
-        ori = orientations(random_matrix)
-
+        pos, ori = split(random_matrix)
+        
         # TEST 1
         assert pos is not None, \
             'Positions produced NoneType object.'
@@ -35,7 +34,7 @@ def test_positions_and_orientations():
             'Positions and orientations should not be identical!'
 
         # TEST 4
-        recombined = np.hstack((pos, ori))
+        recombined = rejoin(pos, ori)
         assert np.allclose(recombined, random_matrix), \
             'Positions and orientations combined together do not '+\
             'form the original matrix'
@@ -54,9 +53,7 @@ def test_generate_fish():
         bounds = np.random.uniform(0.5, 1e3, 3)
         angle_delta = np.random.uniform(0, np.pi)
         random_fish = generate_fish(bounds, angle_delta)
-        
-        position = random_fish[:3]
-        orientation = random_fish[3:]
+        position, orientation = split(random_fish)
         
         # TEST 1
         assert random_fish is not None, \
@@ -132,9 +129,11 @@ def test_normalize_orientation_vectors():
         
         # TEST 2
         assert random_matrix.shape == normalized_matrix.shape, \
-            f'Normalized matrix should have shape {random_matrix.shape} but has shape {normalized_matrix.shape}.'
+            f'Normalized matrix should have shape'+\
+            f'{random_matrix.shape} but has shape {normalized_matrix.shape}.'
 
         # TEST 3
-        norms = np.linalg.norm(orientations(normalized_matrix), axis=1)
+        __, orientations = split(normalized_matrix)
+        norms = np.linalg.norm(orientations, axis=1)
         assert np.allclose(np.full_like(norms, 1), norms), \
             f'Normalized matrix does not contain only unit vectors!'

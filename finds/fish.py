@@ -2,32 +2,6 @@ from numba import jit, njit
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 from .util import spherical_to_cartesian
-
-@njit
-def positions(system: NDArray) -> NDArray:
-    r"""
-    :returns: The positions of all of the fish in the system.
-    :rtype: NDArray
-    
-    :param system: The system.
-    :type  system: NDArray
-
-    :rtype: NDArray
-    """
-    return system[:, :3]
-
-@njit
-def orientations(system: NDArray) -> NDArray:
-    r"""
-    :returns: All of the orientations of the fish in the system.
-    :rtype: NDArray
-
-    :param system: The system.
-    :type  system: NDArray
-
-    :rtype: NDArray
-    """
-    return system[:, 3:]
     
 @njit
 def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:

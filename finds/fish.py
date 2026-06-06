@@ -2,7 +2,7 @@ from numba import jit, njit
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 from .util import spherical_to_cartesian
-    
+
 @njit
 def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:
     r"""

@@ -1,5 +1,3 @@
-from .calculations import *
-
 from numba import jit, njit
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
@@ -8,7 +6,9 @@ import time
 from pathlib import Path
 from datetime import datetime
 
+from .calculations import *
 from .postprocessing import generate_animation_from_file
+from .io import *
 
 @njit
 def calculate_update_rk4(system: NDArray, time_step: float) -> NDArray:
@@ -106,6 +106,7 @@ def perform_simulation(
         raise ValueError('Cannot generate animation without'+
                          'saving path data to file.')
 
+    system = initial_state.copy()
     irl_start_time = time.time()
 
     # generate a new file at output/test-{timestamp}/path.csv
@@ -116,9 +117,10 @@ def perform_simulation(
         output_dir.mkdir(parents=True, exist_ok=True)
     
     output_filename = output_dir / "data.csv" 
+    output_io = init_output_filestream(output_filename, system.shape[0])
     
     if print_to_file:
-        serialize_to_file(system, 0, output_filename)
+        serialize_to_file(system, 0, output_io)
 
     # saving some iteration markers for debugging
     total_iterations = end_time / time_step
@@ -141,8 +143,11 @@ def perform_simulation(
         simulation_time = simulation_index * time_step
 
         # save to the file
-        serialize_to_file(system, simulation_time, output_filename)
+        serialize_to_file(system, simulation_time, output_io)
 
+    # close filestream
+    close_output_filestream(output_io)
+        
     if generate_animation:
         print('Now generating animation..')
         generate_animation_from_file(output_filename)

@@ -11,12 +11,14 @@ FInDS: The Fish Interaction and Dynamics Simulator
    :caption: Contents:
 
    api/constants
+   api/util
+   api/fish
    api/simulation
    api/calculations
-   api/fish
-   api/util
+   api/io
    api/postprocessing
-   api/tests
    
+   api/tests
+	     
 .. bibliography::
    :cited:

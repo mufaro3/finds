@@ -1,0 +1,4 @@
+- Parallelize finds.calculations.compute_pairwise_interactions
+- Remove the read/write protection on docs/build files
+- Write ALL of finds.postprocessing
+- Write finds.calculations.barnes_hut_simplify

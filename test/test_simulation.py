@@ -2,18 +2,6 @@ from finds.simulation import *
 from finds.calculations import *
 from finds.util import *
 
-def test_serialize_to_file():
-    r"""
-    For an input shape of :math:`(N,6)`:
-    
-    1. Each write should create only one row.
-    2. Each row should have exactly :math:`6N+1` columns.
-    3. The deserialized version of the data should be identical
-       to the data before serialization. (We should be able to
-       fully retrieve the data afterward.)
-    """
-    pass
-
 def test_calculate_update_rk4():
     r"""
     For an input shape of :math:`(N,6)`:
@@ -78,8 +66,5 @@ def test_calculate_update_rk4():
         assert np.allclose(advanced_matrix, advanced_matrix_2), \
             'RK4 produced differing results after two identical calls.'
         
-def test_generate_animation_from_file():
-    pass
-
 def test_perform_simulation():
     pass

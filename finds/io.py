@@ -1,18 +1,66 @@
 from pathlib import Path
-import h5py as h5
+import h5py
+from dataclasses import dataclass
 
-def init_output_filestream(filepath: Path) -> h5.File:
+@dataclass
+class IO:
+    filestream:    h5py.File
+    state_dataset: h5py.Dataset
+    time_dataset:  h5py.Dataset
+
+def init_output_filestream(filepath: Path, n_fish: int) -> IO:
     """
-    Initializes the h5 filepath for writing.
+    Initializes the I/O filestream for writing.
 
     :param filepath: The filepath to write to.
     :type  filepath: Path
 
-    :rtype: h5py.File
-    """
-    pass
+    :param n_fish: The number of fish within the system.
+    :type  n_fish: int
 
-def serialize_to_file(system: NDArray, time: float, output_filename: Path) -> None:
+    :returns: The I/O filestream storing the open h5 file alongside
+      the state and time datasets for writing.
+    :rtype: IO
+    """
+    h5file = h5py.File(filepath, 'w')
+    states_ds = h5file.create_dataset(
+        'states',
+        shape=(0, n_fish, 6),
+        maxshape=(None, n_fish, 6),
+        dtype=np.float64,
+        compression='gzip',
+        chunks=True
+    )
+
+    time_ds = h5file.create_dataset(
+        'time',
+        shape=(0,),
+        maxshape=(None,),
+        dtype=np.float64,
+        compression='gzip'
+    )
+
+    h5file.attrs['dt'] = time_step
+
+    io = IO(
+        filestream=h5file,
+        state_dataset=state_ds,
+        time_dataset=time_ds
+    )
+    
+    return io 
+
+def close_output_filestream(io: IO) -> None:
+    """
+    Closes the output filestream at :code:`h5file`.
+
+    :param io: The filestream to close.
+    :type  io: IO
+    """
+    if io.filestream is not None:
+        io.filestream.close()
+
+def serialize_to_file(system: NDArray, time: float, io: IO) -> None:
     """
     Writes the system state to the datafile located at :code:`output_filename`.
 
@@ -22,9 +70,15 @@ def serialize_to_file(system: NDArray, time: float, output_filename: Path) -> No
     :param time: The current simulation time.
     :type  time: float
 
-    :param output_filename: The CSV filepath to write to.
-    :type  Path:
-
-    :rtype: None
+    :param io: The IO filestream to write to.
+    :type  io: IO
     """
-    pass
+    timestep_index = states_ds.shape[0]
+
+    # extend the datasets by one timestep
+    io.state_dataset.resize(timestep_index + 1, axis=0)
+    io.time_dataset.resize(timestep_index + 1, axis=0)
+
+    # store the new values
+    io.state_dataset[timestep_index] = system
+    io.time_dataset[timestep_index]  = time

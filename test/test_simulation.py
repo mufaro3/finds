@@ -1,4 +1,6 @@
 from finds.simulation import *
+from finds.calculations import *
+from finds.util import *
 
 def test_serialize_to_file():
     r"""
@@ -32,8 +34,50 @@ def test_calculate_update_rk4():
     6. The calculation should be deterministic, so running the same
        function twice should produce identical results.
     """
-    pass
+    NUMBER_OF_TESTS = 5
 
+    for _ in range(NUMBER_OF_TESTS):
+        N, random_matrix = generate_random_matrix()
+
+        # TEST 1
+        advanced_matrix = calculate_update_rk4(random_matrix, time_step=0.01)
+        assert advanced_matrix.shape == random_matrix.shape, \
+            f'Output shape {advanced_matrix.shape} is not the same '+\
+            f'as the input shape {random_matrix.shape}.'
+
+        # TEST 2
+        no_change_matrix = calculate_update_rk4(random_matrix, time_step=0)
+        assert np.allclose(no_change_matrix, random_matrix), 
+
+        
+        small_dt = 1e-10
+        derivative = calculate_system_derivative(random_matrix, use_barnes_hut=False)
+        sdt_euler = random_matrix + derivative * small_dt
+        sdt_rk4 = calculate_update_rk4(random_matrix, time_step=small_dt)
+
+        # TEST 3
+        assert np.all(np.abs(random_matrix - sdt_rk4) < np.abs(random_matrix - advanced_matrix)), \
+            'A smaller time-step produced a larger change somewhere in the matrix.'
+
+        # TEST 4
+        assert np.allclose(sdt_euler, sdt_rk4), \
+            'Eulerian limit did not hold: RK4 and Euler produced different results for a small time step.'
+
+        # TEST 5
+        @njit
+        def isnormalized(matrix: NDArray) -> bool:
+            _, orientations = split(matrix)
+            norms = np.linalg.norm(orientations, axis=1)
+            return np.allclose(norms, 1)
+
+        assert isnormalized(advanced_matrix) and isnormalized(sdt_rk4), \
+            'RK4 produced a non-normalized matrix.'
+
+        # TEST 6
+        advanced_matrix_2 = calculate_update_rk4(random_matrix, time_step=0.01)
+        assert np.allclose(advanced_matrix, advanced_matrix_2), \
+            'RK4 produced differing results after two identical calls.'
+        
 def test_generate_animation_from_file():
     pass
 

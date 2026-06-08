@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 docs/build/
 .cache/
+output/

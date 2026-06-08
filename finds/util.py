@@ -14,15 +14,22 @@ def split(mat: NDArray) -> tuple[NDArray, NDArray]:
     :returns: The top and bottom halves of the matrix.
     :rtype: tuple[NDArray, NDArray]
     """
-    if len(mat.shape) == 1:
+    if mat is None:
+        raise ValueError('Matrix is NoneType.')
+
+    if mat.ndim == 1:
         vec = mat
+        
         if vec.size != 6:
             raise ValueError('Vector does not contain 6 elements.')
+
         return vec[:3], vec[3:]
 
-    if len(mat.shape) != 2 or mat.shape[1] != 6:
-        raise ValueError('Matrix must have shape (N,6).')
-
+    if mat.ndim != 2:
+        raise ValueError('Expected 2D matrix.')
+    if mat.shape[1] != 6:
+        raise ValueError("Expected matrix with shape (N,6).")
+    
     return mat[:, :3], mat[:, 3:]
 
 @njit
@@ -41,7 +48,7 @@ def rejoin(tophalf: NDArray, bottomhalf: NDArray) -> NDArray:
     :returns: The rejoined matrix.
     :rtype: NDArray
     """
-    return np.hstack((tophalf, bottomhalf))
+    return np.concatenate((tophalf, bottomhalf), axis=-1)
 
 @njit
 def iterate_excluding_self(array: NDArray):
@@ -75,6 +82,9 @@ def cartesian_to_spherical(vec_cartesian: ArrayLike) -> NDArray:
     :returns: The Cartesian vector in Spherical coordinates.
     :rtype: NDArray
     """
+    if vec_cartesian is None:
+        raise ValueError('vec_cartesian is None')
+    
     vec_cartesian = np.asarray(vec_cartesian)
 
     if vec_cartesian.shape != (3,):
@@ -121,6 +131,9 @@ def spherical_to_cartesian(vec_spherical: ArrayLike) -> NDArray:
     :returns: The vector in cartesian coordinates.
     :rtype: NDArray
     """
+    if vec_spherical is None:
+        raise ValueError('vec_spherical is None')
+    
     vec_spherical = np.asarray(vec_spherical)
     
     if vec_spherical.shape != (2,):

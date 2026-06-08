@@ -1,4 +1,4 @@
-from numba import jit, njit
+from numba import jit, njit, float64
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 
@@ -60,7 +60,7 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
     heads = pos + delta
     tails = pos - delta
 
-    return rejoin(pos, ori)
+    return rejoin(heads, tails)
 
 @njit
 def barnes_hut_simplify(fish: NDArray, other_fish: NDArray, bh_ratio: float):
@@ -135,36 +135,42 @@ def barnes_hut_simplify(fish: NDArray, other_fish: NDArray, bh_ratio: float):
     continue travering the tree to the children of the node. If :math:`\phi < \theta`, then we
     add the clustered fish-particle to the list of fish to be returned.
     """
-    pass
+    return other_fish
 
 @njit
-def _combine_system_and_features(
-        system: NDArray, feature_positions: NDArray) -> NDArray:
+def calculate_interaction_vector(
+        feature_a_pos: NDArray, feature_b_pos: NDArray) -> NDArray:
     r"""
-    Combines the system :math:`(N,6)` and the features :math:`(N,6)` to
-    produce a zipped representation where each fish is represented as a
-    tuple between the fish parameters and its feature positions.
+    Computes the individual interaction vector between feature
+    :math:`\alpha` of fish :math:`i` and feature :math:`\beta` of
+    fish :math:`j`, defined as the displacement between their positions
+    divided by the cube of its norm:
 
-    Used internally for iterating in
-    :py:func:`finds.calculations.compute_pairwise_interactions` via
-    :py:func:`iterate_excluding_self`.
+    .. math::
+        \begin{align}
+        \mathbf{c}_{\alpha\beta} = \frac{\mathbf{r}_{\alpha\beta}}{r_{\alpha\beta}^3}
+        \end{align}
 
-    :param system: The system.
-    :type  system: NDArray
-
-    :param feature_positions: The positions to be zipped.
-    :type  feature_positions: NDArray
-
-    :returns: The zipped array of fish and features.
-    :rtype:   NDArray
+    where
+    
+    .. math::
+        \begin{align}
+        \mathbf{r}_{\alpha\beta} = \mathbf{x}_{\alpha,i} - \mathbf{x}_{\beta,j}.
+        \end{align}
     """
-    return np.stack((system, features), axis=1)
+    displacement = feature_a_pos - feature_b_pos
+    return displacement / ( np.linalg.norm(displacement) ** 3 )
 
-@njit
+
+@njit(locals={
+    'front_interaction_total': float64[:],  # Forces this to always be a 1D array
+    'back_interaction_total': float64[:],   # Forces this to always be a 1D array
+    'specific_other_features': float64[:]    # No 2D conversion allowed!
+})
 def compute_pairwise_interactions(
         system: NDArray,
-        feature_positions: NDArray,
-        use_barnes_hut: bool) -> NDArray:
+        use_barnes_hut: bool,
+        bh_ratio: float) -> NDArray:
     r"""
     Computes the sum of the pairwise interactions for each fish for both head and
     tail interactions.
@@ -184,6 +190,9 @@ def compute_pairwise_interactions(
       the Barnes-Hut approximation.
     :type  use_barnes_hut: bool
 
+    :param bh_ratio: The Barnes-Hut Ratio to use
+    :type  bh_ratio: float
+    
     In short, this function calculates the net interaction for the head and tail of
     each fish. The net interaction of feature :math:`\alpha` for fish :math:`i`,
     :math:`\mathbf{h}_{\alpha,i}`, is defined as the sum of all of the interaction
@@ -221,19 +230,7 @@ def compute_pairwise_interactions(
     and likewise for the total back interaction. Individual interactions
     :math:`\mathbf{c}_{\alpha\beta}` between features :math:`\alpha` of fish
     :math:`i` and :math:`\beta` of fish :math:`j` are defined as the displacement
-    between the positions of the features divided by the norm cubed
-
-    .. math::
-        \begin{align}
-        \mathbf{c}_{\alpha\beta} = \frac{\mathbf{r}_{\alpha\beta}}{r_{\alpha\beta}^3}
-        \end{align}
-    
-    where
-
-    .. math::
-        \begin{align}
-        \mathbf{r}_{\alpha\beta} = \mathbf{x}_{\alpha,i} - \mathbf{x}_{\beta,j}.
-        \end{align}
+    between the positions of the features divided by the norm cubed.
     
     By default, the total interaction is computed for each fish by performing the
     above calculation with all other fish in the system :math:`\mathbf{X}`, but
@@ -242,49 +239,59 @@ def compute_pairwise_interactions(
     still approximately accurate, clustered form :math:`\mathbf{X}'`. The above
     calculations are then done exactly the same, but on less fish.
     """
-    @njit
-    def interaction_vec(feature_a_pos, feature_b_pos):
-        displacement = feature_a - feature_b_pos
-        return displacement / ( np.linalg.norm(displacement) ** 3 )
+    N = system.shape[0]
+    interactions = np.zeros((N, 6))
+    feature_positions = calculate_feature_positions(system)
+    state = rejoin(system, feature_positions)
     
-    interactions = np.zeros((system.shape[0], 3))
-    combined_sys_features = _combine_system_and_features(system, feature_positions)
-    
-    for i, ((fish, fish_features), (other_fishes, other_fish_features)) \
-        in enumerate(iterate_excluding_self(combined_sys_features)):
+    for i, (fish_state, other_fish_states) in enumerate(iterate_excluding_self(state)):
+        fish = fish_state[0:6]
+        fish_features = fish_state[6:12]
+        fish_front, fish_back = split(fish_features) 
+        
         front_interaction_total = np.zeros(3)
         back_interaction_total = np.zeros(3)
 
+        other_fishes_unsimplified = other_fish_states[:, 0:6]
+        other_fish_features_unsimplified = other_fish_states[:, 6:12]
+        
+        other_fishes = None
+        other_fish_features = None
+        
         if use_barnes_hut:
-            other_fishes = barnes_hut_simplify(fish, other_fishes)
-
+            other_fishes = barnes_hut_simplify(fish, other_fishes_unsimplified, bh_ratio)
+            other_fish_features = calculate_feature_positions(other_fishes)
+        else:
+            other_fishes = other_fishes_unsimplified
+            other_fish_features = other_fish_features_unsimplified
+            
         for other_fish in other_fishes:
-            fish_front,  fish_back  = split(fish_features)
             other_front, other_back = split(other_fish_features)
             
             # front interactions
-            front_front = interaction_vec(fish_front, other_front)
-            front_back  = interaction_vec(fish_front, other_back)
+            front_front = calculate_interaction_vector(fish_front, other_front)
+            front_back  = calculate_interaction_vector(fish_front, other_back)
 
             front_interaction = front_front - front_back
-            front_interaction_total = front_interaction_total + front_interaction
+            front_interaction_total += front_interaction
             
             # back interactions
-            back_front = interaction_vec(fish_back, other_front)
-            back_back  = interaction_vec(fish_back, other_back)
+            back_front = calculate_interaction_vector(fish_back, other_front)
+            back_back  = calculate_interaction_vector(fish_back, other_back)
 
             back_interaction = back_front - back_back
-            back_interaction_total = back_interaction_total + back_interaction
+            back_interaction_total += back_interaction
 
-        interactions[i] = rejoin(front_interaction_total, back_interaction_total)
+        interactions[i, 0:3] = front_interaction_total
+        interactions[i, 3:6] = back_interaction_total
             
     return interactions
             
 @njit
 def calculate_feature_velocities(
         system: NDArray,
-        feature_positions: NDArray,
-        use_barnes_hut: bool) -> NDArray:
+        use_barnes_hut: bool,
+        bh_ratio: float) -> NDArray:
     r"""
     Calculates the velocities for the head and tail of all fish in a system.
 
@@ -295,14 +302,13 @@ def calculate_feature_velocities(
     :param system: The system.
     :type  system: NDArray
 
-    :param feature_positions: The positions of the heads/tails of all fish in matrix
-      form.
-    :type  feature_positions: NDArray
-
     :param use_barnes_hut: Whether or not to simplify the calculations using the
       Barnes-Hut algorithm.
     :type  use_barnes_hut: bool
 
+    :param bh_ratio: The Barnes-Hut ratio.
+    :type  bh_ratio: float
+    
     The velocity of feature :math:`\alpha` for fish :math:`i` is determined by the
     formula
 
@@ -331,16 +337,16 @@ def calculate_feature_velocities(
     pairwise_interactions_sum = \
         compute_pairwise_interactions(
             system,
-            feature_positions,
-            use_barnes_hut
+            use_barnes_hut,
+            bh_ratio
         )
     
     external_contrib = VOLUMETRIC_FLOW_RATE / (4 * np.pi) *\
-        pairwise_interactions_sums
+        pairwise_interactions_sum
     return internal_contrib + external_contrib
     
 @njit
-def calculate_system_derivative(system: NDArray, use_barnes_hut: bool) -> NDArray:
+def calculate_system_derivative(system: NDArray, use_barnes_hut: bool, bh_ratio: float) -> NDArray:
     r"""
     Computes the derivative of the system matrix.
 
@@ -354,6 +360,9 @@ def calculate_system_derivative(system: NDArray, use_barnes_hut: bool) -> NDArra
       simplify the calculation.
     :type  use_barnes_hut: bool
 
+    :param bh_ratio: The Barnes-Hut Ratio
+    :type  bh_ratio: float
+    
     This function computes the derivative of the system matrix by first computing
     the features matrix :math:`\mathbf{F}` (the positions of the heads and tails),
     then from that, it computes the derivative of the features matrix
@@ -390,14 +399,14 @@ def calculate_system_derivative(system: NDArray, use_barnes_hut: bool) -> NDArra
     is kept constant.
     """
     _, orientations     = split(system)
-    feature_positions   = calculate_feature_positions(system)
-    feature_velocities  = calculate_feature_velocities(system, feature_positions, use_barnes_hut)
+    feature_velocities  = calculate_feature_velocities(
+        system, use_barnes_hut, bh_ratio)
     front_vel, back_vel = split(feature_velocities)
 
     translational_deriv = (front_vel + back_vel) / 2
 
     vel_delta = front_vel - back_vel
-    lagrange_mult = -np.einsum("ij,ij->i", vel_delta, orientations) / 2
+    lagrange_mult = -np.sum(vel_delta * orientations, axis=1) / 2
     rotational_deriv = (vel_delta + 2 * lagrange_mult * orientations) / FISH_LENGTH
 
     system_deriv = rejoin(translational_deriv, rotational_deriv)

@@ -1,7 +1,9 @@
+from .common import *
+
 from finds.calculations import *
 from finds.fish import *
-from .common import *
 from finds.constants import FISH_LENGTH
+from finds.util import *
 
 def test_calculate_feature_positions():
     r"""
@@ -29,8 +31,10 @@ def test_calculate_feature_positions():
             f'but has shape {feature_positions.shape}'
 
         # TEST 3
-        assert np.all(np.isfinite(feature_positions) and np.isreal(feature_positions)), \
-            'Feature positions matrix contains an infinite or complex value.'
+        assert np.isfinite(feature_positions).all(), \
+            'Feature positions matrix contains an infinite value.'
+        assert np.isreal(feature_positions).all(), \
+            'Feature positions matrix contains a complex value.'
         
         # TEST 4
         head_positions, tail_positions = split(feature_positions)
@@ -63,9 +67,8 @@ def test_compute_pairwise_interactions():
 
     for _ in range(NUMBER_OF_TESTS):
         N, system = generate_random_matrix()
-        feature_positions = calculate_feature_positions(system)
         interactions = compute_pairwise_interactions(
-            system, feature_positions, use_barnes_hut=False)
+            system, use_barnes_hut=False, bh_ratio=None)
 
 
         # TEST 1
@@ -73,12 +76,12 @@ def test_compute_pairwise_interactions():
             'compute_pairwise_interactions produced NoneType.'
 
         # TEST 2
-        assert interactions.shape == (N,3), \
-            f'Interactions matrix requires shape ({N},3) but obtained shape '+\
+        assert interactions.shape == (N,6), \
+            f'Interactions matrix requires shape ({N},6) but obtained shape '+\
             f'{interactions.shape}'
 
         # TEST 3
-        assert np.all(np.isfinite(interactions) and np.isreal(interactions)), \
+        assert np.all(np.isfinite(interactions) & np.isreal(interactions)), \
             'Interactions matrix contains an infinite or complex value.'
         
         # TEST 4
@@ -100,9 +103,8 @@ def test_calculate_feature_velocities():
 
     for _ in range(NUMBER_OF_TESTS):
         N, random_matrix = generate_random_matrix()
-        feature_positions = calculate_feature_positions(random_matrix)
         feature_velocities = calculate_feature_velocities(
-            random_matrix, feature_positions, use_barnes_hut=False)
+            random_matrix, use_barnes_hut=False, bh_ratio=None)
 
         # TEST 1
         assert feature_velocities is not None, \
@@ -114,7 +116,7 @@ def test_calculate_feature_velocities():
             f'but has shape {feature_velocities.shape}.'
 
         # TEST 3
-        assert np.all(np.isfinite(feature_velocities) and np.isreal(feature_velocities)), \
+        assert np.all(np.isfinite(feature_velocities) & np.isreal(feature_velocities)), \
             'Feature velocities matrix contains an infinite or complex value.'
 
         # TEST 4
@@ -134,7 +136,8 @@ def test_calculate_system_derivative():
 
     for _ in range(NUMBER_OF_TESTS):
         N, random_matrix = generate_random_matrix()
-        derivative = calculate_system_derivative(random_matrix, use_barnes_hut=False)
+        derivative = calculate_system_derivative(
+            random_matrix, use_barnes_hut=False, bh_ratio=None)
 
         # TEST 1
         assert derivative.shape == (N,6), \
@@ -142,7 +145,7 @@ def test_calculate_system_derivative():
             f'but has shape {derivative.shape}.'
 
         # TEST 2
-        assert np.all(np.isfinite(derivative) and np.isreal(derivative)), \
+        assert np.all(np.isfinite(derivative) & np.isreal(derivative)), \
             'Derivative matrix contains an infinite or complex value.'
 
         # TEST 3

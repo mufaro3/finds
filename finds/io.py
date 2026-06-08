@@ -1,6 +1,7 @@
 from pathlib import Path
 import h5py
 from dataclasses import dataclass
+from numpy.typing import NDArray
 
 @dataclass
 class IO:

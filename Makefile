@@ -49,6 +49,6 @@ viewdocs: docs
 	@zathura docs/build/finds.pdf &
 
 test:
-	@docker compose run --rm main pytest --tb=line
+	@docker compose run --rm main pytest --tb=short
 
 all: build docs test

@@ -1,3 +1,4 @@
+from .common import *
 from finds.simulation import *
 from finds.calculations import *
 from finds.util import *
@@ -35,8 +36,8 @@ def test_calculate_update_rk4():
 
         # TEST 2
         no_change_matrix = calculate_update_rk4(random_matrix, time_step=0)
-        assert np.allclose(no_change_matrix, random_matrix), 
-
+        assert np.allclose(no_change_matrix, random_matrix), \
+            'calculate_update_rk4 should produce no change with a zero time step.'
         
         small_dt = 1e-10
         derivative = calculate_system_derivative(random_matrix, use_barnes_hut=False)

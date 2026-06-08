@@ -7,6 +7,9 @@ numpy
 matplotlib
 numba
 
+# data storage
+h5py
+
 # documentation
 sphinx
 sphinx_rtd_theme

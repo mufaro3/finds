@@ -1,7 +1,7 @@
 from numba import jit, njit
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
-from .util import spherical_to_cartesian
+from .util import *
 
 @njit
 def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:
@@ -82,11 +82,8 @@ def normalize_orientation_vectors(system: NDArray) -> NDArray:
     :returns: The system, with normalized orientation vectors.
     :rtype:   NDArray
     """
-    pos   = positions(system)
-    ori   = orientations(system)
+    pos, ori = split(system)
     norms = np.sqrt(np.sum(ori**2, axis=1))
 
-    normalized = ori / norms[:, np.newaxis]
-    recombined = np.hstack((pos, normalized))
-    
-    return recombined
+    normalized_ori = ori / norms[:, np.newaxis]
+    return rejoin(pos, normalized_ori)

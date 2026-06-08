@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 # post-processing file
 def generate_animation_from_file(csv_filepath: Path) -> None:
     """
@@ -10,9 +11,11 @@ def generate_animation_from_file(csv_filepath: Path) -> None:
     """
     pass
 
+
 def animate_density_progression(csv_filepath: Path) -> None:
     """
-    Animates the progression in distribution from the center of mass with respect to time.
+    Animates the progression in distribution from the center of mass over
+    time.
 
     :param csv_filepath: The CSV filepath to write to.
     :type  csv_filepath: Path

@@ -1,7 +1,10 @@
-from pathlib import Path
-import h5py
 from dataclasses import dataclass
+from pathlib import Path
+
+import h5py
+import numpy as np
 from numpy.typing import NDArray
+
 
 @dataclass
 class IO:
@@ -9,7 +12,9 @@ class IO:
     state_dataset: h5py.Dataset
     time_dataset:  h5py.Dataset
 
-def init_output_filestream(filepath: Path, n_fish: int) -> IO:
+
+def init_output_filestream(
+        filepath: Path, n_fish: int, time_step: float) -> IO:
     """
     Initializes the I/O filestream for writing.
 
@@ -19,12 +24,15 @@ def init_output_filestream(filepath: Path, n_fish: int) -> IO:
     :param n_fish: The number of fish within the system.
     :type  n_fish: int
 
+    :param time_step: The time-step of the simulation.
+    :type  time_step: float
+
     :returns: The I/O filestream storing the open h5 file alongside
       the state and time datasets for writing.
     :rtype: IO
     """
     h5file = h5py.File(filepath, 'w')
-    states_ds = h5file.create_dataset(
+    state_ds = h5file.create_dataset(
         'states',
         shape=(0, n_fish, 6),
         maxshape=(None, n_fish, 6),
@@ -48,8 +56,9 @@ def init_output_filestream(filepath: Path, n_fish: int) -> IO:
         state_dataset=state_ds,
         time_dataset=time_ds
     )
-    
-    return io 
+
+    return io
+
 
 def close_output_filestream(io: IO) -> None:
     """
@@ -60,6 +69,7 @@ def close_output_filestream(io: IO) -> None:
     """
     if io.filestream is not None:
         io.filestream.close()
+
 
 def serialize_to_file(system: NDArray, time: float, io: IO) -> None:
     """
@@ -74,7 +84,7 @@ def serialize_to_file(system: NDArray, time: float, io: IO) -> None:
     :param io: The IO filestream to write to.
     :type  io: IO
     """
-    timestep_index = states_ds.shape[0]
+    timestep_index = io.state_ds.shape[0]
 
     # extend the datasets by one timestep
     io.state_dataset.resize(timestep_index + 1, axis=0)

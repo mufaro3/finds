@@ -1,4 +1,4 @@
-.PHONY: help run build dev down logs shell clean rebuild docs test all
+.PHONY: help run build dev down logs shell clean rebuild docs test all lint
 
 help:
 	@echo ""
@@ -49,6 +49,13 @@ viewdocs: docs
 	@zathura docs/build/finds.pdf &
 
 test:
-	@docker compose run --rm main pytest --tb=short
+	@docker compose run --rm main pytest --tb=long
 
-all: build docs test
+lint:
+	@echo "Running flake8..."
+	@docker compose run --rm main flake8 --ignore=E201,E202,E203,E221,E225,E226,E231,E241,E252,E502,F541,W504,E731 finds/
+
+	@echo "Checking import order (isort)..."
+	@docker compose run --rm main isort finds/
+
+all: lint build docs test

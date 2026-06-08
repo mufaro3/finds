@@ -1,6 +1,7 @@
-from numba import jit, njit
 import numpy as np
-from numpy.typing import NDArray, ArrayLike
+from numba import njit
+from numpy.typing import ArrayLike, NDArray
+
 
 @njit
 def split(mat: NDArray) -> tuple[NDArray, NDArray]:
@@ -19,7 +20,7 @@ def split(mat: NDArray) -> tuple[NDArray, NDArray]:
 
     if mat.ndim == 1:
         vec = mat
-        
+
         if vec.size != 6:
             raise ValueError('Vector does not contain 6 elements.')
 
@@ -29,8 +30,9 @@ def split(mat: NDArray) -> tuple[NDArray, NDArray]:
         raise ValueError('Expected 2D matrix.')
     if mat.shape[1] != 6:
         raise ValueError("Expected matrix with shape (N,6).")
-    
+
     return mat[:, :3], mat[:, 3:]
+
 
 @njit
 def rejoin(tophalf: NDArray, bottomhalf: NDArray) -> NDArray:
@@ -50,6 +52,7 @@ def rejoin(tophalf: NDArray, bottomhalf: NDArray) -> NDArray:
     """
     return np.concatenate((tophalf, bottomhalf), axis=-1)
 
+
 @njit
 def iterate_excluding_self(array: NDArray):
     """
@@ -62,6 +65,7 @@ def iterate_excluding_self(array: NDArray):
         others = np.concatenate((array[:i], array[i+1:]))
         yield item, others
 
+
 @njit
 def cartesian_to_spherical(vec_cartesian: ArrayLike) -> NDArray:
     r"""
@@ -70,7 +74,7 @@ def cartesian_to_spherical(vec_cartesian: ArrayLike) -> NDArray:
 
     .. math::
         :nowrap:
-    
+
         \begin{align}
           \theta &= \arctan(y/x) \\
           \phi &= \arctan\left(\frac{\sqrt{x^2 + y^2}}{z}\right)
@@ -78,21 +82,22 @@ def cartesian_to_spherical(vec_cartesian: ArrayLike) -> NDArray:
 
     :param vec_cartesian: The cartesian vector.
     :type  vec_cartesian: ArrayLike
-    
+
     :returns: The Cartesian vector in Spherical coordinates.
     :rtype: NDArray
     """
     if vec_cartesian is None:
         raise ValueError('vec_cartesian is None')
-    
+
     vec_cartesian = np.asarray(vec_cartesian)
 
     if vec_cartesian.shape != (3,):
         raise ValueError('Cartesian vector is not three-dimensional!')
-    
+
     norm = np.linalg.norm(vec_cartesian)
     if not np.isclose(norm, 1):
-        raise ValueError('Vector ' + str(vec_cartesian) + ' is not a unit vector, '+
+        raise ValueError('Vector ' + str(vec_cartesian) +\
+                         ' is not a unit vector, '+
                          'norm = ' + str(norm))
 
     x = vec_cartesian[0]
@@ -107,8 +112,8 @@ def cartesian_to_spherical(vec_cartesian: ArrayLike) -> NDArray:
     normalized_phi   = np.mod(recovered_phi,   np.pi)
 
     return np.array([normalized_theta, normalized_phi])
-    
-        
+
+
 @njit
 def spherical_to_cartesian(vec_spherical: ArrayLike) -> NDArray:
     r"""
@@ -117,7 +122,7 @@ def spherical_to_cartesian(vec_spherical: ArrayLike) -> NDArray:
 
     .. math::
         :nowrap:
-    
+
         \begin{align}
         x &= \sin \phi \cos \theta \\
         y &= \sin \phi \sin \theta \\
@@ -125,7 +130,8 @@ def spherical_to_cartesian(vec_spherical: ArrayLike) -> NDArray:
         \end{align}
 
     :param vec_spherical: A vector of spherical coordinates
-      :math:`((\theta_1, \phi_1), (\theta_2, \phi_2), \dots, (\theta_n, \phi_n))`
+      :math:`((\theta_1, \phi_1), (\theta_2, \phi_2), \dots,
+      (\theta_n, \phi_n))`
     :type  vec_spherical: ArrayLike
 
     :returns: The vector in cartesian coordinates.
@@ -133,22 +139,24 @@ def spherical_to_cartesian(vec_spherical: ArrayLike) -> NDArray:
     """
     if vec_spherical is None:
         raise ValueError('vec_spherical is None')
-    
+
     vec_spherical = np.asarray(vec_spherical)
-    
+
     if vec_spherical.shape != (2,):
         raise ValueError('Spherical Vector must have shape (2,), '+
                          'but was given shape: ' + str(vec_spherical.shape))
-    
+
     theta = vec_spherical[0]
     phi   = vec_spherical[1]
-    
+
     # verify that the input is actually angular
     if theta < 0 or theta >= 2 * np.pi:
-        raise ValueError(f'Non-spherical argument. Theta={theta} is not within [0,2pi).')
+        raise ValueError(f'Non-spherical argument. '+\
+                         f'Theta={theta} is not within [0,2pi).')
     if phi < 0 or phi > np.pi:
-        raise ValueError(f'Non-spherical argument. Phi={phi} is not within [0,pi].')
-    
+        raise ValueError(f'Non-spherical argument. '+\
+                         f'Phi={phi} is not within [0,pi].')
+
     cartesian = np.empty(3, dtype=np.float64)
 
     sin_phi = np.sin(phi)

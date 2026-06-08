@@ -1,5 +1,7 @@
 from pprint import pprint
-from .fish import *
+
+from .fish import generate_system
+
 
 def main():
     system = generate_system(
@@ -8,6 +10,7 @@ def main():
         angle_delta=0.01
     )
     pprint(system)
-    
+
+
 if __name__ == '__main__':
     main()

@@ -1,15 +1,15 @@
-from numba import jit, njit
-import numpy as np
-from numpy.typing import NDArray, ArrayLike
-
 import time
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from .calculations import *
-from .postprocessing import generate_animation_from_file
-from .io import *
-from .util import *
+from numba import njit
+from numpy.typing import NDArray
+
+from .calculations import calculate_system_derivative
+from .fish import normalize_orientation_vectors
+from .io import (close_output_filestream, init_output_filestream,
+                 serialize_to_file)
+
 
 @njit
 def calculate_update_rk4(
@@ -21,58 +21,65 @@ def calculate_update_rk4(
     Computes the updated state of the school after the next time step
     using fourth-order Runge-Kutta.
 
-    :param system: The system/school of fish to be updated by one :math:`\delta t`.
+    :param system: The system/school of fish to be updated by one
+      :math:`\delta t`.
     :type  system: NDArray
 
-    :param time_step: The differential time-step for the calculation, :math:`\delta t`
+    :param time_step: The differential time-step for the calculation,
+      :math:`\delta t`
     :type  time_step: float
 
-    :param use_barnes_hut: Whether or not to simplify with Barnes-Hut approximation.
+    :param use_barnes_hut: Whether or not to simplify with Barnes-Hut
+      approximation.
     :type  use_barnes_hut: bool
 
     :param bh_ratio: The Barnes-Hut Ratio
     :type  bh_ratio: float
-    
+
     :returns: The updated state after one time-step.
     :rtype: NDArray
-    
+
     We define :math:`f(\mathbf{X})` as
     :py:func:`src.calculations.calculate_system_derivative`
-    and :math:`\mathbf{X}_0` as :code:`system`. Using a time step :math:`\delta t`
-    and subsequent half-step :math:`\delta t_{1/2} = \delta t/2`, then, the
-    following calculations are used to produce the system's updated state at
-    the next time step, :math:`\mathbf{X}_{\delta t}`.
+    and :math:`\mathbf{X}_0` as :code:`system`. Using a time step
+    :math:`\delta t` and subsequent half-step :math:`\delta t_{1/2} =
+    \delta t/2`, then, the following calculations are used to produce the
+    system's updated state at the next time step,
+    :math:`\mathbf{X}_{\delta t}`.
 
     .. math::
         :nowrap:
-    
+
         \begin{align}
         \dot{\mathbf{X}}_1 &= f(\mathbf{X}_0)  \\
-        \dot{\mathbf{X}}_2 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_1 \delta t_{1/2}) \\
-        \dot{\mathbf{X}}_3 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_2 \delta t_{1/2}) \\
-        \dot{\mathbf{X}}_4 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_3 \delta t) 
+        \dot{\mathbf{X}}_2 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_1
+          \delta t_{1/2}) \\
+        \dot{\mathbf{X}}_3 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_2
+          \delta t_{1/2}) \\
+        \dot{\mathbf{X}}_4 &= f(\mathbf{X}_0 + \dot{\mathbf{X}}_3 \delta t)
         \end{align}
 
     Then, the final derivative :math:`\dot{\mathbf{X}}` is computed as
 
     .. math::
-        \dot{\mathbf{X}} \approx \frac{\dot{\mathbf{X}}_1 + 2 \dot{\mathbf{X}}_2 +
-        2 \dot{\mathbf{X}}_3 + \dot{\mathbf{X}}_4}{6}
+        \dot{\mathbf{X}} \approx \frac{\dot{\mathbf{X}}_1 + 2
+        \dot{\mathbf{X}}_2 + 2 \dot{\mathbf{X}}_3 + \dot{\mathbf{X}}_4}{6}
 
     And the resulting updated system is computed as
 
     .. math::
         \mathbf{X}_{\delta t} = \mathbf{X}_0 + \dot{\mathbf{X}} \delta t
 
-    Before returning, the orientation vectors need to be renormalized, and this is
-    done through :py:func:`src.calculations.normalize_orientation_vectors`.
+    Before returning, the orientation vectors need to be renormalized, and
+    this is done through
+    :py:func:`src.calculations.normalize_orientation_vectors`.
     """
     X0 = system
     g  = calculate_system_derivative
     f  = lambda X: g(X, use_barnes_hut, bh_ratio)
     n  = normalize_orientation_vectors
     dt = time_step
-    
+
     # normalize the orientation vectors at each step to prevent issues
     k1 = f(n(X0))
     k2 = f(n(X0 + k1 * dt / 2))
@@ -84,15 +91,15 @@ def calculate_update_rk4(
 
     return Xt
 
+
 def perform_simulation(
         initial_state: NDArray,
         time_step: float,
         end_time: float,
         use_barnes_hut: bool = False,
-        barnes_hut_ratio: float = None,
+        bh_ratio: float = None,
         print_to_file: bool = True,
-        generate_animation: bool = True,
-        debug_print: bool = True) -> None:
+        debug_print: bool = True) -> Path:
     r"""
     Performs the simulation using Runge-Kutta fourth-order, then optionally
     saves the path information for each state to a datafile and produces an
@@ -107,25 +114,21 @@ def perform_simulation(
     :param end_time: The time to stop the simulation at.
     :type  end_time: float
 
-    :param use_barnes_hut: Whether or not to simplify with Barnes-Hut approximation.
+    :param use_barnes_hut: Whether or not to simplify with Barnes-Hut
+      approximation.
     :type  use_barnes_hut: bool
 
     :param bh_ratio: The Barnes-Hut Ratio
     :type  bh_ratio: float
-    
+
     :param print_to_file: Whether or not to save the path generated from the
       simulation to an autogenerated CSV file, located at
       `output/test-(timestamp)/path.csv`.
     :type  print_to_file: bool
 
-    :param generate_animation: Whether or not to use the autogenerated CSV file
-      to generate an animation as well. Requires :code:`print_to_file` to be True to work.
-    :type generate_animation: bool
+    :returns: The path of the testing output directory.
+    :rtype: Path
     """
-    if generate_animation and not print_to_file:
-        raise ValueError('Cannot generate animation without'+
-                         'saving path data to file.')
-
     system = initial_state.copy()
     irl_start_time = time.time()
 
@@ -135,10 +138,10 @@ def perform_simulation(
     output_dir = Path(f"output/test-{timestamp}")
     if print_to_file:
         output_dir.mkdir(parents=True, exist_ok=True)
-    
-    output_filename = output_dir / "data.csv" 
+
+    output_filename = output_dir / "data.h5"
     output_io = init_output_filestream(output_filename, system.shape[0])
-    
+
     if print_to_file:
         serialize_to_file(system, 0, output_io)
 
@@ -156,7 +159,8 @@ def perform_simulation(
                   f'Iteration {simulation_index}/{total_iterations}')
 
         # compute the next state via RK4
-        system = calculate_update_rk4(system, time_step, use_barnes_hut, bh_ratio)
+        system = calculate_update_rk4(
+            system, time_step, use_barnes_hut, bh_ratio)
 
         # update the iteration indices
         simulation_index += 1
@@ -167,14 +171,10 @@ def perform_simulation(
 
     # close filestream
     close_output_filestream(output_io)
-        
-    if generate_animation:
-        print('Now generating animation..')
-        generate_animation_from_file(output_filename)
 
     if debug_print:
         print(f'100% - Completed.')
-        
+
     irl_end_time = time.time()
 
     # compute and print the elapsed time
@@ -190,3 +190,5 @@ def perform_simulation(
               f"{minutes}m "+
               f"{seconds}s "+
               f"{milliseconds:.1f}ms")
+
+    return output_dir

@@ -40,7 +40,7 @@ def test_calculate_update_rk4():
             'calculate_update_rk4 should produce no change with a zero time step.'
         
         small_dt = 1e-10
-        derivative = calculate_system_derivative(random_matrix, use_barnes_hut=False)
+        derivative = calculate_system_derivative(random_matrix, use_barnes_hut=False, bh_ratio=None)
         sdt_euler = random_matrix + derivative * small_dt
         sdt_rk4 = calculate_update_rk4(random_matrix, time_step=small_dt)
 
@@ -53,7 +53,6 @@ def test_calculate_update_rk4():
             'Eulerian limit did not hold: RK4 and Euler produced different results for a small time step.'
 
         # TEST 5
-        @njit
         def isnormalized(matrix: NDArray) -> bool:
             _, orientations = split(matrix)
             norms = np.linalg.norm(orientations, axis=1)

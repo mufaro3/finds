@@ -1,7 +1,9 @@
-from numba import jit, njit
 import numpy as np
-from numpy.typing import NDArray, ArrayLike
-from .util import *
+from numba import njit
+from numpy.typing import ArrayLike, NDArray
+
+from .util import rejoin, spherical_to_cartesian, split
+
 
 @njit
 def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:
@@ -26,26 +28,30 @@ def generate_fish(bounds: ArrayLike, angle_delta: float) -> NDArray:
     if angle_delta >= np.pi:
         raise ValueError("Angular perturbation is too large! "+
                          "angle_delta=" + str(angle_delta))
-    
+
     bounds = np.asarray(bounds)
 
     position = np.zeros(bounds.shape[0], dtype=np.float64)
     for i in range(bounds.shape[0]):
         position[i] = np.random.uniform(-bounds[i], bounds[i])
-        
+
     orientation = np.zeros(2, dtype=np.float64)
     for i in range(2):
         orientation[i] = np.random.uniform(0, angle_delta)
     orientation_cartes = spherical_to_cartesian(orientation)
-        
+
     new_fish = np.zeros(6, dtype=np.float64)
     new_fish[:3] = position
     new_fish[3:] = orientation_cartes
-    
+
     return new_fish
 
+
 @njit
-def generate_system(n: int, bounds: ArrayLike, angle_delta: float = 0) -> NDArray[float]:
+def generate_system(
+        n: int,
+        bounds: ArrayLike,
+        angle_delta: float = 0) -> NDArray[float]:
     r"""
     Generates a fresh system at random.
 
@@ -58,10 +64,12 @@ def generate_system(n: int, bounds: ArrayLike, angle_delta: float = 0) -> NDArra
       y \in (-x_b, y_b)`, and :math:`z \in (-z_b, z_b)`.
     :type bounds: ArrayLike
 
-    :param angle_delta: The maximum random angular perturbation for all fish in radians.
+    :param angle_delta: The maximum random angular perturbation for all fish
+      in radians.
     :type angle_delta: float
 
-    :returns: A matrix with shape (N,6) storing the position and orientation of each fish.
+    :returns: A matrix with shape (N,6) storing the position and orientation
+      of each fish.
     :rtype: NDArray
     """
     system = np.empty((n, 6), dtype=np.float64)
@@ -70,6 +78,7 @@ def generate_system(n: int, bounds: ArrayLike, angle_delta: float = 0) -> NDArra
         system[i] = generate_fish(bounds, angle_delta)
 
     return system
+
 
 @njit
 def normalize_orientation_vectors(system: NDArray) -> NDArray:

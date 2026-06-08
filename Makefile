@@ -18,9 +18,11 @@ help:
 
 run:
 	@docker compose up
+	@docker compose run --rm main chown -R $$(id -u):$$(id -g) docs/build
 
 dev:
 	@docker compose up --build
+	@docker compose run --rm main chown -R $$(id -u):$$(id -g) docs/build
 
 build:
 	@docker compose build

@@ -143,10 +143,11 @@ def perform_simulation(
     output_io = init_output_filestream(output_filename, system.shape[0])
 
     if print_to_file:
+        print(f'Writing data to {output_filename}')
         serialize_to_file(system, 0, output_io)
 
     # saving some iteration markers for debugging
-    total_iterations = end_time / time_step
+    total_iterations = int(end_time / time_step)
     interval = max(total_iterations // 10, 1)
 
     # the actual iteration stepper
@@ -173,7 +174,7 @@ def perform_simulation(
     close_output_filestream(output_io)
 
     if debug_print:
-        print(f'100% - Completed.')
+        print('100% - Completed.')
 
     irl_end_time = time.time()
 

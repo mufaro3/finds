@@ -44,6 +44,7 @@ clean:
 
 docs:
 	@docker compose run --rm main make -C docs latexpdf
+	@docker compose run --rm main chown -R $$(id -u):$$(id -g) docs/build
 
 viewdocs: docs
 	@zathura docs/build/finds.pdf &

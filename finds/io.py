@@ -14,7 +14,7 @@ class IO:
 
 
 def init_output_filestream(
-        filepath: Path, n_fish: int, time_step: float) -> IO:
+        filepath: Path, n_fish: int) -> IO:
     """
     Initializes the I/O filestream for writing.
 
@@ -23,9 +23,6 @@ def init_output_filestream(
 
     :param n_fish: The number of fish within the system.
     :type  n_fish: int
-
-    :param time_step: The time-step of the simulation.
-    :type  time_step: float
 
     :returns: The I/O filestream storing the open h5 file alongside
       the state and time datasets for writing.
@@ -48,8 +45,6 @@ def init_output_filestream(
         dtype=np.float64,
         compression='gzip'
     )
-
-    h5file.attrs['dt'] = time_step
 
     io = IO(
         filestream=h5file,
@@ -84,7 +79,7 @@ def serialize_to_file(system: NDArray, time: float, io: IO) -> None:
     :param io: The IO filestream to write to.
     :type  io: IO
     """
-    timestep_index = io.state_ds.shape[0]
+    timestep_index = io.state_dataset.shape[0]
 
     # extend the datasets by one timestep
     io.state_dataset.resize(timestep_index + 1, axis=0)

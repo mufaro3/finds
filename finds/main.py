@@ -1,7 +1,7 @@
 from pprint import pprint
 
 from .fish import generate_system
-
+from .simulation import perform_simulation 
 
 def main():
     system = generate_system(
@@ -9,8 +9,12 @@ def main():
         bounds=[10,10,10],
         angle_delta=0.01
     )
-    pprint(system)
 
+    output_file = perform_simulation(
+        system,
+        time_step=0.1,
+        end_time=1
+    )
 
 if __name__ == '__main__':
     main()

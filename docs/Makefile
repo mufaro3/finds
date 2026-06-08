@@ -21,3 +21,4 @@ latexpdf:
 	@python3 -m sphinx -b latex source /tmp/sphinx-latex
 	@$(MAKE) -C /tmp/sphinx-latex all-pdf
 	@cp /tmp/sphinx-latex/*.pdf build/
+	@cp /tmp/sphinx-latex/finds.log build/

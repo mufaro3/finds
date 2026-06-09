@@ -1,17 +1,16 @@
 services:
   main:
-    container_name: simulation_main
-    stdin_open: true
-    tty: true
     build: .
     volumes:
       - .:/finds
     working_dir: /finds
     command: python3 -m finds.main
+    mem_limit: 4g
 
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 2G
+  validation:
+    build: .
+    volumes:
+      - .:/finds
+    working_dir: /finds
+    command: python3 -m finds.validation
+    mem_limit: 4g

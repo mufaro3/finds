@@ -1,4 +1,4 @@
-.PHONY: help run build dev down logs shell clean rebuild docs test all lint
+.PHONY: help run build dev down logs shell clean rebuild docs test all lint validate
 
 help:
 	@echo ""
@@ -14,6 +14,8 @@ help:
 	@echo "  make docs     - Build the documentation"
 	@echo "  make test     - Rebuild and run pytest test suite"
 	@echo "  make all      - Rebuild, run all tests, and build documentation"
+	@echo "  make lint     - Run static code analyzer and cleanup"
+	@echo "  make validate - Run the validation program"
 	@echo ""
 
 run:
@@ -54,7 +56,6 @@ viewdocs: docs
 
 test:
 	@docker compose run --rm main pytest --tb=long
-	@docker compose run --rm main python3 -m finds.validation
 
 lint:
 	@echo "Running flake8..."
@@ -62,5 +63,8 @@ lint:
 
 	@echo "Checking import order (isort)..."
 	@docker compose run --rm main isort finds/
+
+validate:
+	@docker compose up --build validation
 
 all: lint build docs test

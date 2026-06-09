@@ -23,7 +23,6 @@ class ProcessingModule(ABC):
     """
     output_dir: Path
 
-
     def __init__(self, output_dir: Path):
         """
         :param output_dir: The output directory to write to.
@@ -31,14 +30,12 @@ class ProcessingModule(ABC):
         """
         self.output_dir = output_dir
 
-
     def begin(self) -> None:
         """
         Instructs the processing module to initialize such that it can
         produce data.
         """
         pass
-
 
     @abstractmethod
     def append_state(self, system: NDArray, time: float) -> None:
@@ -54,7 +51,6 @@ class ProcessingModule(ABC):
         :type  time: float
         """
         pass
-
 
     def end(self) -> None:
         pass
@@ -79,15 +75,13 @@ class AnimationGenerator(ProcessingModule):
     particle_color: str = 'tab:cyan'
     orientation_color: str = 'tab:orange'
 
-
     @override
     def __init__(self, output_dir: Path):
         super().__init__(output_dir)
 
-
     @override
     def begin(self,
-              fps: int = 10,
+              fps: int = 20,
               max_bounds: ArrayLike = [ 100, 100, 100 ],
               show_debug_text: bool = True,
               show_heads_and_tails: bool = False) -> None:
@@ -121,7 +115,6 @@ class AnimationGenerator(ProcessingModule):
             ymax - ymin,
             zmax - zmin
         ])
-
 
     @override
     def append_state(self, system: NDArray, time: float) -> None:
@@ -157,7 +150,6 @@ class AnimationGenerator(ProcessingModule):
         self.ax.set_title(f't={time:.2f}')
         self.writer.grab_frame()
 
-
     @override
     def end(self) -> None:
         r"""
@@ -174,33 +166,66 @@ class DensityAnimationGenerator(ProcessingModule):
     Produces an animation of the radial mass distribution of fish from the
     center-of-mass for each time step, :math:`\delta t`.
     """
+    n_bins: int = 30
+    max_radius: float = 50.0  # adjust or auto-compute if you prefer
+
     @override
-    def __init__(output_dir: Path):
+    def __init__(self, output_dir: Path):
         super().__init__(output_dir)
 
-
     @override
-    def begin(self) -> None:
-        """
-        Sets up the MatPlotLib animation for rendering.
-        """
-        pass
+    def begin(self, fps: int = 30) -> None:
+        self.fig, self.ax = plt.subplots(figsize=(6, 4))
 
+        self.bins = np.linspace(0, self.max_radius, self.n_bins + 1)
+        self.bar_container = None
+
+        self.output_filename = self.output_dir / \
+            RADIAL_DENSITY_DISTRIBUTION_FILE_NAME
+        self.writer = plt.matplotlib.animation.FFMpegWriter(fps=10)
+        self.writer.setup(self.fig, str(self.output_filename), dpi=100)
+
+        self.ax.set_xlabel("Radius")
+        self.ax.set_ylabel("Count")
+        self.ax.set_title("Radial Density Distribution")
 
     @override
     def append_state(self, system: NDArray, time: float) -> None:
-        """
-        Draws the current state to the animation.
-        """
-        pass
+        positions, _ = split(system)
 
+        # center of mass
+        com = np.mean(positions, axis=0)
+
+        # radii
+        radii = np.linalg.norm(positions - com, axis=1)
+
+        counts, _ = np.histogram(radii, bins=self.bins)
+
+        self.ax.clear()
+
+        bin_centers = 0.5 * (self.bins[:-1] + self.bins[1:])
+
+        self.ax.bar(bin_centers, counts, width=self.bins[1] - self.bins[0])
+
+        self.ax.set_xlim(0, self.max_radius)
+        self.ax.set_ylim(0, max(1, np.max(counts)))
+        self.ax.set_title(f"Radial Density (t={time:.2f})")
+        self.ax.set_xlabel("Radius")
+        self.ax.set_ylabel("Count")
+
+        self.writer.grab_frame()
 
     @override
     def end(self) -> None:
         """
         Closes the animation and saves the file.
         """
-        pass
+        if self.writer is not None:
+            self.writer.finish()
+        plt.close(self.fig)
+
+        print('Saved density distribution animation to '+\
+              f'{self.output_filename}')
 
 
 def process_data(

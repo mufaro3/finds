@@ -18,11 +18,11 @@ help:
 
 run:
 	@docker compose up
-	@docker compose run --rm main chown -R $$(id -u):$$(id -g) docs/build
+	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output/
 
 dev:
 	@docker compose up --build
-	@docker compose run --rm main chown -R $$(id -u):$$(id -g) docs/build
+	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output/
 
 build:
 	@docker compose build
@@ -42,7 +42,8 @@ rebuild:
 
 clean:
 	@docker compose down -v --remove-orphans
-	@rm -rf docs/build/latex
+	@rm -rf docs/build/*
+	@rm -rf output/*
 
 docs:
 	@docker compose run --rm main make -C docs latexpdf
@@ -53,6 +54,7 @@ viewdocs: docs
 
 test:
 	@docker compose run --rm main pytest --tb=long
+	@docker compose run --rm main python3 -m finds.validation
 
 lint:
 	@echo "Running flake8..."

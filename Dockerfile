@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 # ---- system dependencies (for docs + builds) ----
 RUN apt-get update
-RUN apt-get install -y make \
+RUN apt-get install -y make ffmpeg \
     texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended latexmk
 RUN rm -rf /var/lib/apt/lists/*

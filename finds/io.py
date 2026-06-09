@@ -13,8 +13,23 @@ class IO:
     time_dataset:  h5py.Dataset
 
 
-def init_output_filestream(
-        filepath: Path, n_fish: int) -> IO:
+def init_input_filestream(filepath: Path) -> IO:
+    """
+    Initializes an I/O filestream for reading.
+    """
+    if not filepath.is_file():
+        raise ValueError(f'Filepath {filepath} does not exist.')
+
+    h5file = h5py.File(filepath, 'r')
+
+    return IO(
+        filestream=h5file,
+        state_dataset=h5file["states"],
+        time_dataset=h5file["time"]
+    )
+
+
+def init_output_filestream(filepath: Path, n_fish: int) -> IO:
     """
     Initializes the I/O filestream for writing.
 
@@ -55,7 +70,7 @@ def init_output_filestream(
     return io
 
 
-def close_output_filestream(io: IO) -> None:
+def close_filestream(io: IO) -> None:
     """
     Closes the output filestream at :code:`h5file`.
 

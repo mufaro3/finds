@@ -1,3 +1,5 @@
 - Parallelize finds.calculations.compute_pairwise_interactions
 - Write ALL of finds.postprocessing
 - Write finds.calculations.barnes_hut_simplify
+- Add a geometric calculation for the distribution of fish to start
+- Include validation against Mohamed's past papers

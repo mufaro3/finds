@@ -7,9 +7,9 @@ from numpy.typing import NDArray
 
 from .calculations import calculate_system_derivative
 from .fish import normalize_orientation_vectors
-from .io import (close_output_filestream, init_output_filestream,
+from .io import (close_filestream, init_output_filestream,
                  serialize_to_file)
-
+from .constants import DATA_FILE_NAME
 
 @njit
 def calculate_update_rk4(
@@ -139,7 +139,7 @@ def perform_simulation(
     if print_to_file:
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    output_filename = output_dir / "data.h5"
+    output_filename = output_dir / DATA_FILE_NAME
     output_io = init_output_filestream(output_filename, system.shape[0])
 
     if print_to_file:
@@ -171,7 +171,7 @@ def perform_simulation(
         serialize_to_file(system, simulation_time, output_io)
 
     # close filestream
-    close_output_filestream(output_io)
+    close_filestream(output_io)
 
     if debug_print:
         print('100% - Completed.')

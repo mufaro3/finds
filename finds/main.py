@@ -1,20 +1,27 @@
-from pprint import pprint
-
 from .fish import generate_system
-from .simulation import perform_simulation 
+from .simulation import perform_simulation
+from .postprocessing import process_data
+
 
 def main():
     system = generate_system(
-        n=3,
-        bounds=[10,10,10],
+        n=30,
+        bounds=[1,1,0],
         angle_delta=0.01
     )
 
-    output_file = perform_simulation(
+    output_dir = perform_simulation(
         system,
         time_step=0.1,
-        end_time=1
+        end_time=100
     )
+
+    process_data(
+        output_dir,
+        generate_animation=True,
+        generate_density_animation=False
+    )
+
 
 if __name__ == '__main__':
     main()

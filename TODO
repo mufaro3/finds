@@ -1,5 +1,5 @@
-- Parallelize finds.calculations.compute_pairwise_interactions
-- Write finds.calculations.barnes_hut_simplify
-- Add a geometric calculation for the distribution of fish to start
-- Include validation against Mohamed's past papers
-- Solve the weird unbounded memory usage
+- Implement Barnes-Hut simplification
+- Prune unused functions
+- Re-lint and rewrite documentation for all files
+- Add tests for all files
+- Solve testing bugs for generation schemas

@@ -16,7 +16,7 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
     r"""
     Produces a coplanar simulation based on the parameters :math:`\Delta
     \theta`, :math:`\Delta x`, and :math:`\Delta y` as seen in figure 8 of
-    :cite:t:`mabrouk2025`.
+    :cite:t:`mabrouk2024`.
 
     :param dtheta: The angular separation between the fish.
     :type  dtheta: float
@@ -90,7 +90,7 @@ def build_quadra_plot(
     :type bottom_right: NDArray
     :type bottom_left: NDArray
     """
-    print('Generating validation figure 2026-8..')
+    print('Generating validation figure 2025-8..')
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 
@@ -132,7 +132,7 @@ def build_quadra_plot(
         bbox_inches='tight'
     )
 
-    print(f'Saved validation figure 2026-8 to {output_filepath}')
+    print(f'Saved validation figure 2025-8 to {output_filepath}')
 
 def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
     """
@@ -157,7 +157,7 @@ def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
 
 def build_cylindrical_path_plot(output_dir: Path) -> None:
     """
-    Reproduces figure 16 of :cite:t:`mabrouk2026`.
+    Reproduces figure 16 of :cite:t:`mabrouk2025`.
 
     :param output_dir: The output directory for the figure.
     :type  output_dir: Path
@@ -225,8 +225,8 @@ def build_cylindrical_path_plot(output_dir: Path) -> None:
 
 def validation_main() -> None:
     """
-    Reproduces the figure 8 of :cite:t:`mabrouk2026` and figure 16 of
-    :cite:t:`mabrouk2025`.
+    Reproduces the figure 8 of :cite:t:`mabrouk2025` and figure 16 of
+    :cite:t:`mabrouk2024`.
     """
     output_dir = Path(f'output/{VALIDATION_OUTPUT_PATH}')
 

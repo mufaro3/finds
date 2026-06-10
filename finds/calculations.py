@@ -1,5 +1,5 @@
 import numpy as np
-from numba import float64, njit
+from numba import float64, njit, prange
 from numpy.typing import NDArray
 
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
@@ -165,6 +165,18 @@ def calculate_interaction_vector(
         \mathbf{r}_{\alpha\beta} = \mathbf{x}_{\alpha,i} -
         \mathbf{x}_{\beta,j}.
         \end{align}
+
+    :param feature_a_pos: The position of the first feature,
+      :math:`\mathbf{x}_{\alpha,i}`.
+    :type  feature_a_pos: NDArray
+
+    :param feature_b_pos: The position of the second feature,
+      :math:`\mathbf{x}_{\beta,j}`.
+    :type  feature_b_pos: NDArray
+
+    :returns: The interaction vector between features :math:`\alpha` and
+      :math:`\beta`, :math:`\mathbf{c}_{\alpha\beta}`.
+    :rtype: NDArray
     """
     if feature_a_pos.shape != (3,):
         raise ValueError('Feature A position is not a 3-D Vector.')
@@ -177,7 +189,7 @@ def calculate_interaction_vector(
     return result
 
 
-@njit(locals={
+@njit(parallel=True, locals={
     'front_interaction_total': float64[:],
     'back_interaction_total': float64[:],
     'specific_other_features': float64[:]
@@ -260,49 +272,31 @@ def compute_pairwise_interactions(
     N = system.shape[0]
     interactions = np.zeros((N, 6))
     feature_positions = calculate_feature_positions(system)
-    state = rejoin(system, feature_positions)
 
-    for i, (fish_state, other_fish_states) in enumerate(
-            iterate_excluding_self(state)):
-        fish = fish_state[0:6]
-        fish_features = fish_state[6:12]
+    for i in prange(N):
+        fish = system[i]
+        fish_features = feature_positions[i]
         fish_front, fish_back = split(fish_features)
 
         front_interaction_total = np.zeros(3)
         back_interaction_total = np.zeros(3)
 
-        other_fishes_unsimplified = other_fish_states[:, 0:6]
-        other_fish_features_unsimplified = other_fish_states[:, 6:12]
+        for j in range(N):
+            if i == j:
+                continue
 
-        other_fishes = None
-        other_fish_features = None
-
-        if use_barnes_hut:
-            other_fishes = barnes_hut_simplify(
-                fish, other_fishes_unsimplified, bh_ratio)
-            other_fish_features = calculate_feature_positions(other_fishes)
-        else:
-            other_fishes = other_fishes_unsimplified
-            other_fish_features = other_fish_features_unsimplified
-
-        for other_fish, other_fish_features in zip(
-                other_fishes, other_fish_features):
-
-            other_front, other_back = split(other_fish_features)
+            other_fish = system[j]
+            other_front, other_back = split(feature_positions[j])
 
             # front interactions
             front_front = calculate_interaction_vector(fish_front, other_front)
             front_back  = calculate_interaction_vector(fish_front, other_back)
-
-            front_interaction = front_front - front_back
-            front_interaction_total += front_interaction
+            front_interaction_total += front_front - front_back
 
             # back interactions
             back_front = calculate_interaction_vector(fish_back, other_front)
             back_back  = calculate_interaction_vector(fish_back, other_back)
-
-            back_interaction = back_front - back_back
-            back_interaction_total += back_interaction
+            back_interaction_total += back_front - back_back
 
         interactions[i] = rejoin(
             front_interaction_total,

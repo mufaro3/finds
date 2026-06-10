@@ -19,15 +19,15 @@ help:
 	@echo ""
 
 run:
-	@docker compose up
+	@docker compose up main
 	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output/
 
 dev:
-	@docker compose up --build
+	@docker compose up --build main
 	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output/
 
 build:
-	@docker compose build
+	@docker compose build main
 
 down:
 	@docker compose down
@@ -55,7 +55,7 @@ viewdocs: docs
 	@zathura docs/build/finds.pdf &
 
 test:
-	@docker compose run --rm main pytest --tb=long
+	@docker compose run --rm main pytest
 
 lint:
 	@echo "Running flake8..."

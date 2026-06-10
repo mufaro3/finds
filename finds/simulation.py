@@ -178,7 +178,7 @@ def perform_simulation(
 
     irl_end_time = time.time()
 
-    # compute and print the elapsed time
+    # compute and print the elapsed time and memory usage
     if debug_print:
         elapsed = irl_end_time - irl_start_time
 

@@ -142,7 +142,7 @@ def perform_simulation(
     output_filename = output_dir / DATA_FILE_NAME
     output_io = init_output_filestream(output_filename, system.shape[0])
 
-    if print_to_file:
+    if print_to_file and debug_print:
         print(f'Writing data to {output_filename}')
         serialize_to_file(system, 0, output_io)
 
@@ -154,7 +154,7 @@ def perform_simulation(
     for simulation_index in range(total_iterations):
 
         # debug printing
-        if simulation_index % interval == 0:
+        if simulation_index % interval == 0 and debug_print:
             fraction = simulation_index / float(total_iterations)
             print(f'{fraction * 100:.0f}% - '+
                   f'Iteration {simulation_index}/{total_iterations}')

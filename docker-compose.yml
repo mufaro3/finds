@@ -6,6 +6,8 @@ services:
     working_dir: /finds
     command: python3 -m finds.main
     mem_limit: 4g
+    stdin_open: true
+    tty: true
 
   validation:
     build: .
@@ -14,3 +16,5 @@ services:
     working_dir: /finds
     command: python3 -m finds.validation
     mem_limit: 4g
+    stdin_open: true
+    tty: true

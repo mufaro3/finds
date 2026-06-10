@@ -2,11 +2,15 @@ from .fish import generate_system
 from .simulation import perform_simulation
 from .postprocessing import process_data
 from .util import split, rejoin
-from .constants import DATA_FILE_NAME
+from .constants import DATA_FILE_NAME, VALIDATION_OUTPUT_PATH, \
+    VALIDATION_GRAPH_PATH
 from .io import init_input_filestream, close_filestream
 
+import shutil
+from pathlib import Path
 import numpy as np
 from numpy.typing import NDArray
+from matplotlib import pyplot as plt
 
 def coplanar_simulation(
         label: str, dtheta: float, dx: float, dy: float) -> NDArray:
@@ -50,7 +54,8 @@ def coplanar_simulation(
     output_dir = perform_simulation(
         initial_state,
         time_step=0.1,
-        end_time=20
+        end_time=20,
+        debug_print=False
     )
 
     fs = init_input_filestream(output_dir / DATA_FILE_NAME)
@@ -60,9 +65,13 @@ def coplanar_simulation(
     for t in range(n_steps):
         state = fs.state_dataset[t]
         positions, _ = split(state)
-        trajectories[:, :, t] = positions[:, :3]
+        trajectories[:, :, t] = positions[:, :2]
 
     close_filestream(fs)
+
+    # delete test files
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
 
     return trajectories
 
@@ -70,16 +79,22 @@ def build_quadra_plot(
         top_right: NDArray,
         top_left: NDArray,
         bottom_right: NDArray,
-        bottom_left: NDArray) -> None:
+        bottom_left: NDArray,
+        output_dir: Path) -> None:
     r"""
     Builds and displays a four-quadrant plot showing each of the trajectories
     of the two-fish coplanar simulations.
+
+    :param output_dir: The directory to output the validation figure to.
+    :type  output_dir: Path
 
     :type top_right: NDArray
     :type top_left: NDArray
     :type bottom_right: NDArray
     :type bottom_left: NDArray
     """
+    print('Generating validation figure..')
+
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 
     panels = [
@@ -98,8 +113,8 @@ def build_quadra_plot(
         ax.plot(*fish_b_pos, label='Fish B')
 
         # start positions
-        ax.scatter(fish_a[0, 0], fish_a[1, 0])
-        ax.scatter(fish_b[0, 0], fish_b[1, 0])
+        ax.scatter(fish_a_pos[0, 0], fish_a_pos[1, 0])
+        ax.scatter(fish_b_pos[0, 0], fish_b_pos[1, 0])
 
         ax.set_title(title)
         ax.set_xlabel('x')
@@ -110,14 +125,27 @@ def build_quadra_plot(
     axes[0, 0].legend()
 
     plt.tight_layout()
-    plt.show()
+
+    output_filepath = output_dir  / VALIDATION_GRAPH_PATH
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    plt.savefig(
+        output_filepath,
+        dpi=300,
+        bbox_inches='tight'
+    )
+
+    print(f'Saved validation figure to {output_filepath}')
 
 def validation_main() -> None:
+    output_dir = Path(f'output/{VALIDATION_OUTPUT_PATH}')
+
     build_quadra_plot(
         top_right    = coplanar_simulation('a', dtheta=0, dx=0.5, dy=0),
         top_left     = coplanar_simulation('b', dtheta=0, dx=5,   dy=0.5),
         bottom_right = coplanar_simulation('c', dtheta=0, dx=1,   dy=1),
-        bottom_left  = coplanar_simulation('d', dtheta=0, dx=0.5, dy=1)
+        bottom_left  = coplanar_simulation('d', dtheta=0, dx=0.5, dy=1),
+        output_dir   = output_dir
     )
 
 if __name__ == '__main__':

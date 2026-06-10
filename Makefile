@@ -66,5 +66,6 @@ lint:
 
 validate:
 	@docker compose up --build validation
+	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output
 
 all: lint build docs test

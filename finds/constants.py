@@ -12,7 +12,8 @@ FISH_SELF_PROPELLED_SPEED: float = (
     (4 * np.pi * FISH_LENGTH**2)
 )
 
-#: The name of each data file produced after a simulation.
+VALIDATION_OUTPUT_PATH='validation'
+VALIDATION_GRAPH_PATH='reproduced_fig8.png'
 DATA_FILE_NAME = 'data.h5'
 ANIMATION_FILE_NAME = 'animation.mp4'
 RADIAL_DENSITY_DISTRIBUTION_FILE_NAME = 'density_animation.mp4'

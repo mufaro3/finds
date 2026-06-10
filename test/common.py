@@ -12,10 +12,17 @@ def generate_random_matrix() -> tuple[int, NDArray]:
       system matrix :math:`\mathbf{X}`.
     :rtype: tuple[int, NDArray]
     """
-    
+
     bounds = np.random.uniform(0.5, 1e3, 3)
     angle_delta = np.random.uniform(0, np.pi)
     N = np.random.randint(10,int(1e3))
-    random_matrix = generate_system(N, bounds, angle_delta)
+
+    random_matrix = generate_system(
+        distribution='random',
+        orientation='aligned',
+        n_random=N,
+        bounds=bounds,
+        angle_delta=angle_delta
+    )
 
     return N, random_matrix

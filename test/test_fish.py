@@ -16,13 +16,13 @@ def test_positions_and_orientations():
     for _ in range(NUMBER_OF_TESTS):
         N, random_matrix = generate_random_matrix()
         pos, ori = split(random_matrix)
-        
+
         # TEST 1
         assert pos is not None, \
             'Positions produced NoneType object.'
         assert ori is not None, \
             'Orientations prodced NoneType object.'
-        
+
         # TEST 2
         assert pos.shape == (N,3), \
             f'Positions should have shape ({N},3) but has shape {pos.shape}.'
@@ -38,76 +38,116 @@ def test_positions_and_orientations():
         assert np.allclose(recombined, random_matrix), \
             'Positions and orientations combined together do not '+\
             'form the original matrix'
-        
-def test_generate_fish():
+
+def helper_test_fish(random_fish: NDArray, bounds: NDArray):
     r"""
     1. Should not be a NoneType object.
     2. Should have a length of 6.
     3. The orientation should be a unit vector.
     4. The position should be within bounds.
     5. The orientation should be within the angular perturbation maximum.
+
+    :type random_fish: NDArray
     """
-    NUMBER_OF_TESTS = 20
+    position, orientation = split(random_fish)
 
-    for _ in range(NUMBER_OF_TESTS):
-        bounds = np.random.uniform(0.5, 1e3, 3)
-        angle_delta = np.random.uniform(0, np.pi)
-        random_fish = generate_fish(bounds, angle_delta)
-        position, orientation = split(random_fish)
-        
-        # TEST 1
-        assert random_fish is not None, \
-            'generate_fish produced a NoneType object.'
-        
-        # TEST 2
-        assert random_fish.shape == (6,), \
-            f'Fish should have shape (6,) but has shape {random_fish.shape}.'
+    # TEST 1
+    assert random_fish is not None, \
+        'generate_fish produced a NoneType object.'
 
-        # TEST 3
-        norm = np.linalg.norm(orientation)
-        assert np.isclose(norm, 1), \
-            f'Orientation is not a unit vector, has norm {norm}.'
-        
-        # TEST 4
-        def in_bounds(point, bounds):
-            for dim in range(3):
-                if not (-bounds[dim] <= point[dim] <= bounds[dim]):
-                    return False
-            return True
-        
-        assert in_bounds(position, bounds), \
-            f'Fish at {position} is not within bounds of {-bounds} to {bounds}.'
+    # TEST 2
+    assert random_fish.shape == (6,), \
+        f'Fish should have shape (6,) but has shape {random_fish.shape}.'
 
-        # TEST 5
-        theta, phi = cartesian_to_spherical(orientation)
-        assert 0 <= theta < angle_delta, \
-            f'Theta not within angular perturbation: '+\
-            f'theta={theta}, angle_delta={angle_delta}.'
-        assert 0 <= phi <= np.pi, \
-            f'Phi not within angular perturbation: '+\
-            f'phi={phi}, angle_delta={angle_delta}'
+    # TEST 3
+    norm = np.linalg.norm(orientation)
+    assert np.isclose(norm, 1), \
+        f'Orientation is not a unit vector, has norm {norm}.'
 
-def test_generate_system():
+    # TEST 4
+    def in_bounds(point, bounds):
+        for dim in range(3):
+            if not (-bounds[dim] <= point[dim] <= bounds[dim]):
+                return False
+        return True
+
+    assert in_bounds(position, bounds), \
+        f'Fish at {position} is not within bounds of {-bounds} to {bounds}.'
+
+    # TEST 5
+    theta, phi = cartesian_to_spherical(orientation)
+    assert 0 <= theta < angle_delta, \
+        f'Theta not within angular perturbation: '+\
+        f'theta={theta}, angle_delta={angle_delta}.'
+    assert 0 <= phi <= np.pi, \
+        f'Phi not within angular perturbation: '+\
+        f'phi={phi}, angle_delta={angle_delta}'
+
+def helper_test_system(system: NDArray, bounds: NDArray):
     r"""
     1. Should have a shape of :math:`(N,6)`.
     2. There should be no duplicate entries.
+    3. See :py:func:`helper_test_fish`
     """
-    NUMBER_OF_TESTS = 10
+    N = system.shape[0]
 
+    # TEST 1
+    assert system.shape == (N,6), \
+        f'Matrix should have shape ({N},6) but has shape {random_matrix.shape}.'
+
+    # TEST 2
+    num_unique_rows = len(np.unique(system, axis=0))
+    length = len(system)
+    num_duplicate_rows = length-num_unique_rows
+    assert num_duplicate_rows == 0, \
+        f'Matrix contains {num_duplicate_rows} duplicate rows.'
+
+    # TEST 3
+    for i in range(N):
+        helper_test_fish(system[i])
+
+def test_generate_system():
+    NUMBER_OF_TESTS = 10
     for _ in range(NUMBER_OF_TESTS):
         N, random_matrix = generate_random_matrix()
-        
-        # TEST 1
-        assert random_matrix.shape == (N,6), \
-            f'Matrix should have shape ({N},6) but has shape {random_matrix.shape}.'
+        helper_test_system(random_matrix, bounds=[10, 10, 10])
 
-        # TEST 2
-        num_unique_rows = len(np.unique(random_matrix, axis=0))
-        length = len(random_matrix)
-        num_duplicate_rows = length-num_unique_rows
-        assert num_duplicate_rows == 0, \
-            f'Matrix contains {num_duplicate_rows} duplicate rows.'
-        
+    lattice_aligned = generate_system(
+        distribution='lattice',
+        orientation='aligned',
+    )
+    helper_test_system(lattice_aligned, bounds=[10, 10, 10])
+
+    lattice_radial_outward = generate_system(
+        distribution='lattice',
+        orientation='radial outward'
+    )
+    helper_test_system(lattice_radial_outward, bounds=[10, 10, 10])
+
+    lattice_radial_inward = generate_system(
+        distribution='lattice',
+        orientation='radial inward'
+    )
+    helper_test_system(lattice_radial_inward, bounds=[10, 10, 10])
+
+    sphere = generate_system(
+        distribution='sphere',
+        orientation='aligned'
+    )
+    helper_test_system(sphere, bounds=[20, 20, 20])
+
+    square = generate_system(
+        distribution='square',
+        orientation='aligned'
+    )
+    helper_test_system(square, bounds=[0, 10, 10])
+
+    circle = generate_system(
+        distribution='circle',
+        orientation='aligned'
+    )
+    helper_test_system(circle, bounds=[0, 20, 20])
+
 def test_normalize_orientation_vectors():
     r"""
     For an input shape of :math:`(N,6)`:
@@ -126,7 +166,7 @@ def test_normalize_orientation_vectors():
         # TEST 1
         assert normalized_matrix is not None, \
             'Normalization produced NoneType!'
-        
+
         # TEST 2
         assert random_matrix.shape == normalized_matrix.shape, \
             f'Normalized matrix should have shape'+\

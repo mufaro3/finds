@@ -1,13 +1,12 @@
 from .fish import generate_system
-from .simulation import perform_simulation
 from .postprocessing import process_data
+from .simulation import perform_simulation
 
 
 def main():
     system = generate_system(
-        n=100,
-        bounds=[10,10,10],
-        angle_delta=0.01
+        distribution='lattice',
+        orientation='aligned'
     )
 
     output_dir = perform_simulation(

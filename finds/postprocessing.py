@@ -1,18 +1,19 @@
+import gc
+import tracemalloc as tm
 from abc import ABC, abstractmethod
-from pathlib import Path
-
-from matplotlib import pyplot as plt
-from matplotlib.animation import FFMpegWriter
-
-import numpy as np
-from numpy.typing import NDArray, ArrayLike
 from dataclasses import dataclass
+from pathlib import Path
 from typing import override
 
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.animation import FFMpegWriter
+from numpy.typing import ArrayLike, NDArray
+
+from .constants import (ANIMATION_FILE_NAME, DATA_FILE_NAME,
+                        RADIAL_DENSITY_DISTRIBUTION_FILE_NAME)
+from .io import close_filestream, init_input_filestream
 from .util import split
-from .io import init_input_filestream, close_filestream
-from .constants import DATA_FILE_NAME, ANIMATION_FILE_NAME, \
-    RADIAL_DENSITY_DISTRIBUTION_FILE_NAME
 
 
 class ProcessingModule(ABC):
@@ -65,9 +66,11 @@ class AnimationGenerator(ProcessingModule):
     """
 
     # sizing and configuration
-    particle_radius: int = 20
+    particle_radius: int = 30
     orientation_width: int = 2
-    orientation_length: int = 3
+    orientation_length: int = 4
+    padding: int = 0.1
+    figsize: tuple[int] = (8,8)
 
     # color scheme
     head_color: str = 'tab:red'
@@ -78,29 +81,6 @@ class AnimationGenerator(ProcessingModule):
     @override
     def __init__(self, output_dir: Path):
         super().__init__(output_dir)
-
-    @override
-    def begin(self,
-              fps: int = 20,
-              max_bounds: ArrayLike = [ 100, 100, 100 ],
-              show_debug_text: bool = True,
-              show_heads_and_tails: bool = False) -> None:
-        r"""
-        Sets up the MatPlotLib animation for rendering.
-        """
-        self.show_debug_text = show_debug_text
-        self.show_heads_and_tails = show_heads_and_tails
-
-        self.fig = plt.figure(figsize=(8, 8))
-        self.ax = self.fig.add_subplot(projection='3d')
-        self.frames = []
-
-        self.padding = 0.1
-        self.max_bounds = np.asarray(max_bounds, dtype=float)
-
-        self.output_filename = self.output_dir / ANIMATION_FILE_NAME
-        self.writer = FFMpegWriter(fps)
-        self.writer.setup(self.fig, str(self.output_filename), dpi=100)
 
     def set_limits(self):
         xmin, ymin, zmin = -self.max_bounds
@@ -117,37 +97,57 @@ class AnimationGenerator(ProcessingModule):
         ])
 
     @override
+    def begin(self,
+              fps: int = 30,
+              max_bounds: ArrayLike = [ 100, 100, 100 ],
+              show_debug_text: bool = True,
+              show_heads_and_tails: bool = False) -> None:
+        r"""
+        Sets up the MatPlotLib animation for rendering.
+
+        :type max_bounds: ArrayLike
+        """
+        self.fig = plt.figure(figsize=self.figsize)
+        self.ax = self.fig.add_subplot(projection='3d')
+        self.max_bounds = np.asarray(max_bounds, dtype=float)
+        self.set_limits()
+
+        # initialize the position particles
+        self.scatter_plot = self.ax.scatter(
+            [], [], [],
+            s=self.particle_radius,
+            c=self.particle_color)
+
+        # initialize the orientations
+        self.quiver_plot = self.ax.quiver(
+            0, 0, 0, 0, 0, 0,
+            length=self.orientation_length,
+            normalize=True,
+            color=self.orientation_color)
+
+        self.title_text = self.ax.set_title('')
+        self.output_filename = self.output_dir / ANIMATION_FILE_NAME
+        self.writer = FFMpegWriter(fps)
+        self.writer.setup(self.fig, str(self.output_filename), dpi=100)
+
+    @override
     def append_state(self, system: NDArray, time: float) -> None:
         r"""
         Draws the current state to the animation.
         """
         positions, orientations = split(system)
 
-        self.ax.clear()
-        self.set_limits()
-
-        self.ax.scatter(
+        self.scatter_plot._offsets3d = (
             positions[:, 0],
             positions[:, 1],
-            positions[:, 2],
-            s = self.particle_radius,
-            c = self.particle_color
+            positions[:, 2]
         )
 
-        self.ax.quiver(
-            positions[:, 0],
-            positions[:, 1],
-            positions[:, 2],
-            orientations[:, 0],
-            orientations[:, 1],
-            orientations[:, 2],
-            length=self.orientation_length,
-            normalize=True,
-            linewidth=self.orientation_width,
-            color=self.orientation_color,
+        self.quiver_plot.set_segments(
+            np.stack([positions, positions + orientations], axis=1)
         )
 
-        self.ax.set_title(f't={time:.2f}')
+        self.title_text.set_text(f't={time:.2f}')
         self.writer.grab_frame()
 
     @override
@@ -176,43 +176,40 @@ class DensityAnimationGenerator(ProcessingModule):
     @override
     def begin(self, fps: int = 30) -> None:
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
-
         self.bins = np.linspace(0, self.max_radius, self.n_bins + 1)
-        self.bar_container = None
+        bin_centers = 0.5 * (self.bins[:-1] + self.bins[1:])
+
+        self.bars = self.ax.bar(
+            bin_centers,
+            np.zeros(self.n_bins),
+            width=self.bins[1] - self.bins[0])
+
+        self.ax.set_xlim(0, self.max_radius)
+        self.ax.set_xlabel("Radius")
+        self.ax.set_ylabel("Count")
+        self.title_text = self.ax.set_title("Radial Density Distribution")
 
         self.output_filename = self.output_dir / \
             RADIAL_DENSITY_DISTRIBUTION_FILE_NAME
         self.writer = plt.matplotlib.animation.FFMpegWriter(fps=10)
         self.writer.setup(self.fig, str(self.output_filename), dpi=100)
 
-        self.ax.set_xlabel("Radius")
-        self.ax.set_ylabel("Count")
-        self.ax.set_title("Radial Density Distribution")
-
     @override
     def append_state(self, system: NDArray, time: float) -> None:
         positions, _ = split(system)
-
-        # center of mass
         com = np.mean(positions, axis=0)
-
-        # radii
         radii = np.linalg.norm(positions - com, axis=1)
-
         counts, _ = np.histogram(radii, bins=self.bins)
 
-        self.ax.clear()
+        for bar, count in zip(self.bars, counts):
+            bar.set_height(count)
 
-        bin_centers = 0.5 * (self.bins[:-1] + self.bins[1:])
+        current_ymax = self.ax.get_ylim()
+        max_count = np.max(counts)
+        if np.any(max_count > current_ymax):
+            self.ax.set_ylim(0, max_count * 1.1)
 
-        self.ax.bar(bin_centers, counts, width=self.bins[1] - self.bins[0])
-
-        self.ax.set_xlim(0, self.max_radius)
-        self.ax.set_ylim(0, max(1, np.max(counts)))
-        self.ax.set_title(f"Radial Density (t={time:.2f})")
-        self.ax.set_xlabel("Radius")
-        self.ax.set_ylabel("Count")
-
+        self.title_text.set_text(f"Radial Density (t={time:.2f})")
         self.writer.grab_frame()
 
     @override
@@ -246,7 +243,10 @@ def process_data(
     :type  generate_animation: bool
     """
     datafile = output_dir / DATA_FILE_NAME
-    io = init_input_filestream(datafile)
+    io = init_input_filestream(datafile, cache_limit=1024**2)
+
+    tm.start()
+    mem_s1 = tm.take_snapshot()
 
     modules: list[ProcessingModule] = []
 
@@ -268,9 +268,16 @@ def process_data(
             for module in modules:
                 module.append_state(system, time)
 
+            gc.collect()
+
     finally:
 
         for module in modules:
             module.end()
+
+    mem_s2 = tm.take_snapshot()
+    mem_stats = mem_s2.compare_to(mem_s1, 'traceback')
+    for stat in mem_stats[:5]:
+        print(stat)
 
     close_filestream(io)

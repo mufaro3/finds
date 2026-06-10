@@ -6,10 +6,10 @@ from numba import njit
 from numpy.typing import NDArray
 
 from .calculations import calculate_system_derivative
-from .fish import normalize_orientation_vectors
-from .io import (close_filestream, init_output_filestream,
-                 serialize_to_file)
 from .constants import DATA_FILE_NAME
+from .fish import normalize_orientation_vectors
+from .io import close_filestream, init_output_filestream, serialize_to_file
+
 
 @njit
 def calculate_update_rk4(

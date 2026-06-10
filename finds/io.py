@@ -13,14 +13,14 @@ class IO:
     time_dataset:  h5py.Dataset
 
 
-def init_input_filestream(filepath: Path) -> IO:
+def init_input_filestream(filepath: Path, cache_limit: int = None) -> IO:
     """
     Initializes an I/O filestream for reading.
     """
     if not filepath.is_file():
         raise ValueError(f'Filepath {filepath} does not exist.')
 
-    h5file = h5py.File(filepath, 'r')
+    h5file = h5py.File(filepath, 'r', rdcc_nbytes=cache_limit)
 
     return IO(
         filestream=h5file,

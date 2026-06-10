@@ -59,7 +59,7 @@ test:
 
 lint:
 	@echo "Running flake8..."
-	@docker compose run --rm main flake8 --ignore=E201,E202,E203,E221,E225,E226,E231,E241,E252,E502,F541,W504,E731 finds/
+	@docker compose run --rm main flake8 --ignore=E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E502,F541,W504,E731 finds/
 
 	@echo "Checking import order (isort)..."
 	@docker compose run --rm main isort finds/

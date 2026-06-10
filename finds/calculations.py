@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
                         VOLUMETRIC_FLOW_RATE)
-from .util import iterate_excluding_self, rejoin, split
+from .util import rejoin, split
 
 
 @njit
@@ -274,7 +274,6 @@ def compute_pairwise_interactions(
     feature_positions = calculate_feature_positions(system)
 
     for i in prange(N):
-        fish = system[i]
         fish_features = feature_positions[i]
         fish_front, fish_back = split(fish_features)
 
@@ -285,7 +284,6 @@ def compute_pairwise_interactions(
             if i == j:
                 continue
 
-            other_fish = system[j]
             other_front, other_back = split(feature_positions[j])
 
             # front interactions

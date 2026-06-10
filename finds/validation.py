@@ -1,16 +1,16 @@
-from .fish import generate_system
-from .simulation import perform_simulation
-from .postprocessing import process_data
-from .util import split, rejoin
-from .constants import DATA_FILE_NAME, VALIDATION_OUTPUT_PATH, \
-    VALIDATION_GRAPH_PATH, VALIDATION_3D_GRAPH_PATH
-from .io import init_input_filestream, close_filestream
-
 import shutil
 from pathlib import Path
+
 import numpy as np
-from numpy.typing import NDArray
 from matplotlib import pyplot as plt
+from numpy.typing import NDArray
+
+from .constants import (DATA_FILE_NAME, VALIDATION_3D_GRAPH_PATH,
+                        VALIDATION_GRAPH_PATH, VALIDATION_OUTPUT_PATH)
+from .io import close_filestream, init_input_filestream
+from .simulation import perform_simulation
+from .util import rejoin, split
+
 
 def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
     r"""
@@ -134,6 +134,7 @@ def build_quadra_plot(
 
     print(f'Saved validation figure 2025-8 to {output_filepath}')
 
+
 def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
     """
     Radially distributes :math:`n` fish on the yz-axis at :math:`x`. The
@@ -154,6 +155,7 @@ def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
         z = r * np.sin(theta)
         system[i] = np.array([ x, y, z, 1, 0, 0 ])
     return system
+
 
 def build_cylindrical_path_plot(output_dir: Path) -> None:
     """
@@ -222,6 +224,7 @@ def build_cylindrical_path_plot(output_dir: Path) -> None:
     plt.savefig(output_file, dpi=300)
     plt.close(fig)
     print(f'Saved validation figure 2025-16 to {output_file}')
+
 
 def validation_main() -> None:
     """

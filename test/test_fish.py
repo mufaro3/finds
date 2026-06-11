@@ -14,7 +14,7 @@ def test_positions_and_orientations():
     NUMBER_OF_TESTS = 10
 
     for _ in range(NUMBER_OF_TESTS):
-        N, random_matrix = generate_random_matrix()
+        N, random_matrix, bounds = generate_random_matrix()
         pos, ori = split(random_matrix)
 
         # TEST 1
@@ -83,7 +83,7 @@ def helper_test_fish(random_fish: NDArray, bounds: NDArray):
         f'Phi not within angular perturbation: '+\
         f'phi={phi}, angle_delta={angle_delta}'
 
-def helper_test_system(system: NDArray, bounds: NDArray):
+def helper_test_system(system: NDArray, bounds: ArrayLike):
     r"""
     1. Should have a shape of :math:`(N,6)`.
     2. There should be no duplicate entries.
@@ -93,7 +93,8 @@ def helper_test_system(system: NDArray, bounds: NDArray):
 
     # TEST 1
     assert system.shape == (N,6), \
-        f'Matrix should have shape ({N},6) but has shape {random_matrix.shape}.'
+        f'Matrix should have shape ({N},6) but has shape '+\
+        f'{random_matrix.shape}.'
 
     # TEST 2
     num_unique_rows = len(np.unique(system, axis=0))
@@ -104,13 +105,13 @@ def helper_test_system(system: NDArray, bounds: NDArray):
 
     # TEST 3
     for i in range(N):
-        helper_test_fish(system[i])
+        helper_test_fish(system[i], np.asarray(bounds))
 
 def test_generate_system():
     NUMBER_OF_TESTS = 10
     for _ in range(NUMBER_OF_TESTS):
-        N, random_matrix = generate_random_matrix()
-        helper_test_system(random_matrix, bounds=[10, 10, 10])
+        N, random_matrix, bounds = generate_random_matrix()
+        helper_test_system(random_matrix, bounds=bounds)
 
     lattice_aligned = generate_system(
         distribution='lattice',

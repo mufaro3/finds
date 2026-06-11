@@ -25,4 +25,4 @@ def generate_random_matrix() -> tuple[int, NDArray]:
         angle_delta=angle_delta
     )
 
-    return N, random_matrix
+    return N, random_matrix, bounds

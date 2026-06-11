@@ -97,7 +97,7 @@ def generate_positions_random(n: int, bounds: ArrayLike) -> NDArray:
     if bounds.shape != (3,):
         raise ValueError('Bounds must be 3 dimensional.')
 
-    positions = np.empty((n, 3), dtype=np.float64)
+    positions = np.zeros((n, 3), dtype=np.float64)
 
     for i in range(n):
         for j in range(3):

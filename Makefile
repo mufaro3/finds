@@ -1,4 +1,4 @@
-.PHONY: help run build dev down logs shell clean rebuild docs test all lint validate
+.PHONY: help run build dev down logs shell clean rebuild docs test all lint validate repl
 
 help:
 	@echo ""
@@ -16,6 +16,7 @@ help:
 	@echo "  make all      - Rebuild, run all tests, and build documentation"
 	@echo "  make lint     - Run static code analyzer and cleanup"
 	@echo "  make validate - Run the validation program"
+	@echo "  make repl     - Run the interactive REPL"
 	@echo ""
 
 run:
@@ -67,5 +68,8 @@ lint:
 validate:
 	@docker compose up --build validation
 	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output
+
+repl:
+	@docker compose run --rm main python
 
 all: lint build docs test

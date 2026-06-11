@@ -4,10 +4,14 @@ from .simulation import perform_simulation
 
 
 def main():
+    print('Generating system..')
     system = generate_system(
-        distribution='lattice',
-        orientation='aligned'
+        distribution='circle',
+        orientation='aligned',
+        size=50,
+        spacing=5.0
     )
+    print(f'System size: N={system.shape[0]}')
 
     output_dir = perform_simulation(
         system,
@@ -15,6 +19,7 @@ def main():
         end_time=50
     )
 
+    print('Generating figures..')
     process_data(
         output_dir,
         generate_animation=True,

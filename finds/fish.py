@@ -22,6 +22,7 @@ def normalize_orientation_vectors(system: NDArray) -> NDArray:
     normalized_ori = ori / norms[:, np.newaxis]
     return rejoin(pos, normalized_ori)
 
+
 def perturb_orientations(orientations: NDArray, angle_delta: float) -> NDArray:
     r"""
     Perturbs an orientations matrix by :math:`\Delta \theta`.
@@ -56,7 +57,7 @@ def perturb_orientations(orientations: NDArray, angle_delta: float) -> NDArray:
         cos_phi = np.cos(phi)
 
         Rz = np.array([
-            [1, 0,         0         ],
+            [1, 0,          0        ],
             [0, cos_theta, -sin_theta],
             [0, sin_theta,  cos_theta]
         ])
@@ -72,7 +73,6 @@ def perturb_orientations(orientations: NDArray, angle_delta: float) -> NDArray:
     return orientations
 
 
-@njit
 def generate_positions_random(n: int, bounds: ArrayLike) -> NDArray:
     r"""
     Generates a fresh system at random.
@@ -90,23 +90,18 @@ def generate_positions_random(n: int, bounds: ArrayLike) -> NDArray:
       in radians.
     :type angle_delta: float
 
-    :returns: A matrix with shape (N,6) storing the position of each fish.
+    :returns: A matrix with shape :math:`(N,6)` storing the position of
+      each fish.
     :rtype: NDArray
     """
     bounds = np.asarray(bounds)
     if bounds.shape != (3,):
         raise ValueError('Bounds must be 3 dimensional.')
 
-    positions = np.zeros((n, 3), dtype=np.float64)
-
-    for i in range(n):
-        for j in range(3):
-            positions[i,j] = np.random.uniform(-bounds[i], bounds[i])
-
+    positions = np.random.uniform(-bounds, bounds, size=(n, 3))
     return positions
 
 
-@njit
 def generate_positions_lattice(side_length: int, spacing: float) -> NDArray:
     r"""
     Generates the positions of fish arranged as a cubic lattice centered
@@ -133,7 +128,6 @@ def generate_positions_lattice(side_length: int, spacing: float) -> NDArray:
     return positions
 
 
-@njit
 def generate_positions_sphere(radius: int, spacing: float) -> NDArray:
     r"""
     Generates the positions of fish arranged as a sphere centered at (0,0).
@@ -162,7 +156,6 @@ def generate_positions_sphere(radius: int, spacing: float) -> NDArray:
     return positions
 
 
-@njit
 def generate_positions_square(side_length: int, spacing: float) -> NDArray:
     r"""
     Generates the positions of fish arranged as a planar square oriented with
@@ -190,7 +183,6 @@ def generate_positions_square(side_length: int, spacing: float) -> NDArray:
     return positions
 
 
-@njit
 def generate_positions_circle(radius: int, spacing: float):
     r"""
     Generates the positions of fish arranged as a planar circle oriented with
@@ -286,9 +278,9 @@ def generate_system(
         orientations = \
             np.tile(np.array([1.0, 0.0, 0.0], dtype=np.float64), (N, 1))
     elif orientation == 'radial outward':
-        orientations = positions
+        orientations = positions.copy()
     elif orientation == 'radial inward':
-        orientations = -positions
+        orientations = -positions.copy()
     else:
         raise ValueError(f'Invalid orientation parameter \"{orientation}\". '+
                          'Must be one of: \"aligned\", \"radial outward\", '+

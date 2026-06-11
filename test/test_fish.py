@@ -1,6 +1,9 @@
-from finds.fish import *
-from finds.util import *
-from .common import *
+from finds.fish import generate_system, normalize_orientation_vectors
+from finds.util import split, rejoin
+from .common import generate_random_matrix
+import numpy as np
+from numpy.typing import NDArray, ArrayLike
+
 
 def test_positions_and_orientations():
     r"""
@@ -14,7 +17,7 @@ def test_positions_and_orientations():
     NUMBER_OF_TESTS = 10
 
     for _ in range(NUMBER_OF_TESTS):
-        N, random_matrix, bounds = generate_random_matrix()
+        N, random_matrix = generate_random_matrix()
         pos, ori = split(random_matrix)
 
         # TEST 1
@@ -38,6 +41,7 @@ def test_positions_and_orientations():
         assert np.allclose(recombined, random_matrix), \
             'Positions and orientations combined together do not '+\
             'form the original matrix'
+
 
 def helper_test_fish(random_fish: NDArray, bounds: NDArray):
     r"""
@@ -74,15 +78,6 @@ def helper_test_fish(random_fish: NDArray, bounds: NDArray):
     assert in_bounds(position, bounds), \
         f'Fish at {position} is not within bounds of {-bounds} to {bounds}.'
 
-    # TEST 5
-    theta, phi = cartesian_to_spherical(orientation)
-    assert 0 <= theta < angle_delta, \
-        f'Theta not within angular perturbation: '+\
-        f'theta={theta}, angle_delta={angle_delta}.'
-    assert 0 <= phi <= np.pi, \
-        f'Phi not within angular perturbation: '+\
-        f'phi={phi}, angle_delta={angle_delta}'
-
 def helper_test_system(system: NDArray, bounds: ArrayLike):
     r"""
     1. Should have a shape of :math:`(N,6)`.
@@ -94,7 +89,7 @@ def helper_test_system(system: NDArray, bounds: ArrayLike):
     # TEST 1
     assert system.shape == (N,6), \
         f'Matrix should have shape ({N},6) but has shape '+\
-        f'{random_matrix.shape}.'
+        f'{system.shape}.'
 
     # TEST 2
     num_unique_rows = len(np.unique(system, axis=0))
@@ -107,10 +102,22 @@ def helper_test_system(system: NDArray, bounds: ArrayLike):
     for i in range(N):
         helper_test_fish(system[i], np.asarray(bounds))
 
+
 def test_generate_system():
     NUMBER_OF_TESTS = 10
     for _ in range(NUMBER_OF_TESTS):
-        N, random_matrix, bounds = generate_random_matrix()
+        bounds = np.random.uniform(0.5, 1e3, 3)
+        angle_delta = np.random.uniform(0, np.pi)
+        N = np.random.randint(10,int(1e3))
+
+        random_matrix = generate_system(
+            distribution='random',
+            orientation='aligned',
+            n_random=N,
+            bounds=bounds,
+            angle_delta=angle_delta
+        )
+
         helper_test_system(random_matrix, bounds=bounds)
 
     lattice_aligned = generate_system(
@@ -148,6 +155,7 @@ def test_generate_system():
         orientation='aligned'
     )
     helper_test_system(circle, bounds=[0, 20, 20])
+
 
 def test_normalize_orientation_vectors():
     r"""

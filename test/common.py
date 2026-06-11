@@ -2,6 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 from finds.fish import generate_system
 
+
 def generate_random_matrix() -> tuple[int, NDArray]:
     r"""
     Generates a random system matrix of size :math:`N \in [10,1000)`
@@ -25,4 +26,4 @@ def generate_random_matrix() -> tuple[int, NDArray]:
         angle_delta=angle_delta
     )
 
-    return N, random_matrix, bounds
+    return N, random_matrix

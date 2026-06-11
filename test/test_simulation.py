@@ -1,7 +1,10 @@
-from .common import *
-from finds.simulation import *
-from finds.calculations import *
-from finds.util import *
+from .common import generate_random_matrix
+from finds.simulation import calculate_update_rk4
+from finds.calculations import calculate_system_derivative
+from finds.util import split
+import numpy as np
+from numpy.typing import NDArray
+
 
 def test_calculate_update_rk4():
     r"""
@@ -26,7 +29,7 @@ def test_calculate_update_rk4():
     NUMBER_OF_TESTS = 5
 
     for _ in range(NUMBER_OF_TESTS):
-        N, random_matrix, bounds = generate_random_matrix()
+        N, random_matrix = generate_random_matrix()
 
         # TEST 1
         advanced_matrix = calculate_update_rk4(random_matrix, time_step=0.01)
@@ -70,6 +73,7 @@ def test_calculate_update_rk4():
         advanced_matrix_2 = calculate_update_rk4(random_matrix, time_step=0.01)
         assert np.allclose(advanced_matrix, advanced_matrix_2), \
             'RK4 produced differing results after two identical calls.'
+
 
 def test_perform_simulation():
     pass

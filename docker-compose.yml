@@ -16,10 +16,6 @@ services:
     <<: *base
     command: python3 -m finds.validation
 
-  test:
-    <<: *base
-    command: python3 -m pytest /finds/test
-
   docs:
     <<: *base
     working_dir: /finds/docs

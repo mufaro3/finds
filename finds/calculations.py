@@ -54,7 +54,6 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
 
     is a half-length vector in the direction of the orientation.
     """
-
     pos, ori = split(system)
 
     delta = ori * FISH_LENGTH / 2

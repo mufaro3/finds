@@ -1,5 +1,4 @@
 import gc
-import tracemalloc as tm
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -67,8 +66,8 @@ class AnimationGenerator(ProcessingModule):
 
     # sizing and configuration
     particle_radius: int = 30
-    orientation_width: int = 2
-    orientation_length: int = 4
+    orientation_width: int = 5
+    orientation_length: int = 5
     padding: int = 0.1
     figsize: tuple[int] = (8,8)
 
@@ -111,6 +110,11 @@ class AnimationGenerator(ProcessingModule):
         self.ax = self.fig.add_subplot(projection='3d')
         self.max_bounds = np.asarray(max_bounds, dtype=float)
         self.set_limits()
+        self.ax.view_init(elev=20, azim=45)
+
+        self.ax.set_xlabel("X")
+        self.ax.set_ylabel("Y")
+        self.ax.set_zlabel("Z")
 
         # initialize the position particles
         self.scatter_plot = self.ax.scatter(
@@ -121,8 +125,6 @@ class AnimationGenerator(ProcessingModule):
         # initialize the orientations
         self.quiver_plot = self.ax.quiver(
             0, 0, 0, 0, 0, 0,
-            length=self.orientation_length,
-            normalize=True,
             color=self.orientation_color)
 
         self.title_text = self.ax.set_title('')
@@ -143,8 +145,9 @@ class AnimationGenerator(ProcessingModule):
             positions[:, 2]
         )
 
+        vecs = orientations * self.orientation_length
         self.quiver_plot.set_segments(
-            np.stack([positions, positions + orientations], axis=1)
+            np.stack([positions, positions + vecs], axis=1)
         )
 
         self.title_text.set_text(f't={time:.2f}')
@@ -228,7 +231,8 @@ class DensityAnimationGenerator(ProcessingModule):
 def process_data(
         output_dir: Path,
         generate_animation: bool=True,
-        generate_density_animation: bool=True) -> None:
+        generate_density_animation: bool=True,
+        debug_print: bool=True) -> None:
     r"""
     Processes the data stored within the output directory. Each state and
     simulation time are read in sequentially, one at a time, so the data is
@@ -245,10 +249,10 @@ def process_data(
     datafile = output_dir / DATA_FILE_NAME
     io = init_input_filestream(datafile, cache_limit=1024**2)
 
-    tm.start()
-    mem_s1 = tm.take_snapshot()
-
     modules: list[ProcessingModule] = []
+
+    if debug_print:
+        print('Starting postprocessing..')
 
     if generate_animation:
         modules.append(AnimationGenerator(output_dir))
@@ -260,7 +264,17 @@ def process_data(
         module.begin()
 
     try:
-        for i in range(len(io.time_dataset)):
+        total_iterations = len(io.time_dataset)
+        interval = max(total_iterations // 10, 1)
+
+
+        for i in range(total_iterations):
+
+            # debug printing
+            if i % interval == 0 and debug_print:
+                fraction = i / float(total_iterations)
+                print(f'{fraction * 100:.0f}% - '+
+                      f'Iteration {i}/{total_iterations}')
 
             system = io.state_dataset[i]
             time = io.time_dataset[i]
@@ -274,10 +288,5 @@ def process_data(
 
         for module in modules:
             module.end()
-
-    mem_s2 = tm.take_snapshot()
-    mem_stats = mem_s2.compare_to(mem_s1, 'traceback')
-    for stat in mem_stats[:5]:
-        print(stat)
 
     close_filestream(io)

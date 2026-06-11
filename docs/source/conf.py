@@ -21,7 +21,6 @@ author = 'Mufaro J. Machaya'
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",  # optional but recommended
-    "sphinx.ext.imgmath",
     "sphinxcontrib.bibtex"
 ]
 

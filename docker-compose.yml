@@ -1,20 +1,38 @@
 services:
-  main:
+  base: &base
     build: .
     volumes:
       - .:/finds
     working_dir: /finds
-    command: python3 -m finds.main
     mem_limit: 4g
     stdin_open: true
     tty: true
 
+  main:
+    <<: *base
+    command: python3 -m finds.main
+
   validation:
-    build: .
-    volumes:
-      - .:/finds
-    working_dir: /finds
+    <<: *base
     command: python3 -m finds.validation
-    mem_limit: 4g
-    stdin_open: true
-    tty: true
+
+  test:
+    <<: *base
+    command: python3 -m pytest /finds/test
+
+  docs:
+    <<: *base
+    working_dir: /finds/docs
+    command: make all
+
+  repl:
+    <<: *base
+    command: >
+      python3 -i -c "
+      from finds import *;
+      from finds.fish import *;
+      from finds.calculations import *;
+      from finds.simulation import *;
+      from test.common import *;
+      print('F.I.N.D.S REPL loaded')
+      "

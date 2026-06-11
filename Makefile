@@ -1,34 +1,37 @@
-.PHONY: help run build dev down logs shell clean rebuild docs test all lint validate repl
+.PHONY: help run dev build down logs shell clean rebuild \
+        docs viewdocs test lint validate repl all
+
+ENV_FILE := .env
+FLAKE8_IGNORED := E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,\
+	          E502,F541,W504,E731
+SERVICE ?= main
 
 help:
 	@echo ""
 	@echo "Available commands:"
-	@echo "  make run      - Start containers (no build)"
-	@echo "  make dev      - Build + start containers"
-	@echo "  make build    - Build images only"
-	@echo "  make down     - Stop containers"
-	@echo "  make logs     - Follow container logs"
-	@echo "  make shell    - Open shell in main container"
-	@echo "  make rebuild  - Full rebuild (no cache)"
-	@echo "  make clean    - Remove containers + volumes"
-	@echo "  make docs     - Build the documentation"
-	@echo "  make test     - Rebuild and run pytest test suite"
-	@echo "  make all      - Rebuild, run all tests, and build documentation"
-	@echo "  make lint     - Run static code analyzer and cleanup"
-	@echo "  make validate - Run the validation program"
-	@echo "  make repl     - Run the interactive REPL"
+	@echo "  make run        - Start main"
+	@echo "  make dev        - Build + start main"
+	@echo "  make build      - Build images"
+	@echo "  make down       - Stop containers"
+	@echo "  make logs       - Follow logs"
+	@echo "  make shell      - Bash shell"
+	@echo "  make repl       - Python REPL"
+	@echo "  make test       - Run pytest"
+	@echo "  make docs       - Build docs"
+	@echo "  make validate   - Run validation"
+	@echo "  make lint       - Run linting"
+	@echo "  make rebuild    - Rebuild without cache"
+	@echo "  make clean      - Remove generated files"
 	@echo ""
 
 run:
 	@docker compose up main
-	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output/
 
 dev:
 	@docker compose up --build main
-	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output/
 
 build:
-	@docker compose build main
+	@docker compose build
 
 down:
 	@docker compose down
@@ -39,6 +42,29 @@ logs:
 shell:
 	@docker compose run --rm main bash
 
+repl:
+	@docker compose run --rm repl
+
+test:
+	@docker compose run --rm test
+
+validate:
+	@docker compose run --rm validation
+
+docs:
+	@docker compose run --rm docs
+
+viewdocs: docs
+	@zathura docs/build/finds.pdf &
+
+lint:
+	@echo "Running flake8..."
+	@docker compose run --rm main \
+		flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/
+
+	@echo "Checking import order (isort)..."
+	@docker compose run --rm main isort finds/
+
 rebuild:
 	@docker compose down
 	@docker compose build --no-cache
@@ -47,29 +73,5 @@ clean:
 	@docker compose down -v --remove-orphans
 	@rm -rf docs/build/*
 	@rm -rf output/*
-
-docs:
-	@docker compose run --rm main make -C docs latexpdf
-	@docker compose run --rm main chown -R $$(id -u):$$(id -g) docs/build
-
-viewdocs: docs
-	@zathura docs/build/finds.pdf &
-
-test:
-	@docker compose run --rm main pytest
-
-lint:
-	@echo "Running flake8..."
-	@docker compose run --rm main flake8 --ignore=E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E502,F541,W504,E731 finds/
-
-	@echo "Checking import order (isort)..."
-	@docker compose run --rm main isort finds/
-
-validate:
-	@docker compose up --build validation
-	@docker compose run --rm main chown -R $$(id -u):$$(id -g) output
-
-repl:
-	@docker compose run --rm main python
 
 all: lint build docs test

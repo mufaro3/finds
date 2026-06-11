@@ -6,9 +6,9 @@ from .simulation import perform_simulation
 def main():
     print('Generating system..')
     system = generate_system(
-        distribution='circle',
+        distribution='lattice',
         orientation='aligned',
-        size=50,
+        size=20,
         spacing=5.0
     )
     print(f'System size: N={system.shape[0]}')

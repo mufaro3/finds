@@ -15,9 +15,3 @@ Function Unit Tests
    :members:
    :undoc-members:
    :show-inheritance:
-
-.. automodule:: test.test_util
-   :members:
-   :undoc-members:
-   :show-inheritance:
-

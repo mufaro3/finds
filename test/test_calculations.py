@@ -2,7 +2,7 @@ from .common import generate_random_matrix
 
 from finds.calculations import calculate_feature_positions, \
     calculate_feature_velocities, calculate_system_derivative, \
-    compute_pairwise_interactions
+    compute_interaction_pairwise
 from finds.constants import FISH_LENGTH
 from finds.util import split
 import numpy as np
@@ -59,7 +59,7 @@ def test_barnes_hut_simplify():
     pass
 
 
-def test_compute_pairwise_interactions():
+def test_compute_interaction_pairwise():
     r"""
     For an input shape of :math:`(N,6)`:
 
@@ -73,8 +73,7 @@ def test_compute_pairwise_interactions():
 
     for _ in range(NUMBER_OF_TESTS):
         N, system = generate_random_matrix()
-        interactions = compute_pairwise_interactions(
-            system, use_barnes_hut=False, bh_ratio=None)
+        interactions = compute_interaction_pairwise(system)
 
         # TEST 1
         assert interactions is not None, \

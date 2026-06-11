@@ -1,11 +1,11 @@
 import numpy as np
 from numba import float64, njit, prange
+from numba.typed import Dict
 from numpy.typing import NDArray
 
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
                         VOLUMETRIC_FLOW_RATE)
 from .util import rejoin, split
-
 
 @njit
 def calculate_feature_positions(system: NDArray) -> NDArray:
@@ -65,85 +65,11 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
 
 @njit
 def barnes_hut_simplify(fish: NDArray, other_fish: NDArray, bh_ratio: float):
-    r"""
-    Clusters the list of other fish through Barnes-Hut approximation
-    :cite:`barnes1986bh`.
-
-    :param fish: The fish to use as the central reference.
-    :type  fish: NDArray
-
-    :param other_fish: The matrix consisting of the other fish in the
-      system (or the original system with :code:`fish` removed).
-    :type other_fish: NDArray
-
-    :param bh_ratio: The minimum ratio :math:`\theta` of partition size
-      to particle distance for which to keep the particle.
-    :type bh_ratio: float
-
-    :returns: A simplified version of :code:`other_fish` with shape
-      :math:`(m,6)` where :math:`m \le N` as a result of clustering members
-      of the system that are relatively far from :code:`fish`.
-    :rtype: NDArray
-
-    This function simplifies :code:`other_fish` by clustering fish that are
-    sufficiently "far away" (as determined by the Barnes-Hut ratio
-    :math:`\theta`). A complete, interactive description of the Barnes-Hut
-    algorithm can be found online :cite:`heer_barnes_hut`.
-
-    This begins by constructing an Octree out of :code:`other_fish` that
-    partitions the three-dimensional space around the origin. The fish-
-    particles are inserted in list order, and for each additional point, the
-    Octree expands by further subdividing the three-dimensional space. Then,
-    once the Octree is fully-built, each node of the tree (essentially
-    representing every possible division of the three-dimensional space) is
-    "clustered," meaning that several of the fish-particles are computed into
-    a fish-particle representing the average of all of them.
-
-    For example, if we have fish :math:`i` and fish :math:`j` in the form
-
-    .. math::
-
-        \begin{bmatrix}
-          x_i & y_i & z_i & n_{ix} & n_{iy} & n_{iz} \\
-          x_j & y_j & z_j & n_{jx} & n_{jy} & n_{jz}
-        \end{bmatrix} \in \mathbf{X}
-
-    their clustered form would simply be the average of the two:
-
-    .. math::
-
-        \frac{1}{2} \begin{bmatrix}
-          x_i + x_j & y_i + y_j & z_i + z_j &
-          n_{ix} + n_{jx} & n_{iy} + n_{jy} & n_{iz} + n_{jz}
-        \end{bmatrix}.
-
-    Then, we begin traversing this tree. If the node is a leaf, then we
-    automatically add the fish at that point to the list of fish to be
-    returned. For each branch node in the octree, we then compute a size-to-
-    distance ratio :math:`\phi`. This is computed as the fraction of the
-    "size" or the side length of the cube comprising the subdivision over the
-    distance from the center-of-mass of the subdivision (or the position of
-    the cluster).
-
-    For example, if we have a subdivision storing fish 1 through :math:`k`
-    clustered into a cluster-fish with position :math:`\mathbf{x}_{c}` with
-    a side length of size :math:`l`, then the Barnes-Hut ratio with respect
-    to a fish at position :math:`\mathbf{x}_{c0}` would be
-
-    .. math::
-
-        \phi = \frac{l}{||\mathbf{x}_c - \mathbf{x}_{c0}||}.
-
-    Once we've calculated :math:`\phi` for the given node, if
-    :math:`\phi \ge \theta`, then we continue travering the tree to the
-    children of the node. If :math:`\phi < \theta`, then we
-    add the clustered fish-particle to the list of fish to be returned.
-    """
     return other_fish
 
 
 @njit
-def calculate_interaction_vector(
+def calculate_feature_interaction(
         feature_a_pos: NDArray, feature_b_pos: NDArray) -> NDArray:
     r"""
     Computes the individual interaction vector between feature
@@ -188,15 +114,137 @@ def calculate_interaction_vector(
     return result
 
 
-@njit(parallel=True, locals={
-    'front_interaction_total': float64[:],
-    'back_interaction_total': float64[:],
-    'specific_other_features': float64[:]
-})
-def compute_pairwise_interactions(
-        system: NDArray,
-        use_barnes_hut: bool,
-        bh_ratio: float) -> NDArray:
+@njit
+def calculate_fish_interaction(
+        fish_front:  NDArray,
+        fish_back:   NDArray,
+        other_front: NDArray,
+        other_back:  NDArray) -> NDArray:
+    """
+    Returns the front and back interaction vectors between two fish.
+
+    :type fish_front: NDArray
+    :type fish_back: NDArray
+    :type other_front: NDArray
+    :type other_back: NDArray
+    :rtype: NDArray
+    """
+    # front interactions
+    front_front = calculate_feature_interaction(fish_front, other_front)
+    front_back  = calculate_feature_interaction(fish_front, other_back)
+    front_interaction = front_front - front_back
+
+    # back interactions
+    back_front = calculate_feature_interaction(fish_back, other_front)
+    back_back  = calculate_feature_interaction(fish_back, other_back)
+    back_interaction = back_front - back_back
+
+    return front_interaction, back_interaction
+
+@dataclass
+class OctreeNode:
+    center: NDArray
+    size: float
+    data: NDArray = None
+    children: list["OctreeNode"] = field(default_factory=list)
+    is_leaf: bool = True
+
+def build_octree(system: NDArray) -> OctreeNode:
+    r"""
+    Builds the Barnes-Hut Octree.
+    """
+    pass
+
+# TODO: finish description
+def traverse_octree():
+    pass
+
+def compute_interaction_barnes_hut(
+        system: NDArray, bh_ratio: float) -> NDArray:
+    r"""
+    Computes the interaction vectors using the Barnes-Hut approximation
+    :cite:`barnes1986bh`.
+
+    :param system: The system.
+    :type  system: NDArray
+
+    :param bh_ratio: The minimum ratio :math:`\theta` of partition size
+      to particle distance for which to keep the particle.
+    :type bh_ratio: float
+
+    :returns: The array of interaction vectors.
+    :rtype: NDArray
+
+    This function simplifies calculating interaction by clustering fish that
+    are sufficiently "far away" (as determined by the Barnes-Hut ratio
+    :math:`\theta`). A complete, interactive description of the Barnes-Hut
+    algorithm can be found online :cite:`heer_barnes_hut`.
+
+    This begins by constructing an Octree that partitions the three-
+    dimensional space around the origin. The fish-particles are inserted in
+    list order, and for each additional point, the Octree expands by further
+    subdividing the three-dimensional space. Then, once the Octree is fully-
+    built, each node of the tree (essentially representing every possible
+    division of the three-dimensional space) is "clustered," meaning that
+    several of the fish-particles are computed into a fish-particle
+    representing the average of all of them.
+
+    For example, if we have fish :math:`i` and fish :math:`j` in the form
+
+    .. math::
+
+        \begin{bmatrix}
+          x_i & y_i & z_i & n_{ix} & n_{iy} & n_{iz} \\
+          x_j & y_j & z_j & n_{jx} & n_{jy} & n_{jz}
+        \end{bmatrix} \in \mathbf{X}
+
+    their clustered form would simply be the average of the two:
+
+    .. math::
+
+        \frac{1}{2} \begin{bmatrix}
+          x_i + x_j \\ y_i + y_j \\ z_i + z_j \\
+          n_{ix} + n_{jx} \\ n_{iy} + n_{jy} \\ n_{iz} + n_{jz}
+        \end{bmatrix}^{T}.
+
+    Then, we traverse this tree for each fish. If the node is a leaf, then we
+    automatically compute the interaction. For each branch node in the octree,
+    we then compute a size-to-distance ratio :math:`\phi`. This is computed as
+    the fraction of the "size" or the side length of the cube comprising the
+    subdivision over the distance from the center-of-mass of the subdivision
+    (or the position of the cluster).
+
+    For example, if we have a subdivision storing fish 1 through :math:`k`
+    clustered into a cluster-fish with position :math:`\mathbf{x}_{c}` with
+    a side length of size :math:`l`, then the Barnes-Hut ratio with respect
+    to a fish at position :math:`\mathbf{x}_{c0}` would be
+
+    .. math::
+
+        \phi = \frac{l}{||\mathbf{x}_c - \mathbf{x}_{c0}||}.
+
+    Once we've calculated :math:`\phi` for the given node, if
+    :math:`\phi \ge \theta`, then we continue travering the tree to the
+    children of the node. If :math:`\phi < \theta`, then we compute the
+    interaction.
+    """
+    N = system.shape[0]
+    octree = build_octree(system)
+    interactions = np.zeros((N,6))
+
+    for i in range(N):
+        front_interaction_total = np.zeros(3)
+        back_interaction_total = np.zeroes(3)
+
+        # traverse the octree
+
+        interactions[i] = rejoin(
+            front_interaction_total,
+            back_interaction_total
+        )
+
+@njit(parallel=True)
+def compute_interaction_pairwise(system: NDArray) -> NDArray:
     r"""
     Computes the sum of the pairwise interactions for each fish for both head
     and tail interactions.
@@ -208,17 +256,6 @@ def compute_pairwise_interactions(
 
     :param system: The system.
     :type  system: NDArray
-
-    :param feature_positions: The positions of the fronts/sources and backs/
-      sinks for all fish in matrix format.
-    :type  feature_positions: NDArray
-
-    :param use_barnes_hut: Whether or not to simplify the calculations through
-      the Barnes-Hut approximation.
-    :type  use_barnes_hut: bool
-
-    :param bh_ratio: The Barnes-Hut Ratio to use
-    :type  bh_ratio: float
 
     In short, this function calculates the net interaction for the head and
     tail of each fish. The net interaction of feature :math:`\alpha` for fish
@@ -259,14 +296,6 @@ def compute_pairwise_interactions(
     :math:`i` and :math:`\beta` of fish :math:`j` are defined as the
     displacement between the positions of the features divided by the norm
     cubed.
-
-    By default, the total interaction is computed for each fish by performing
-    the above calculation with all other fish in the system
-    :math:`\mathbf{X}`, but the system can first be simplified via the
-    Barnes-Hut process :math:`f(\mathbf{X})` using
-    :py:func:`src.calculations.barnes_hut_simplify` into a more compact but
-    still approximately accurate, clustered form :math:`\mathbf{X}'`. The above
-    calculations are then done exactly the same, but on less fish.
     """
     N = system.shape[0]
     interactions = np.zeros((N, 6))
@@ -284,16 +313,12 @@ def compute_pairwise_interactions(
                 continue
 
             other_front, other_back = split(feature_positions[j])
+            front_interaction, back_interaction = \
+                calculate_interaction(fish_front, fish_back,
+                                      other_front, other_back)
 
-            # front interactions
-            front_front = calculate_interaction_vector(fish_front, other_front)
-            front_back  = calculate_interaction_vector(fish_front, other_back)
-            front_interaction_total += front_front - front_back
-
-            # back interactions
-            back_front = calculate_interaction_vector(fish_back, other_front)
-            back_back  = calculate_interaction_vector(fish_back, other_back)
-            back_interaction_total += back_front - back_back
+            front_interaction_total += front_interaction
+            back_interaction_total += back_interaction
 
         interactions[i] = rejoin(
             front_interaction_total,
@@ -302,7 +327,6 @@ def compute_pairwise_interactions(
     return interactions
 
 
-@njit
 def calculate_feature_velocities(
         system: NDArray,
         use_barnes_hut: bool,
@@ -355,16 +379,13 @@ def calculate_feature_velocities(
     # extend it to (N,6) for each
     internal_contrib = rejoin(internal_contrib_each, internal_contrib_each)
 
-    pairwise_interactions_sum = \
-        compute_pairwise_interactions(
-            system,
-            use_barnes_hut,
-            bh_ratio
-        )
+    interaction = None
+    if use_barnes_hut:
+        interaction = compute_interaction_barnes_hut(system, bh_ratio)
+    else:
+        interaction = compute_interaction_pairwise(system)
 
-    external_contrib = VOLUMETRIC_FLOW_RATE / (4 * np.pi) *\
-        pairwise_interactions_sum
-
+    external_contrib = VOLUMETRIC_FLOW_RATE / (4 * np.pi) * interaction
     if internal_contrib.shape != external_contrib.shape:
         raise ArithmeticError('Internal Contribution has a different '+\
                               'shape from External Contribution.')
@@ -372,7 +393,6 @@ def calculate_feature_velocities(
     return internal_contrib + external_contrib
 
 
-@njit
 def calculate_system_derivative(
         system: NDArray,
         use_barnes_hut: bool,

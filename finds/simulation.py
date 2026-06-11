@@ -11,7 +11,6 @@ from .fish import normalize_orientation_vectors
 from .io import close_filestream, init_output_filestream, serialize_to_file
 
 
-@njit
 def calculate_update_rk4(
         system: NDArray,
         time_step: float,

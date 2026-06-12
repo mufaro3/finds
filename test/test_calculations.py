@@ -2,11 +2,11 @@ from .common import generate_random_matrix
 
 from finds.calculations import calculate_feature_positions, \
     calculate_feature_velocities, calculate_system_derivative, \
-    compute_interaction_pairwise
+    compute_interaction_pairwise, compute_interaction_barnes_hut
 from finds.constants import FISH_LENGTH
 from finds.util import split
 import numpy as np
-
+from numpy.typing import NDArray
 
 def test_calculate_feature_positions():
     r"""
@@ -47,19 +47,7 @@ def test_calculate_feature_positions():
         assert np.allclose(distances, FISH_LENGTH), \
             'Head and tail positions are not FISH_LENGTH apart.'
 
-
-def test_barnes_hut_simplify():
-    r"""
-    For an input shape of :math:`(N,6)`:
-
-    1. The output shape should be :math:`(M,6)` where :math:`M \le N`.
-    2. For N identical fish located infinitesimally apart, the input should
-       be identical to the output (without any clustering).
-    """
-    pass
-
-
-def test_compute_interaction_pairwise():
+def helper_test_interaction(interactions: NDArray, N: int):
     r"""
     For an input shape of :math:`(N,6)`:
 
@@ -69,33 +57,45 @@ def test_compute_interaction_pairwise():
     4. The norm of all rows in the output matrix should be greater than 0.
        (All interactions are non-zero in magnitude by definition.)
     """
+    # TEST 1
+    assert interactions is not None, \
+        'compute_pairwise_interactions produced NoneType.'
+
+    # TEST 2
+    assert interactions.shape == (N,6), \
+        f'Interactions matrix requires shape ({N},6) but obtained shape '+\
+        f'{interactions.shape}'
+
+    # TEST 3
+    assert np.all(np.isfinite(interactions)), \
+        'Interactions matrix contains an infinite value.'
+
+    assert np.all(np.isreal(interactions)), \
+        'Interactions matrix contains a complex value.'
+
+    # TEST 4
+    norms = np.linalg.norm(interactions, axis=1)
+    assert not np.any(np.isclose(norms, 0)), \
+        'Interactions matrix computed a zero-valued interaction.'
+
+
+def test_compute_interaction_pairwise():
     NUMBER_OF_TESTS = 10
 
-    for _ in range(NUMBER_OF_TESTS):
+    for i in range(NUMBER_OF_TESTS):
         N, system = generate_random_matrix()
         interactions = compute_interaction_pairwise(system)
+        helper_test_interaction(interactions, N)
 
-        # TEST 1
-        assert interactions is not None, \
-            'compute_pairwise_interactions produced NoneType.'
 
-        # TEST 2
-        assert interactions.shape == (N,6), \
-            f'Interactions matrix requires shape ({N},6) but obtained shape '+\
-            f'{interactions.shape}'
+def test_compute_interaction_barnes_hut():
+    NUMBER_OF_TESTS = 10
 
-        # TEST 3
-        assert np.all(np.isfinite(interactions)), \
-            'Interactions matrix contains an infinite value.'
-
-        assert np.all(np.isreal(interactions)), \
-            'Interactions matrix contains a complex value.'
-
-        # TEST 4
-        norms = np.linalg.norm(interactions, axis=1)
-        assert not np.any(np.isclose(norms, 0)), \
-            'Interactions matrix computed a zero-valued interaction.'
-
+    for i in range(NUMBER_OF_TESTS):
+        N, system = generate_random_matrix()
+        bh_ratio = np.random.uniform()
+        interactions = compute_interaction_barnes_hut(system, bh_ratio)
+        helper_test_interaction(interactions, N)
 
 def test_calculate_feature_velocities():
     r"""

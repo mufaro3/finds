@@ -1,7 +1,9 @@
+import warnings
 import numpy as np
 from numba import float64, njit, prange
 from numba.typed import Dict
 from numpy.typing import NDArray
+from dataclasses import dataclass
 
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
                         VOLUMETRIC_FLOW_RATE)
@@ -61,11 +63,6 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
     tails = pos - delta
 
     return rejoin(heads, tails)
-
-
-@njit
-def barnes_hut_simplify(fish: NDArray, other_fish: NDArray, bh_ratio: float):
-    return other_fish
 
 
 @njit
@@ -139,25 +136,157 @@ def calculate_fish_interaction(
     back_back  = calculate_feature_interaction(fish_back, other_back)
     back_interaction = back_front - back_back
 
-    return front_interaction, back_interaction
+    return rejoin(front_interaction, back_interaction)
+
 
 @dataclass
 class OctreeNode:
     center: NDArray
-    size: float
+    side_length: float
+    children: list["OctreeNode"]
     data: NDArray = None
-    children: list["OctreeNode"] = field(default_factory=list)
+    front_pos: NDArray = None
+    back_pos: NDArray = None
     is_leaf: bool = True
+    external: bool = False
+
+    def __init__(self, center: NDArray, side_length: float):
+        self.children = [None]*8
+        self.center = center
+        self.side_length = side_length
+
+    def calculate_quadrant(self, position: NDArray) -> NDArray:
+        quadrant = 0
+        for i in range(3):
+            if position[i] > self.center[i]:
+                quadrant += 2 ** i
+        return quadrant
+
+    def calculate_child_center(self, quadrant: int) -> NDArray:
+        offset_length = self.side_length / 4
+        offset = np.zeros(3)
+        for i in range(3):
+            if quadrant & (2 ** i):
+                offset[i] = offset_length
+            else:
+                offset[i] = -offset_length
+        return self.center + offset
+
+    def insert_into_children(self, fish: NDArray):
+        quadrant = self.calculate_quadrant(fish[0:3])
+        child = self.children[quadrant]
+
+        if self.children[quadrant] is None:
+            self.children[quadrant] = OctreeNode(
+                center = self.calculate_child_center(quadrant),
+                side_length = self.side_length / 2
+            )
+
+        self.children[quadrant].insert_data(fish)
+
+    def insert_data(self, fish: NDArray):
+        if self.is_leaf:
+            # this node is free
+            if self.data is None:
+                self.data = fish
+                return
+            else:
+                # we have a collision, so we need to subdivide
+                old_data = self.data
+                new_data = (old_data + fish) / 2
+
+                self.data = new_data
+                self.insert_into_children(old_data)
+                self.insert_into_children(fish)
+
+                self.is_leaf = False
+        else:
+            self.insert_into_children(fish)
+
+    def calculate_feature_positions(self):
+
+        if self.data is not None:
+            feature_pos = calculate_feature_positions(self.data)
+            front, back = split(feature_pos)
+            self.front_pos = front
+            self.back_pos = back
+
+        if not self.is_leaf:
+            for quadrant in range(8):
+                if self.children[quadrant] is not None:
+                    self.children[quadrant].calculate_feature_positions()
+
+    def compute_interaction(self,
+            fish_pos: NDArray,
+            fish_front: NDArray,
+            fish_back: NDArray,
+            minimum_ratio: float) -> NDArray:
+
+        if self.data is None:
+            return np.zeros(6)
+
+        # this is a leaf, so automatically calculate
+        if self.is_leaf:
+            # this is the fish being calculated, so ignore it
+            if np.allclose(self.data[:3], fish_pos):
+                return np.zeros(6)
+            return calculate_fish_interaction(
+                fish_front, fish_back,
+                self.front_pos, self.back_pos)
+
+        # determine whether or not to calculate on this aggregate
+        distance = np.linalg.norm(fish_pos - self.center)
+        if np.isclose(distance, 0):
+            distance += 0.01
+            warnings.warn("Fish is located at the same position as the center")
+
+        ratio = self.side_length / distance
+        if ratio < minimum_ratio:
+            return calculate_fish_interaction(
+                fish_front, fish_back,
+                self.front_pos, self.back_pos
+            )
+        else:
+            total_interaction = np.zeros(6)
+            for quadrant in range(8):
+                if self.children[quadrant] is not None:
+                    total_interaction += \
+                        self.children[quadrant].compute_interaction(
+                            fish_pos, fish_front,
+                            fish_back, minimum_ratio
+                        )
+            return total_interaction
+
 
 def build_octree(system: NDArray) -> OctreeNode:
     r"""
     Builds the Barnes-Hut Octree.
-    """
-    pass
 
-# TODO: finish description
-def traverse_octree():
-    pass
+    :param system: The system matrix.
+    :type  system: NDArray
+
+    :rtype: OctreeNode
+    """
+    positions, _ = split(system)
+
+    mins = np.min(positions, axis=0)
+    maxs = np.max(positions, axis=0)
+
+    # avoid boundary issues
+    octree = OctreeNode(
+        side_length = np.max(maxs - mins) * 1.001,
+        center = (mins + maxs) / 2
+    )
+
+    # add the fish to the tree
+    for fish in system:
+        octree.insert_data(fish)
+
+    # compute the front and back positions
+    octree.calculate_feature_positions()
+
+    return octree
+
 
 def compute_interaction_barnes_hut(
         system: NDArray, bh_ratio: float) -> NDArray:
@@ -230,18 +359,18 @@ def compute_interaction_barnes_hut(
     """
     N = system.shape[0]
     octree = build_octree(system)
+    feature_positions = calculate_feature_positions(system)
     interactions = np.zeros((N,6))
 
     for i in range(N):
-        front_interaction_total = np.zeros(3)
-        back_interaction_total = np.zeroes(3)
+        fish_pos, _ = split(system[i])
+        fish_front, fish_back = split(feature_positions[i])
+        interactions[i] = \
+            octree.compute_interaction(
+                fish_pos, fish_front, fish_back, bh_ratio)
 
-        # traverse the octree
+    return interactions
 
-        interactions[i] = rejoin(
-            front_interaction_total,
-            back_interaction_total
-        )
 
 @njit(parallel=True)
 def compute_interaction_pairwise(system: NDArray) -> NDArray:
@@ -305,24 +434,18 @@ def compute_interaction_pairwise(system: NDArray) -> NDArray:
         fish_features = feature_positions[i]
         fish_front, fish_back = split(fish_features)
 
-        front_interaction_total = np.zeros(3)
-        back_interaction_total = np.zeros(3)
+        interaction_total = np.zeros(6)
 
         for j in range(N):
             if i == j:
                 continue
 
             other_front, other_back = split(feature_positions[j])
-            front_interaction, back_interaction = \
-                calculate_interaction(fish_front, fish_back,
-                                      other_front, other_back)
+            interaction_total += calculate_fish_interaction(
+                fish_front, fish_back,
+                other_front, other_back)
 
-            front_interaction_total += front_interaction
-            back_interaction_total += back_interaction
-
-        interactions[i] = rejoin(
-            front_interaction_total,
-            back_interaction_total)
+        interactions[i] = interaction_total
 
     return interactions
 

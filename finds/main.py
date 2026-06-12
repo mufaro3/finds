@@ -6,17 +6,19 @@ from .simulation import perform_simulation
 def main():
     print('Generating system..')
     system = generate_system(
-        distribution='lattice',
+        distribution='random',
         orientation='aligned',
-        size=20,
-        spacing=5.0
+        n_random=200,
+        bounds=[10, 10, 10]
     )
     print(f'System size: N={system.shape[0]}')
 
     output_dir = perform_simulation(
         system,
         time_step=0.1,
-        end_time=50
+        end_time=10,
+        use_barnes_hut=True,
+        bh_ratio=0.5
     )
 
     print('Generating figures..')

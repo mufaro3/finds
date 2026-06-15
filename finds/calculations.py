@@ -4,6 +4,7 @@ from numba import float64, njit, prange
 from numba.typed import Dict
 from numpy.typing import NDArray
 from dataclasses import dataclass
+from tqdm import trange, tqdm
 
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
                         VOLUMETRIC_FLOW_RATE)
@@ -237,7 +238,7 @@ class OctreeNode:
         # determine whether or not to calculate on this aggregate
         distance = np.linalg.norm(fish_pos - self.center)
         if np.isclose(distance, 0):
-            distance += 0.01
+            distance = 0.01
             warnings.warn("Fish is located at the same position as the center")
 
         ratio = self.side_length / distance
@@ -289,7 +290,8 @@ def build_octree(system: NDArray) -> OctreeNode:
 
 
 def compute_interaction_barnes_hut(
-        system: NDArray, bh_ratio: float) -> NDArray:
+        system: NDArray, bh_ratio: float,
+        show_progress: bool = False) -> NDArray:
     r"""
     Computes the interaction vectors using the Barnes-Hut approximation
     :cite:`barnes1986bh`.
@@ -362,7 +364,7 @@ def compute_interaction_barnes_hut(
     feature_positions = calculate_feature_positions(system)
     interactions = np.zeros((N,6))
 
-    for i in range(N):
+    for i in trange(N, disable = not show_progress):
         fish_pos, _ = split(system[i])
         fish_front, fish_back = split(feature_positions[i])
         interactions[i] = \
@@ -453,7 +455,8 @@ def compute_interaction_pairwise(system: NDArray) -> NDArray:
 def calculate_feature_velocities(
         system: NDArray,
         use_barnes_hut: bool,
-        bh_ratio: float) -> NDArray:
+        bh_ratio: float,
+        show_progress: bool = False) -> NDArray:
     r"""
     Calculates the velocities for the head and tail of all fish in a system.
 
@@ -504,7 +507,7 @@ def calculate_feature_velocities(
 
     interaction = None
     if use_barnes_hut:
-        interaction = compute_interaction_barnes_hut(system, bh_ratio)
+        interaction = compute_interaction_barnes_hut(system, bh_ratio, show_progress)
     else:
         interaction = compute_interaction_pairwise(system)
 
@@ -519,7 +522,8 @@ def calculate_feature_velocities(
 def calculate_system_derivative(
         system: NDArray,
         use_barnes_hut: bool,
-        bh_ratio: float) -> NDArray:
+        bh_ratio: float,
+        show_progress: bool = False) -> NDArray:
     r"""
     Computes the derivative of the system matrix.
 
@@ -575,7 +579,7 @@ def calculate_system_derivative(
     N = system.shape[0]
     _, orientations     = split(system)
     feature_velocities  = calculate_feature_velocities(
-        system, use_barnes_hut, bh_ratio)
+        system, use_barnes_hut, bh_ratio, show_progress)
     front_vel, back_vel = split(feature_velocities)
     translational_deriv = (front_vel + back_vel) / 2
 

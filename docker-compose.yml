@@ -5,6 +5,8 @@ services:
       - .:/finds
     working_dir: /finds
     mem_limit: 4g
+    environment:
+      - PYTHONUNBUFFERED=1
     stdin_open: true
     tty: true
 
@@ -30,5 +32,5 @@ services:
       from finds.calculations import *;
       from finds.simulation import *;
       from test.common import *;
-      print('F.I.N.D.S REPL loaded')
+      print('FInDS REPL loaded')
       "

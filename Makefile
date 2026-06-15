@@ -41,7 +41,7 @@ run:
 	@docker compose up main
 
 dev:
-	@docker compose up --build main
+	@docker compose run --rm main
 
 build:
 	@docker compose build
@@ -71,7 +71,7 @@ test:
 lint:
 	@echo "Running flake8..."
 	@docker compose run --rm main \
-		flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/
+		python3 -m flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/
 
 	@echo "Checking import order (isort)..."
 	@docker compose run --rm main isort finds/

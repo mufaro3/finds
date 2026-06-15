@@ -1,8 +1,8 @@
-import gc
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import override
+from tqdm import trange, tqdm
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -23,19 +23,15 @@ class ProcessingModule(ABC):
     """
     output_dir: Path
 
-    def __init__(self, output_dir: Path):
+    def begin(self, output_dir: Path):
         """
+        Instructs the processing module to initialize such that it can
+        produce data.
+
         :param output_dir: The output directory to write to.
         :type  output_dir: Path
         """
         self.output_dir = output_dir
-
-    def begin(self) -> None:
-        """
-        Instructs the processing module to initialize such that it can
-        produce data.
-        """
-        pass
 
     @abstractmethod
     def append_state(self, system: NDArray, time: float) -> None:
@@ -77,9 +73,11 @@ class AnimationGenerator(ProcessingModule):
     particle_color: str = 'tab:cyan'
     orientation_color: str = 'tab:orange'
 
-    @override
-    def __init__(self, output_dir: Path):
-        super().__init__(output_dir)
+    def __init__(self,
+                 fps: int = 60,
+                 max_bounds: ArrayLike = [ 100, 100, 100 ]):
+        self.fps = fps
+        self.max_bounds = np.asarray(max_bounds, dtype=float)
 
     def set_limits(self):
         xmin, ymin, zmin = -self.max_bounds
@@ -96,19 +94,16 @@ class AnimationGenerator(ProcessingModule):
         ])
 
     @override
-    def begin(self,
-              fps: int = 30,
-              max_bounds: ArrayLike = [ 100, 100, 100 ],
-              show_debug_text: bool = True,
-              show_heads_and_tails: bool = False) -> None:
+    def begin(self, output_dir: Path) -> None:
         r"""
         Sets up the MatPlotLib animation for rendering.
 
         :type max_bounds: ArrayLike
         """
+        super().begin(output_dir)
+
         self.fig = plt.figure(figsize=self.figsize)
         self.ax = self.fig.add_subplot(projection='3d')
-        self.max_bounds = np.asarray(max_bounds, dtype=float)
         self.set_limits()
         self.ax.view_init(elev=20, azim=45)
 
@@ -129,7 +124,7 @@ class AnimationGenerator(ProcessingModule):
 
         self.title_text = self.ax.set_title('')
         self.output_filename = self.output_dir / ANIMATION_FILE_NAME
-        self.writer = FFMpegWriter(fps)
+        self.writer = FFMpegWriter(self.fps)
         self.writer.setup(self.fig, str(self.output_filename), dpi=100)
 
     @override
@@ -173,11 +168,12 @@ class DensityAnimationGenerator(ProcessingModule):
     max_radius: float = 50.0  # adjust or auto-compute if you prefer
 
     @override
-    def __init__(self, output_dir: Path):
-        super().__init__(output_dir)
+    def __init__(self, fps: int = 60):
+        self.fps = fps
 
     @override
-    def begin(self, fps: int = 30) -> None:
+    def begin(self, output_dir: Path) -> None:
+        self.output_dir = output_dir
         self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.bins = np.linspace(0, self.max_radius, self.n_bins + 1)
         bin_centers = 0.5 * (self.bins[:-1] + self.bins[1:])
@@ -194,7 +190,7 @@ class DensityAnimationGenerator(ProcessingModule):
 
         self.output_filename = self.output_dir / \
             RADIAL_DENSITY_DISTRIBUTION_FILE_NAME
-        self.writer = plt.matplotlib.animation.FFMpegWriter(fps=10)
+        self.writer = plt.matplotlib.animation.FFMpegWriter(fps=self.fps)
         self.writer.setup(self.fig, str(self.output_filename), dpi=100)
 
     @override
@@ -228,11 +224,14 @@ class DensityAnimationGenerator(ProcessingModule):
               f'{self.output_filename}')
 
 
+DEFAULT_MODULES_LIST=[
+    AnimationGenerator(),
+    DensityAnimationGenerator()
+]
+
 def process_data(
         output_dir: Path,
-        generate_animation: bool=True,
-        generate_density_animation: bool=True,
-        debug_print: bool=True) -> None:
+        modules: list[ProcessingModule] = DEFAULT_MODULES_LIST) -> None:
     r"""
     Processes the data stored within the output directory. Each state and
     simulation time are read in sequentially, one at a time, so the data is
@@ -246,46 +245,26 @@ def process_data(
       simulation.
     :type  generate_animation: bool
     """
+    tqdm.write('[Postprocessing]')
+
     datafile = output_dir / DATA_FILE_NAME
     io = init_input_filestream(datafile, cache_limit=1024**2)
 
-    modules: list[ProcessingModule] = []
-
-    if debug_print:
-        print('Starting postprocessing..')
-
-    if generate_animation:
-        modules.append(AnimationGenerator(output_dir))
-
-    if generate_density_animation:
-        modules.append(DensityAnimationGenerator(output_dir))
-
     for module in modules:
-        module.begin()
+        module.begin(output_dir)
 
     try:
         total_iterations = len(io.time_dataset)
         interval = max(total_iterations // 10, 1)
 
-
-        for i in range(total_iterations):
-
-            # debug printing
-            if i % interval == 0 and debug_print:
-                fraction = i / float(total_iterations)
-                print(f'{fraction * 100:.0f}% - '+
-                      f'Iteration {i}/{total_iterations}')
-
+        for i in trange(total_iterations):
             system = io.state_dataset[i]
             time = io.time_dataset[i]
 
             for module in modules:
                 module.append_state(system, time)
 
-            gc.collect()
-
     finally:
-
         for module in modules:
             module.end()
 

@@ -1,5 +1,5 @@
-- Implement Barnes-Hut simplification
 - Prune unused functions
 - Re-lint and rewrite documentation for all files
 - Add tests for all files
-- Solve testing bugs for generation schemas
+- Fix Barnes-Hut simplification
+- Implement in a progress bar and estimated time calculation

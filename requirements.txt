@@ -1,6 +1,9 @@
 # standard
 dataclasses
 
+# progress bars
+tqdm
+
 # math/plotting
 scipy
 numpy

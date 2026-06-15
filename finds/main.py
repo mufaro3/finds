@@ -1,32 +1,31 @@
 from .fish import generate_system
 from .postprocessing import process_data
 from .simulation import perform_simulation
+from tqdm import tqdm
 
+import numpy as np
 
 def main():
-    print('Generating system..')
     system = generate_system(
-        distribution='random',
+        distribution='lattice',
         orientation='aligned',
-        n_random=200,
-        bounds=[10, 10, 10]
+        angle_delta=np.pi/2,
+        size=6,
+        spacing=5,
+        debug_print=True
     )
-    print(f'System size: N={system.shape[0]}')
 
     output_dir = perform_simulation(
         system,
-        time_step=0.1,
-        end_time=10,
+        time_step=0.01,
+        end_time=20,
         use_barnes_hut=True,
-        bh_ratio=0.5
+        bh_ratio=0.9,
+        print_iterations=True,
+        print_each_fish=False
     )
 
-    print('Generating figures..')
-    process_data(
-        output_dir,
-        generate_animation=True,
-        generate_density_animation=True
-    )
+    process_data(output_dir)
 
 
 if __name__ == '__main__':

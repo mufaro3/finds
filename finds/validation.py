@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+import argparse
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -12,7 +13,11 @@ from .simulation import perform_simulation
 from .util import rejoin, split
 
 
-def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
+USE_BARNES_HUT=False
+BARNES_HUT_RATIO=0.5
+
+def coplanar_simulation(dtheta: float, dx: float, dy: float,
+                        use_barnes_hut: bool, barnes_hut_ratio: bool) -> NDArray:
     r"""
     Produces a coplanar simulation based on the parameters :math:`\Delta
     \theta`, :math:`\Delta x`, and :math:`\Delta y` as seen in figure 8 of
@@ -51,7 +56,10 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
         initial_state,
         time_step=0.01,
         end_time=20,
-        debug_print=False
+        print_iterations=True,
+        print_each_fish=False,
+        use_barnes_hut=use_barnes_hut,
+        bh_ratio=barnes_hut_ratio
     )
 
     fs = init_input_filestream(output_dir / DATA_FILE_NAME)
@@ -157,7 +165,7 @@ def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
     return system
 
 
-def build_cylindrical_path_plot(output_dir: Path) -> None:
+def build_cylindrical_path_plot(output_dir: Path, use_barnes_hut, barnes_hut_ratio) -> None:
     """
     Reproduces figure 16 of :cite:t:`mabrouk2025`.
 
@@ -176,7 +184,10 @@ def build_cylindrical_path_plot(output_dir: Path) -> None:
         initial_state,
         time_step=0.01,
         end_time=20,
-        debug_print=False
+        print_iterations=True,
+        print_each_fish=False,
+        use_barnes_hut=use_barnes_hut,
+        bh_ratio=barnes_hut_ratio
     )
 
     fs = init_input_filestream(test_output_dir / DATA_FILE_NAME)
@@ -226,25 +237,29 @@ def build_cylindrical_path_plot(output_dir: Path) -> None:
     print(f'Saved validation figure 2025-16 to {output_file}')
 
 
-def validation_main() -> None:
+def validation_main(use_barnes_hut, barnes_hut_ratio) -> None:
     """
     Reproduces the figure 8 of :cite:t:`mabrouk2025` and figure 16 of
     :cite:t:`mabrouk2024`.
     """
     output_dir = Path(f'output/{VALIDATION_OUTPUT_PATH}')
 
+
+    csim = lambda dtheta, dx, dy: coplanar_simulation(
+        dtheta, dx, dy, use_barnes_hut, barnes_hut_ratio)
+
     # paper 1 figure 8
     build_quadra_plot(
-        top_right    = coplanar_simulation(dtheta=0, dx=0.5, dy=0),
-        top_left     = coplanar_simulation(dtheta=0, dx=5,   dy=0.5),
-        bottom_right = coplanar_simulation(dtheta=0, dx=1,   dy=1),
-        bottom_left  = coplanar_simulation(dtheta=0, dx=0.5, dy=1),
+        top_right    = csim(dtheta=0, dx=0.5, dy=0),
+        top_left     = csim(dtheta=0, dx=5,   dy=0.5),
+        bottom_right = csim(dtheta=0, dx=1,   dy=1),
+        bottom_left  = csim(dtheta=0, dx=0.5, dy=1),
         output_dir   = output_dir
     )
 
     # paper 2 figure 16
-    build_cylindrical_path_plot(output_dir)
+    build_cylindrical_path_plot(output_dir, use_barnes_hut, barnes_hut_ratio)
 
 
 if __name__ == '__main__':
-    validation_main()
+    validation_main(USE_BARNES_HUT, BARNES_HUT_RATIO)

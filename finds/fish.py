@@ -1,6 +1,7 @@
 import numpy as np
 from numba import njit
 from numpy.typing import ArrayLike, NDArray
+from tqdm import tqdm
 
 from .util import rejoin, split
 
@@ -217,16 +218,17 @@ def generate_system(
         spacing: float = 1.0,
         n_random: int = 2,
         bounds: ArrayLike = [10, 10, 10],
-        angle_delta: float = 0) -> NDArray:
+        angle_delta: float = 0,
+        debug_print: bool = True) -> NDArray:
     r"""
     Generates a system of fish distributed according to :code:`distribution`:
     either spherically, as a lattice, or randomly within a box.
 
     :param distribution: How the fish are distributed.
-    :type  distribution: 'lattice' | 'sphere' | 'random' | 'square' | 'circle'
+    :type  distribution: 'random' | 'lattice' | 'sphere' |  'square' | 'circle'
 
     :param orientation: How the fish are oriented.
-    :type  orientation: 'aligned' | 'radial outward' | 'radial inward'
+    :type  orientation: 'random' | 'aligned' | 'radial outward' | 'radial inward'
 
     :param n_random: The number of fish, provided that this is a random
       distribution. For all other distributions, the :code:`size` parameter is
@@ -274,7 +276,9 @@ def generate_system(
 
     N = positions.shape[0]
 
-    if orientation == 'aligned':
+    if orientation == 'random':
+        orientations = np.random.default_rng().uniform(size=(N,3))
+    elif orientation == 'aligned':
         orientations = \
             np.tile(np.array([1.0, 0.0, 0.0], dtype=np.float64), (N, 1))
     elif orientation == 'radial outward':
@@ -283,7 +287,7 @@ def generate_system(
         orientations = -positions.copy()
     else:
         raise ValueError(f'Invalid orientation parameter \"{orientation}\". '+
-                         'Must be one of: \"aligned\", \"radial outward\", '+
+                         'Must be one of: \"random\", \"aligned\", \"radial outward\", '+
                          '\"radial inward\".')
 
     if angle_delta != 0:
@@ -295,5 +299,9 @@ def generate_system(
     orientations[zero_mask] = np.array([1.0, 0.0, 0.0])
 
     system_raw = rejoin(positions, orientations)
+
+    if debug_print:
+        tqdm.write(f"Generated \"{distribution}\" system with "+\
+                   f"\"{orientation}\" orientation, N={N}.")
 
     return normalize_orientation_vectors(system_raw)

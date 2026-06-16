@@ -9,8 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
 from numpy.typing import ArrayLike, NDArray
 
-from .constants import (ANIMATION_FILE_NAME, DATA_FILE_NAME,
-                        RADIAL_DENSITY_DISTRIBUTION_FILE_NAME)
+from .constants import DATA_FILE_NAME
 from .io import close_filestream, init_input_filestream
 from .util import split
 
@@ -123,7 +122,7 @@ class AnimationGenerator(ProcessingModule):
             color=self.orientation_color)
 
         self.title_text = self.ax.set_title('')
-        self.output_filename = self.output_dir / ANIMATION_FILE_NAME
+        self.output_filename = self.output_dir / '3d_animation.mp4'
         self.writer = FFMpegWriter(self.fps)
         self.writer.setup(self.fig, str(self.output_filename), dpi=100)
 
@@ -188,8 +187,8 @@ class DensityAnimationGenerator(ProcessingModule):
         self.ax.set_ylabel("Count")
         self.title_text = self.ax.set_title("Radial Density Distribution")
 
-        self.output_filename = self.output_dir / \
-            RADIAL_DENSITY_DISTRIBUTION_FILE_NAME
+        self.output_filename = self.output_dir /\
+            'radial_density_evolution.mp4'
         self.writer = plt.matplotlib.animation.FFMpegWriter(fps=self.fps)
         self.writer.setup(self.fig, str(self.output_filename), dpi=100)
 
@@ -245,8 +244,6 @@ def process_data(
       simulation.
     :type  generate_animation: bool
     """
-    tqdm.write('[Postprocessing]')
-
     datafile = output_dir / DATA_FILE_NAME
     io = init_input_filestream(datafile, cache_limit=1024**2)
 
@@ -257,7 +254,7 @@ def process_data(
         total_iterations = len(io.time_dataset)
         interval = max(total_iterations // 10, 1)
 
-        for i in trange(total_iterations):
+        for i in trange(total_iterations, desc='Postprocessing'):
             system = io.state_dataset[i]
             time = io.time_dataset[i]
 

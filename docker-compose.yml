@@ -25,12 +25,12 @@ services:
 
   repl:
     <<: *base
-    command: >
-      python3 -i -c "
+    command: |
+      python3 -i <<'EOF'
       from finds import *;
       from finds.fish import *;
       from finds.calculations import *;
       from finds.simulation import *;
       from test.common import *;
-      print('FInDS REPL loaded')
-      "
+      print("FInDS REPL loaded");
+      EOF

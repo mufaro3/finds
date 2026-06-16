@@ -47,6 +47,7 @@ def test_calculate_feature_positions():
         assert np.allclose(distances, FISH_LENGTH), \
             'Head and tail positions are not FISH_LENGTH apart.'
 
+
 def helper_test_interaction(interactions: NDArray, N: int):
     r"""
     For an input shape of :math:`(N,6)`:
@@ -96,6 +97,7 @@ def test_compute_interaction_barnes_hut():
         bh_ratio = np.random.uniform()
         interactions = compute_interaction_barnes_hut(system, bh_ratio)
         helper_test_interaction(interactions, N)
+
 
 def test_calculate_feature_velocities():
     r"""

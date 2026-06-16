@@ -2,22 +2,27 @@ import shutil
 from pathlib import Path
 import argparse
 
+from tqdm import tqdm, trange
 import numpy as np
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
+import time
+from itertools import product, combinations
 
-from .constants import (DATA_FILE_NAME, VALIDATION_3D_GRAPH_PATH,
-                        VALIDATION_GRAPH_PATH, VALIDATION_OUTPUT_PATH)
+from .fish import generate_system
+from .constants import DATA_FILE_NAME, VALIDATION_OUTPUT_PATH
 from .io import close_filestream, init_input_filestream
 from .simulation import perform_simulation
 from .util import rejoin, split
-
+from .calculations import calculate_system_derivative, OctreeNode, \
+    build_octree
 
 USE_BARNES_HUT=False
 BARNES_HUT_RATIO=0.5
 
-def coplanar_simulation(dtheta: float, dx: float, dy: float,
-                        use_barnes_hut: bool, barnes_hut_ratio: bool) -> NDArray:
+def coplanar_simulation(
+        dtheta: float, dx: float, dy: float,
+        use_barnes_hut: bool, barnes_hut_ratio: bool) -> NDArray:
     r"""
     Produces a coplanar simulation based on the parameters :math:`\Delta
     \theta`, :math:`\Delta x`, and :math:`\Delta y` as seen in figure 8 of
@@ -56,10 +61,11 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float,
         initial_state,
         time_step=0.01,
         end_time=20,
-        print_iterations=True,
+        print_iterations=False,
         print_each_fish=False,
         use_barnes_hut=use_barnes_hut,
-        bh_ratio=barnes_hut_ratio
+        bh_ratio=barnes_hut_ratio,
+        print_file_output=False
     )
 
     fs = init_input_filestream(output_dir / DATA_FILE_NAME)
@@ -131,7 +137,7 @@ def build_quadra_plot(
 
     plt.tight_layout()
 
-    output_filepath = output_dir  / VALIDATION_GRAPH_PATH
+    output_filepath = output_dir  / 'v-2026-8.png'
     output_dir.mkdir(parents=True, exist_ok=True)
 
     plt.savefig(
@@ -165,7 +171,8 @@ def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
     return system
 
 
-def build_cylindrical_path_plot(output_dir: Path, use_barnes_hut, barnes_hut_ratio) -> None:
+def build_cylindrical_path_plot(
+        output_dir: Path, use_barnes_hut, barnes_hut_ratio) -> None:
     """
     Reproduces figure 16 of :cite:t:`mabrouk2025`.
 
@@ -184,10 +191,11 @@ def build_cylindrical_path_plot(output_dir: Path, use_barnes_hut, barnes_hut_rat
         initial_state,
         time_step=0.01,
         end_time=20,
-        print_iterations=True,
+        print_iterations=False,
         print_each_fish=False,
         use_barnes_hut=use_barnes_hut,
-        bh_ratio=barnes_hut_ratio
+        bh_ratio=barnes_hut_ratio,
+        print_file_output=False
     )
 
     fs = init_input_filestream(test_output_dir / DATA_FILE_NAME)
@@ -231,13 +239,213 @@ def build_cylindrical_path_plot(output_dir: Path, use_barnes_hut, barnes_hut_rat
 
     plt.tight_layout()
 
-    output_file = output_dir / VALIDATION_3D_GRAPH_PATH
+    output_file = output_dir / 'v-2025-16.png'
     plt.savefig(output_file, dpi=300)
     plt.close(fig)
     print(f'Saved validation figure 2025-16 to {output_file}')
 
 
-def validation_main(use_barnes_hut, barnes_hut_ratio) -> None:
+def draw_octree(root: OctreeNode, ax=None, draw_data=True, max_depth=None):
+    """
+    Draw an Octree in 3D.
+    """
+
+    if ax is None:
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(111, projection='3d')
+
+    def draw_cube(center, side_length):
+        """
+        Draw a wireframe cube.
+        """
+        half = side_length / 2
+
+        # cube corners
+        corners = np.array([
+            center + np.array([dx, dy, dz]) * half
+            for dx, dy, dz in product([-1, 1], repeat=3)
+        ])
+
+        # connect edges
+        for start, end in combinations(corners, 2):
+            diff = np.abs(start - end)
+
+            # exactly one coordinate differs
+            if np.sum(diff > 1e-12) == 1:
+                ax.plot(
+                    [start[0], end[0]],
+                    [start[1], end[1]],
+                    [start[2], end[2]]
+                )
+
+    def recurse(node, depth=0):
+        if node is None:
+            return
+
+        if max_depth is not None and depth > max_depth:
+            return
+
+        # draw node cube
+        draw_cube(node.center, node.side_length)
+
+        # draw fish position
+        if draw_data and node.data is not None:
+            pos = node.data[:3]
+            ax.scatter(
+                pos[0], pos[1], pos[2],
+                s=20
+            )
+
+        # recurse children
+        if not node.is_leaf:
+            for child in node.children:
+                if child is not None:
+                    recurse(child, depth + 1)
+
+    recurse(root)
+
+    # equal aspect ratio
+    limits = np.array([
+        ax.get_xlim3d(),
+        ax.get_ylim3d(),
+        ax.get_zlim3d()
+    ])
+
+    center = limits.mean(axis=1)
+    radius = np.max(limits[:, 1] - limits[:, 0]) / 2
+
+    ax.set_xlim(center[0] - radius, center[0] + radius)
+    ax.set_ylim(center[1] - radius, center[1] + radius)
+    ax.set_zlim(center[2] - radius, center[2] + radius)
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+
+    return ax
+
+
+def generate_octree_figure(output_dir: Path) -> None:
+    points = np.array([
+        [-1, -1, -1],
+        [-1,  1, -1],
+        [-1, -1,  1],
+        [1,  -1, -1],
+        [1,   1, -1],
+        [1,  -1,  1],
+        [1,   1,  1]
+    ])
+
+    data = np.hstack((points, np.tile(np.zeros(3), (points.shape[0], 1))))
+    octree = build_octree(data)
+    ax = draw_octree(octree)
+    plt.savefig(output_dir / 'example_octree.png',
+                dpi=300, bbox_inches="tight")
+
+
+def generate_comparison_figure(output_dir: Path) -> None:
+    """
+    Generate timing comparison between brute-force and Barnes-Hut.
+    """
+
+    output_dir.mkdir(exist_ok=True, parents=True)
+
+    def perform_time_test(n: int,
+                          bh_ratio: float | None = None,
+                          repeats: int = 3) -> float:
+        """
+        Time a single derivative calculation.
+        """
+
+        example_system = generate_system(
+            distribution='random',
+            orientation='random',
+            n_random=n,
+            debug_print=False
+        )
+
+        use_barnes_hut = bh_ratio is not None
+
+        # warmup to exclude numba compilation
+        calculate_system_derivative(
+            example_system,
+            use_barnes_hut,
+            bh_ratio if bh_ratio is not None else 0.0
+        )
+
+        times = []
+
+        for _ in range(repeats):
+            start_time = time.perf_counter()
+
+            calculate_system_derivative(
+                example_system,
+                use_barnes_hut,
+                bh_ratio if bh_ratio is not None else 0.0
+            )
+
+            end_time = time.perf_counter()
+            times.append(end_time - start_time)
+
+        return np.mean(times)
+
+    # system sizes
+    nvalues = np.flip(np.arange(25, 500, step=25))
+
+    # Barnes-Hut opening angles
+    bh_ratios = np.arange(0.25, 1.0, step=0.25)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # brute-force baseline
+    brute_force_times = []
+
+    for n in tqdm(nvalues, desc='Brute Force Benchmark'):
+        brute_force_times.append(
+            perform_time_test(n, bh_ratio=None)
+        )
+
+    ax.plot(
+        nvalues,
+        brute_force_times,
+        label="Brute force",
+        linewidth=3
+    )
+
+    # Barnes-Hut curves
+    for bh_ratio in tqdm(bh_ratios, leave=False, desc='Barnes-Hut'):
+        bh_times = []
+
+        for n in tqdm(nvalues, leave=False, desc=f'BH Ratio={bh_ratio:.2f}'):
+            bh_times.append(perform_time_test(n, bh_ratio=bh_ratio))
+
+        ax.plot(
+            nvalues,
+            bh_times,
+            label=f"BH ratio={bh_ratio:.1f}"
+        )
+
+    ax.set_xlabel("Number of fish (N)")
+    ax.set_ylabel("Runtime (seconds)")
+    ax.set_title("Barnes–Hut vs Brute Force Runtime")
+    ax.legend()
+    ax.grid(True)
+
+    output_path = output_dir / "barnes_hut_comparison.png"
+
+    plt.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight"
+    )
+
+    plt.close(fig)
+
+    print(f"Saved comparison figure to {output_path}")
+
+def validation_main(
+        use_barnes_hut: bool,
+        barnes_hut_ratio: bool) -> None:
     """
     Reproduces the figure 8 of :cite:t:`mabrouk2025` and figure 16 of
     :cite:t:`mabrouk2024`.
@@ -249,6 +457,7 @@ def validation_main(use_barnes_hut, barnes_hut_ratio) -> None:
         dtheta, dx, dy, use_barnes_hut, barnes_hut_ratio)
 
     # paper 1 figure 8
+    """
     build_quadra_plot(
         top_right    = csim(dtheta=0, dx=0.5, dy=0),
         top_left     = csim(dtheta=0, dx=5,   dy=0.5),
@@ -256,9 +465,12 @@ def validation_main(use_barnes_hut, barnes_hut_ratio) -> None:
         bottom_left  = csim(dtheta=0, dx=0.5, dy=1),
         output_dir   = output_dir
     )
+    """
 
     # paper 2 figure 16
-    build_cylindrical_path_plot(output_dir, use_barnes_hut, barnes_hut_ratio)
+    #build_cylindrical_path_plot(output_dir, use_barnes_hut, barnes_hut_ratio)
+    #generate_octree_figure(output_dir)
+    generate_comparison_figure(output_dir)
 
 
 if __name__ == '__main__':

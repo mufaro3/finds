@@ -8,24 +8,24 @@ import numpy as np
 def main():
     system = generate_system(
         distribution='lattice',
-        orientation='aligned',
-        angle_delta=np.pi/2,
-        size=6,
-        spacing=5,
+        orientation='radial inward',
+        angle_delta=0,
+        size=100,
+        spacing=25,
         debug_print=True
     )
 
     output_dir = perform_simulation(
         system,
         time_step=0.01,
-        end_time=20,
+        end_time=5,
         use_barnes_hut=True,
-        bh_ratio=0.9,
+        bh_ratio=0.5,
         print_iterations=True,
-        print_each_fish=False
+        print_each_fish=True
     )
 
-    process_data(output_dir)
+    # process_data(output_dir)
 
 
 if __name__ == '__main__':

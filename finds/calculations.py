@@ -6,139 +6,10 @@ from numpy.typing import NDArray
 from dataclasses import dataclass
 from tqdm import trange, tqdm
 
+from .fish import calculate_feature_positions
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
                         VOLUMETRIC_FLOW_RATE)
 from .util import rejoin, split
-
-@njit
-def calculate_feature_positions(system: NDArray) -> NDArray:
-    r"""
-    Computes the front and back positions for each fish in the
-    system, returned in the following format:
-
-    .. math::
-
-       \mathbf{F} = \begin{bmatrix}
-       x_{f1} & y_{f1} & z_{f1} & x_{b1} & y_{b1} & z_{b1} \\
-       x_{f2} & y_{f2} & z_{f2} & x_{b2} & y_{b2} & z_{b2} \\
-       \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-       x_{fN} & y_{fN} & z_{fN} & x_{bN} & y_{bN} & z_{bN}
-       \end{bmatrix}
-
-
-    :param system: The system.
-    :type system: NDArray
-
-    :returns: The matrix storing the head and tail positions for
-      each fish.
-    :rtype: NDArray
-
-    The position of the front :math:`\mathbf{x}_{f}` and the position
-    of the back :math:`\mathbf{x}_{b}` for each fish are computed using
-    the center-of-mass position :math:`\mathbf{x}_c` and the orientation
-    :math:`\mathbf{n}` using the following formulas
-
-    .. math::
-        :nowrap:
-
-        \begin{align}
-         \mathbf{v}_f &= \mathbf{x}_c + \vec{\delta} \\
-         \mathbf{v}_b &= \mathbf{x}_c - \vec{\delta}
-        \end{align}
-
-    where
-
-    .. math::
-        :nowrap:
-
-        \begin{align}
-          \vec{\delta} = \frac{1}{2} \ell \mathbf{n}
-        \end{align}
-
-    is a half-length vector in the direction of the orientation.
-    """
-    pos, ori = split(system)
-
-    delta = ori * FISH_LENGTH / 2
-    heads = pos + delta
-    tails = pos - delta
-
-    return rejoin(heads, tails)
-
-
-@njit
-def calculate_feature_interaction(
-        feature_a_pos: NDArray, feature_b_pos: NDArray) -> NDArray:
-    r"""
-    Computes the individual interaction vector between feature
-    :math:`\alpha` of fish :math:`i` and feature :math:`\beta` of
-    fish :math:`j`, defined as the displacement between their positions
-    divided by the cube of its norm:
-
-    .. math::
-        \begin{align}
-        \mathbf{c}_{\alpha\beta} = \frac{\mathbf{r}_{\alpha\beta}}
-        {r_{\alpha\beta}^3}
-        \end{align}
-
-    where
-
-    .. math::
-        \begin{align}
-        \mathbf{r}_{\alpha\beta} = \mathbf{x}_{\alpha,i} -
-        \mathbf{x}_{\beta,j}.
-        \end{align}
-
-    :param feature_a_pos: The position of the first feature,
-      :math:`\mathbf{x}_{\alpha,i}`.
-    :type  feature_a_pos: NDArray
-
-    :param feature_b_pos: The position of the second feature,
-      :math:`\mathbf{x}_{\beta,j}`.
-    :type  feature_b_pos: NDArray
-
-    :returns: The interaction vector between features :math:`\alpha` and
-      :math:`\beta`, :math:`\mathbf{c}_{\alpha\beta}`.
-    :rtype: NDArray
-    """
-    if feature_a_pos.shape != (3,):
-        raise ValueError('Feature A position is not a 3-D Vector.')
-    if feature_b_pos.shape != (3,):
-        raise ValueError('Feature B position is not a 3-D Vector.')
-
-    displacement = feature_a_pos - feature_b_pos
-    result = displacement / (np.linalg.norm(displacement) ** 3)
-
-    return result
-
-
-@njit
-def calculate_fish_interaction(
-        fish_front:  NDArray,
-        fish_back:   NDArray,
-        other_front: NDArray,
-        other_back:  NDArray) -> NDArray:
-    """
-    Returns the front and back interaction vectors between two fish.
-
-    :type fish_front: NDArray
-    :type fish_back: NDArray
-    :type other_front: NDArray
-    :type other_back: NDArray
-    :rtype: NDArray
-    """
-    # front interactions
-    front_front = calculate_feature_interaction(fish_front, other_front)
-    front_back  = calculate_feature_interaction(fish_front, other_back)
-    front_interaction = front_front - front_back
-
-    # back interactions
-    back_front = calculate_feature_interaction(fish_back, other_front)
-    back_back  = calculate_feature_interaction(fish_back, other_back)
-    back_interaction = back_front - back_back
-
-    return rejoin(front_interaction, back_interaction)
-
 
 @dataclass
 class OctreeNode:
@@ -205,7 +76,6 @@ class OctreeNode:
             self.insert_into_children(fish)
 
     def calculate_feature_positions(self):
-
         if self.data is not None:
             feature_pos = calculate_feature_positions(self.data)
             front, back = split(feature_pos)
@@ -239,7 +109,8 @@ class OctreeNode:
         distance = np.linalg.norm(fish_pos - self.center)
         if np.isclose(distance, 0):
             distance = 0.01
-            warnings.warn("Fish is located at the same position as the center")
+            warnings.warn(f"Fish {fish_pos} is located at the same "+\
+                          f"position as the center {self.center}.")
 
         ratio = self.side_length / distance
         if ratio < minimum_ratio:
@@ -288,6 +159,96 @@ def build_octree(system: NDArray) -> OctreeNode:
 
     return octree
 
+@njit
+def calculate_feature_interaction(
+        feature_a_pos: NDArray, feature_b_pos: NDArray) -> NDArray:
+    r"""
+    Computes the individual interaction vector between feature
+    :math:`\alpha` of fish :math:`i` and feature :math:`\beta` of
+    fish :math:`j`, defined as the displacement between their positions
+    divided by the cube of its norm:
+
+    .. math::
+        \begin{align}
+        \mathbf{c}_{\alpha\beta} = \frac{\mathbf{r}_{\alpha\beta}}
+        {r_{\alpha\beta}^3}
+        \end{align}
+
+    where
+
+    .. math::
+        \begin{align}
+        \mathbf{r}_{\alpha\beta} = \mathbf{x}_{\alpha,i} -
+        \mathbf{x}_{\beta,j}.
+        \end{align}
+
+    :param feature_a_pos: The position of the first feature,
+      :math:`\mathbf{x}_{\alpha,i}`.
+    :type  feature_a_pos: NDArray
+
+    :param feature_b_pos: The position of the second feature,
+      :math:`\mathbf{x}_{\beta,j}`.
+    :type  feature_b_pos: NDArray
+
+    :returns: The interaction vector between features :math:`\alpha` and
+      :math:`\beta`, :math:`\mathbf{c}_{\alpha\beta}`.
+    :rtype: NDArray
+    """
+    if feature_a_pos.shape != (3,):
+        raise ValueError('Feature A position is not a 3-D Vector.')
+    if feature_b_pos.shape != (3,):
+        raise ValueError('Feature B position is not a 3-D Vector.')
+
+    displacement = feature_a_pos - feature_b_pos
+    result = displacement / (np.linalg.norm(displacement) ** 3)
+
+    return result
+
+
+@njit
+def calculate_fish_interaction(
+        fish_front:  NDArray,
+        fish_back:   NDArray,
+        other_front: NDArray,
+        other_back:  NDArray) -> NDArray:
+    r"""
+    Returns the front and back interaction vectors between two fish.
+
+    :type fish_front: NDArray
+    :type fish_back: NDArray
+    :type other_front: NDArray
+    :type other_back: NDArray
+    :rtype: NDArray
+
+    The front interaction from fish :math:`i` to fish :math:`j` is defined
+    as the difference between the front-to-front and front-to-back
+    interactions
+
+    .. math::
+        \begin{align}
+        \mathbf{h}_{f,ij} = \mathbf{c}_{ff} - \mathbf{c}_{fb}
+        \end{align}
+
+    and the back interaction is defined as the difference between the back-to-
+    front and back-to-back interactions
+
+    .. math::
+        \begin{align}
+        \mathbf{h}_{b,ij} = \mathbf{c}_{bf} - \mathbf{c}_{bb}.
+        \end{align}
+    """
+    # front interactions
+    front_front = calculate_feature_interaction(fish_front, other_front)
+    front_back  = calculate_feature_interaction(fish_front, other_back)
+    front_interaction = front_front - front_back
+
+    # back interactions
+    back_front = calculate_feature_interaction(fish_back, other_front)
+    back_back  = calculate_feature_interaction(fish_back, other_back)
+    back_interaction = back_front - back_back
+
+    return rejoin(front_interaction, back_interaction)
+
 
 def compute_interaction_barnes_hut(
         system: NDArray, bh_ratio: float,
@@ -302,6 +263,10 @@ def compute_interaction_barnes_hut(
     :param bh_ratio: The minimum ratio :math:`\theta` of partition size
       to particle distance for which to keep the particle.
     :type bh_ratio: float
+
+    :param show_progress: Whether or not to show the calculation progress on
+      each time-step.
+    :type  show_progress: bool
 
     :returns: The array of interaction vectors.
     :rtype: NDArray
@@ -397,25 +362,9 @@ def compute_interaction_pairwise(system: NDArray) -> NDArray:
     In particular, interaction comes in four types: front-to-front
     :math:`\mathbf{c}_{ff}`, front-to-back :math:`\mathbf{c}_{fb}`,
     back-to-front :math:`\mathbf{c}_{bf}`, and back-to-back
-    :math:`\mathbf{c}_{bb}`. The front interaction from fish :math:`i` to fish
-    :math:`j` is defined as the difference between the front-to-front and
-    front-to-back interactions
-
-    .. math::
-        \begin{align}
-        \mathbf{h}_{f,ij} = \mathbf{c}_{ff} - \mathbf{c}_{fb}
-        \end{align}
-
-    and the back interaction is defined as the difference between the back-to-
-    front and back-to-back interactions
-
-    .. math::
-        \begin{align}
-        \mathbf{h}_{b,ij} = \mathbf{c}_{bf} - \mathbf{c}_{bb}.
-        \end{align}
-
-    Then, the total front interaction of fish :math:`i` is defined as the sum
-    of the front interactions across all other fish :math:`j`
+    :math:`\mathbf{c}_{bb}`. Then, the total front interaction of fish
+    :math:`i` is defined as the sum of the front interactions across all
+    other fish :math:`j`
 
     .. math::
         \begin{align}
@@ -432,6 +381,7 @@ def compute_interaction_pairwise(system: NDArray) -> NDArray:
     interactions = np.zeros((N, 6))
     feature_positions = calculate_feature_positions(system)
 
+    # the calculations for each fish are independent so this is parallelized
     for i in prange(N):
         fish_features = feature_positions[i]
         fish_front, fish_back = split(fish_features)
@@ -475,6 +425,10 @@ def calculate_feature_velocities(
     :param bh_ratio: The Barnes-Hut ratio.
     :type  bh_ratio: float
 
+    :param show_progress: Whether or not to show the calculation progress of
+      this time-step
+    :type  show_progress: bool
+
     The velocity of feature :math:`\alpha` for fish :math:`i` is determined
     by the formula
 
@@ -507,7 +461,8 @@ def calculate_feature_velocities(
 
     interaction = None
     if use_barnes_hut:
-        interaction = compute_interaction_barnes_hut(system, bh_ratio, show_progress)
+        interaction = compute_interaction_barnes_hut(
+            system, bh_ratio, show_progress)
     else:
         interaction = compute_interaction_pairwise(system)
 
@@ -539,6 +494,10 @@ def calculate_system_derivative(
 
     :param bh_ratio: The Barnes-Hut Ratio
     :type  bh_ratio: float
+
+    :param show_progress: Whether or not to display the progress of this
+      time-step
+    :type  show_progress: bool
 
     This function computes the derivative of the system matrix by first
     computing the features matrix :math:`\mathbf{F}` (the positions of the

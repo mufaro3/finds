@@ -7,3 +7,4 @@ from .test_calculations import *
 from .test_fish import *
 from .test_simulation import *
 from .common import *
+from .test_octree import *

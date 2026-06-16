@@ -99,7 +99,8 @@ def perform_simulation(
         use_barnes_hut: bool = False,
         bh_ratio: float = None,
         print_iterations: bool = False,
-        print_each_fish: bool = False) -> Path:
+        print_each_fish: bool = False,
+        print_file_output: bool = True) -> Path:
     r"""
     Performs the simulation using Runge-Kutta fourth-order, then optionally
     saves the path information for each state to a datafile and produces an
@@ -138,11 +139,10 @@ def perform_simulation(
     # saving some iteration markers for debugging
     total_iterations = int(end_time / time_step)
 
-    tqdm.write('[Calculation]')
-
     # the actual iteration stepper
     for simulation_index in trange(total_iterations,
-                                   disable = not print_iterations):
+                                   disable = not print_iterations,
+                                   desc = 'Computing Time Evolution'):
 
         # compute the next state via RK4
         system = calculate_update_rk4(
@@ -157,6 +157,7 @@ def perform_simulation(
 
     # close filestream
     close_filestream(output_io)
-    tqdm.write(f'Saved simulation data to {output_filename}')
+    if print_file_output:
+        tqdm.write(f'Saved simulation data to {output_filename}')
 
     return output_dir

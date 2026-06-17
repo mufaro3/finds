@@ -12,5 +12,8 @@ FISH_SELF_PROPELLED_SPEED: float = (
     (4 * np.pi * FISH_LENGTH**2)
 )
 
+#: The output path for validation files
 VALIDATION_OUTPUT_PATH='validation'
+
+#: The name of all calculation data files
 DATA_FILE_NAME = 'data.h5'

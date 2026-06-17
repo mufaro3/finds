@@ -18,7 +18,7 @@ FInDS: The Fish Interaction and Dynamics Simulator
    api/io
    api/postprocessing
 
-   api/validation
+   api/scripts
    api/tests
 
 .. bibliography::

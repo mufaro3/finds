@@ -13,89 +13,232 @@ from .util import rejoin, split
 
 @dataclass
 class OctreeNode:
-    #: The center position of this octant.
+    r"""
+    Represents the node of an Octree, representing the octant partition and
+    the clustered data for this node.
+
+    Attributes
+    ==========
     center: NDArray
-    #: The side length of this octant.
+      The center position of this octant.
+
     side_length: float
-    #: The list of child octants
-    children: list
+      The side length of this octant.
 
-    #: The fish or clustered fish stored at this node.
-    data: NDArray = None
+    children: list[OctreeNode]
+      The list of child octants. The size should always be kept constant at 8.
 
-    #: The position of the front of the clustered fish for this octant.
-    front_pos: NDArray = None
+    cluster: NDArray
+      The sum of all of the fish stored at or underneath this node.
 
-    #: The position of the back of the clustered fish for this octant.
-    back_pos: NDArray = None
+    cluster_size: int
+      The number of fish stored at this node.
 
-    #: Whether or not this node has children.
-    is_leaf: bool = True
+    average: NDArray
+      The average of all of the fish clustered at this node, defined as the
+      cluster sum divided by the cluster size.
+
+    front_pos: NDArray
+      The position of the front of the clustered fish for this octant.
+
+    back_pos: NDArray
+      The position of the back of the clustered fish for this octant.
+
+    is_leaf: bool
+      Whether or not this node has children.
+    """
 
     def __init__(self, center: NDArray, side_length: float):
         self.children = [None]*8
         self.center = center
         self.side_length = side_length
+        self.is_leaf = True
+        self.cluster_size = 0
 
-    def calculate_quadrant(self, position: NDArray) -> NDArray:
-        quadrant = 0
+    def calculate_octant_index(self, position: NDArray) -> int:
+        r"""
+        Computes the index of the corresponding octant that a particle located
+        at :code:`position` would be found in relative to the center of this
+        octant.
+
+        :param position: The position of the object we're comparing against
+          the center of this octant.
+        :type  position: NDArray
+
+        :returns: The integer index corresponding to the octant the position
+          belongs in, between 0 to 7.
+        :rtype:   int
+
+        The logic behind this is simple, and follows binary. Given the center
+        position :math:`\mathbf{r} = \langle r_x, r_y, r_z \rangle` of this
+        octant and the comparison point :math:`\mathbf{p} = \langle p_x, p_y
+        p_z \rangle`, we loop through each of the dimensions :math:`i`. For
+        each dimension, we evaluate whether or not :math:`p_i > r_i`, and if
+        so, we set the binary digit at that index to 1. Otherwise, that digit
+        is set to 0. For brevity, rather than computing directly in binary,
+        this same effect can be produced by adding :math:`2^i` if :math:`p_i >
+        r_i` is true.
+
+        Each of the octants map in the following manner:
+
+        +--------------+----------------+-----------------+
+        | Octant       | Binary         | Index           |
+        +==============+================+=================+
+        | -x, -y, -z   | 000            | 0               |
+        +--------------+----------------+-----------------+
+        | +x, -y, -z   | 001            | 1               |
+        +--------------+----------------+-----------------+
+        | -x, +y, -z   | 010            | 2               |
+        +--------------+----------------+-----------------+
+        | +x, +y, -z   | 011            | 3               |
+        +--------------+----------------+-----------------+
+        | -x, -y, +z   | 100            | 4               |
+        +--------------+----------------+-----------------+
+        | +x, -y, +z   | 101            | 5               |
+        +--------------+----------------+-----------------+
+        | -x, +y, +z   | 110            | 6               |
+        +--------------+----------------+-----------------+
+        | +x, +y, +z   | 111            | 7               |
+        +--------------+----------------+-----------------+
+
+        For example, given a center point :math:`\mathbf{r} = \langle 0, 0, 0
+        \rangle` and a test point :math:`\mathbf{p} = \langle 0, -1,
+        1 \rangle`, the predicate evaluated on each index produces a vector
+        :math:`\langle \text{False}, \text{False}, \text{True} \rangle`, which
+        corresponds to the binary string 100 (as binary is built in reverse)
+        where 1 is True and 0 is False. From there, the base 10 representation
+        of 100 is 4, so therefore, :math:`\mathbf{p}` would be said to lie in
+        octant 4, which corresponds to the --+ octant.
+        """
+        octant_index = 0
         for i in range(3):
             if position[i] > self.center[i]:
-                quadrant += 2 ** i
-        return quadrant
+                octant_index += 2 ** i
+        return octant_index
 
-    def calculate_child_center(self, quadrant: int) -> NDArray:
+    def calculate_child_center(self, child_octant_index: int) -> NDArray:
+        r"""
+        Computes the center position of a corresponding child octant relative
+        to the center of this parent octant.
+
+        :param child_octant_index: The octant index of the child octant.
+        :type  child_octant_index: int
+
+        :returns: The center position of the child octant.
+        :rtype: NDArray
+
+        First, the offset from the parent center position is calculated as the
+        side length for this octant divided by four [#]_. Then, the child's
+        octant index can be reinterpreted as binary and looped through for
+        each dimension. For each dimension, if the predicate bit corresponding
+        to that dimension is true [#]_, then it sets the offset vector for that
+        dimension to have the positive offset. Otherwise, it sets the offset
+        vector at that dimension to have the negative offset.
+
+        For example, if the side length of this octant is :math:`\ell`, and
+        we want to compute the center of an octant with index
+
+        .. [#] This octant is a cube and the child octant is an octant
+          cube contained within the parent, thus all child octant
+          center positions will be offset from the parent center position by
+          exactly one-fourth of the side length on each dimension.
+
+        .. [#] This can be directly calculated with base-10 using the bitwise
+          AND operator. Rather than doing these calculations directly in
+          binary in this code, if we have an octant index :math:`o` on
+          dimension :math:`i`, the bit being True or False can be checked by
+          performing :math:`o` \& :math:`2^i`.
+        """
         offset_length = self.side_length / 4
         offset = np.zeros(3)
-        for i in range(3):
-            if quadrant & (2 ** i):
+
+        # loop through each dimension
+        for dimension_index in range(3):
+            dimension_bit = 2 ** dimension_index
+
+            # if the bit at dimension i is ON
+            if child_octant_index & dimension_bit:
+
+                # go forward in that dimension
                 offset[i] = offset_length
+
             else:
+                # otherwise, go backward
                 offset[i] = -offset_length
+
         return self.center + offset
 
-    def insert_into_children(self, fish: NDArray):
-        quadrant = self.calculate_quadrant(fish[0:3])
-        child = self.children[quadrant]
+    def insert_into_children(self, fish: NDArray) -> None:
+        r"""
+        Inserts a new fish into the child nodes of this octant.
 
-        if self.children[quadrant] is None:
-            self.children[quadrant] = OctreeNode(
+        :param fish: The new fish to insert.
+        :type  fish: NDArray
+
+        Given a new fish :math:`\mathbf{s} = (\mathbf{x}_c, \mathbf{n})`,
+        we first compute the child octant index :math:`o` for the fish based
+        on its position relative to the center of this octant. If the child
+        octant has not been initialized yet (i.e., there is no data presently
+        there), then we initialize a new octree node for that octant with half
+        the side length of this node and an offset center. Then, we insert the
+        fish into that octant.
+        """
+        octant_index = self.calculate_octant_index(fish[0:3])
+
+        # if the child octant has not been initialized
+        if self.children[octant_index] is None:
+
+            # then initialize it relative to this node
+            self.children[octant_index] = OctreeNode(
                 center = self.calculate_child_center(quadrant),
-                side_length = self.side_length / 2
+                side_length = self.side_length / 2,
             )
 
-        self.children[quadrant].insert_data(fish)
+        # then we can insert the data
+        self.children[octant_index].insert_data(fish)
 
-    def insert_data(self, fish: NDArray):
+    def insert_data(self, fish: NDArray) -> None:
+        r"""
+        Inserts a new fish into this octant.
+
+        :param fish: The fish to be inserted.
+        :type  fish: NDArray
+
+        This follows the Barnes-Hut hierarchical tree generation algorithm.
+
+        TODO: finish this
+        """
+        # this node is free
+        if self.cluster_size == 0:
+            self.cluster = fish.copy()
+            self.cluster_size = 1
+            self.average = fish.copy()
+            return
+
+        # we have a collision, so we need to subdivide
+        old_cluster = self.cluster
+        self.cluster_size += 1
+        self.cluster += fish
+        self.average = self.cluster / self.cluster_size
+
+        self.insert_into_children(fish)
         if self.is_leaf:
-            # this node is free
-            if self.data is None:
-                self.data = fish
-                return
-            else:
-                # we have a collision, so we need to subdivide
-                old_data = self.data
-                new_data = (old_data + fish) / 2
+            self.insert_into_children(old_cluster)
+            self.is_leaf = False
 
-                self.data = new_data
-                self.insert_into_children(old_data)
-                self.insert_into_children(fish)
-
-                self.is_leaf = False
-        else:
-            self.insert_into_children(fish)
-
-    def calculate_feature_positions(self):
-        if self.data is not None:
-            feature_pos = calculate_feature_positions(self.data)
-            front, back = split(feature_pos)
-            self.front_pos = front
-            self.back_pos = back
+    def calculate_feature_positions(self) -> None:
+        r"""
+        Computes the positions of the front and back for each cluster average
+        within the greater Octree via recursion.
+        """
+        if self.average is not None:
+            feature_pos = calculate_feature_positions(self.average)
+            self.front_pos, self.back_pos = split(feature_pos)
 
         if not self.is_leaf:
-            for quadrant in range(8):
-                if self.children[quadrant] is not None:
-                    self.children[quadrant].calculate_feature_positions()
+            for octant_index in range(8):
+                if self.children[octant_index] is not None:
+                    self.children[octant_index].calculate_feature_positions()
 
     def compute_interaction(self,
             fish_pos: NDArray,
@@ -109,7 +252,7 @@ class OctreeNode:
         # this is a leaf, so automatically calculate
         if self.is_leaf:
             # this is the fish being calculated, so ignore it
-            if np.allclose(self.data[:3], fish_pos):
+            if np.allclose(self.average[:3], fish_pos):
                 return np.zeros(6)
             return calculate_fish_interaction(
                 fish_front, fish_back,
@@ -168,6 +311,7 @@ def build_octree(system: NDArray) -> OctreeNode:
     octree.calculate_feature_positions()
 
     return octree
+
 
 @njit
 def calculate_feature_interaction(

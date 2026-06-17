@@ -7,3 +7,4 @@ These formulas are described in :cite:`mabrouk2024` and :cite:`mabrouk2025`.
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: __init__

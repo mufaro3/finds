@@ -35,6 +35,27 @@ latex_documents = [
     ),
 ]
 
+latex_elements = {
+    "pointsize": "12pt",
+    'passoptionstopackages': r'''
+\PassOptionsToPackage{svgnames}{xcolor}
+''',
+    'fontpkg': r'''
+\usepackage{tgpagella}
+\usepackage{tgheros}
+\usepackage{inconsolata}
+''',
+    'preamble': r'''
+\usepackage[titles]{tocloft}
+\cftsetpnumwidth {1.25cm}\cftsetrmarg{1.5cm}
+\setlength{\cftchapnumwidth}{0.75cm}
+\setlength{\cftsecindent}{\cftchapnumwidth}
+\setlength{\cftsecnumwidth}{1.25cm}
+''',
+    'fncychap': r'\usepackage[Bjornstrup]{fncychap}',
+    'printindex': r'\footnotesize\raggedright\printindex',
+}
+
 bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = 'plain'
 
@@ -48,7 +69,7 @@ autodoc_default_options = {
     "undoc-members": True,
     "member-order": "bysource",
 }
-
+autoclass_content = "class"
 napoleon_use_ivar = True
 
 # -- Options for HTML output -------------------------------------------------

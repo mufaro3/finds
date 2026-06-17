@@ -9,12 +9,12 @@ from numpy.typing import NDArray
 import time
 from itertools import product, combinations
 
-from .fish import generate_system
-from .constants import DATA_FILE_NAME, VALIDATION_OUTPUT_PATH
-from .io import close_filestream, init_input_filestream
-from .simulation import perform_simulation
-from .util import rejoin, split
-from .calculations import calculate_system_derivative, OctreeNode, \
+from finds.fish import generate_system
+from finds.constants import DATA_FILE_NAME, VALIDATION_OUTPUT_PATH
+from finds.io import close_filestream, init_input_filestream
+from finds.simulation import perform_simulation
+from finds.util import rejoin, split
+from finds.calculations import calculate_system_derivative, OctreeNode, \
     build_octree
 
 USE_BARNES_HUT=False
@@ -289,8 +289,8 @@ def draw_octree(root: OctreeNode, ax=None, draw_data=True, max_depth=None):
         draw_cube(node.center, node.side_length)
 
         # draw fish position
-        if draw_data and node.data is not None:
-            pos = node.data[:3]
+        if draw_data and node.avg() is not None:
+            pos = node.avg()[:3]
             ax.scatter(
                 pos[0], pos[1], pos[2],
                 s=20
@@ -325,23 +325,164 @@ def draw_octree(root: OctreeNode, ax=None, draw_data=True, max_depth=None):
     return ax
 
 
+def draw_octree_tree(
+    root,
+    horizontal_spacing=2.0,
+    vertical_spacing=3.0,
+    label_offset=20
+):
+    """
+    Draw an octree as a 2D parent-child tree.
+
+    Parameters
+    ----------
+    horizontal_spacing : float
+        Horizontal distance multiplier between nodes.
+
+    vertical_spacing : float
+        Vertical distance multiplier between tree levels.
+
+    label_offset : float
+        Distance in points between node and text label.
+    """
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    positions = {}
+
+    def compute_positions(node, depth=0, x=0):
+        if node is None:
+            return x, x
+
+        if node.is_leaf:
+            positions[id(node)] = (
+                x * horizontal_spacing,
+                -depth * vertical_spacing
+            )
+            return x, x
+
+        child_ranges = []
+        next_x = x
+
+        for child in node.children:
+            if child is not None:
+                left, right = compute_positions(
+                    child,
+                    depth + 1,
+                    next_x
+                )
+
+                child_ranges.append((left, right))
+                next_x = right + 1
+
+        if child_ranges:
+            left = child_ranges[0][0]
+            right = child_ranges[-1][1]
+
+            positions[id(node)] = (
+                ((left + right) / 2) * horizontal_spacing,
+                -depth * vertical_spacing
+            )
+
+            return left, right
+
+        positions[id(node)] = (
+            x * horizontal_spacing,
+            -depth * vertical_spacing
+        )
+
+        return x, x
+
+    compute_positions(root)
+
+    def draw_node(node):
+        if node is None:
+            return
+
+        x0, y0 = positions[id(node)]
+
+        # draw node
+        ax.scatter(
+            x0,
+            y0,
+            s=100,
+            zorder=3
+        )
+
+        # draw label
+        if node.avg() is not None:
+            vals = node.avg()[:3]
+
+            label = (
+                f"({vals[0]:.2f}, "
+                f"{vals[1]:.2f}, "
+                f"{vals[2]:.2f})"
+            )
+
+            ax.annotate(
+                label,
+                (x0, y0),
+                xytext=(0, label_offset),
+                textcoords="offset points",
+                ha="center",
+                fontsize=8
+            )
+
+        # draw children
+        if not node.is_leaf:
+            for i, child in enumerate(node.children):
+                if child is None:
+                    continue
+
+                x1, y1 = positions[id(child)]
+
+                ax.plot(
+                    [x0, x1],
+                    [y0, y1],
+                    "k-",
+                    lw=1,
+                    zorder=1
+                )
+
+                # octant label
+                ax.text(
+                    (x0 + x1) / 2,
+                    (y0 + y1) / 2,
+                    str(i),
+                    fontsize=7,
+                    ha="center"
+                )
+
+                draw_node(child)
+
+    draw_node(root)
+
+    ax.axis("off")
+
+    plt.tight_layout()
+
+    return ax
+
 def generate_octree_figure(output_dir: Path) -> None:
-    points = np.array([
-        [-1, -1, -1],
-        [-1,  1, -1],
-        [-1, -1,  1],
-        [1,  -1, -1],
-        [1,   1, -1],
-        [1,  -1,  1],
-        [1,   1,  1]
-    ])
+    data = generate_system(
+        distribution='random',
+        orientation='random',
+        n_random=5
+    )
 
-    data = np.hstack((points, np.tile(np.zeros(3), (points.shape[0], 1))))
     octree = build_octree(data)
+    tqdm.write('Building 3D Octree Figure')
     ax = draw_octree(octree)
-    plt.savefig(output_dir / 'example_octree.png',
+    octree_3d_path = output_dir / 'example_octree.png'
+    plt.savefig(octree_3d_path,
                 dpi=300, bbox_inches="tight")
-
+    tqdm.write(f'Saved 3D Octree figure to {octree_3d_path}.')
+    tqdm.write('Building 2D Octree Figure')
+    ax2 = draw_octree_tree(octree)
+    octree_2d_path = output_dir / 'example_octree_tree.png'
+    plt.savefig(octree_2d_path,
+                dpi=300, bbox_inches="tight")
+    tqdm.write(f'Saved 2D Octree figure to {octree_2d_path}.')
 
 def validation_main(
         use_barnes_hut: bool,
@@ -353,6 +494,7 @@ def validation_main(
     output_dir = Path(f'output/{VALIDATION_OUTPUT_PATH}')
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    """
     csim = lambda dtheta, dx, dy: coplanar_simulation(
         dtheta, dx, dy, use_barnes_hut, barnes_hut_ratio)
 
@@ -367,6 +509,8 @@ def validation_main(
 
     # paper 2 figure 16
     build_cylindrical_path_plot(output_dir, use_barnes_hut, barnes_hut_ratio)
+    """
+
     generate_octree_figure(output_dir)
 
 if __name__ == '__main__':

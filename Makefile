@@ -1,91 +1,90 @@
-.PHONY: help run dev build down logs shell clean rebuild \
-        docs viewdocs test lint validate repl all
-
-FLAKE8_IGNORED := E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E502,F541,W504,E731
-# auto | long | short | line | native | no
-tb ?= no
-PYTEST_TRACEBACK_MODE := $(tb)
-
+.PHONY: help run build logs shell clean \
+        docs test lint validate benchmark stats repl
 help:
 	@echo ""
-	@echo "Available commands:"
-	@echo "  make run              - Start main"
-	@echo "  make dev              - Build + start main"
-	@echo "  make build            - Build images"
-	@echo "  make down             - Stop containers"
-	@echo "  make logs             - Follow logs"
-	@echo "  make shell            - Bash shell"
-	@echo "  make repl             - Python REPL"
-	@echo "  make test [tb=MODE]   - Run pytest"
+	@echo "(FINDS) AVAILABLE COMMANDS"
 	@echo ""
-	@echo "Traceback options (tb):"
-	@echo "  auto   - default pytest behavior"
-	@echo "  long   - full traceback"
-	@echo "  short  - shorter traceback"
-	@echo "  line   - per-line summary"
-	@echo "  native - Python native formatting"
-	@echo "  no     - no traceback"
+	@echo "  [Building, Running, and Documentation]"
 	@echo ""
-	@echo "Example:"
-	@echo "  make test tb=short"
-	@echo "  make test tb=no"
+	@echo "  make run              - Build and run main."
+	@echo "  make build            - Build the container image."
+	@echo "  make docs             - Build documentation as HTML and PDF."
 	@echo ""
-	@echo "  make docs             - Build docs"
-	@echo "  make validate         - Run validation"
-	@echo "  make lint             - Run linting"
-	@echo "  make rebuild          - Rebuild without cache"
-	@echo "  make clean            - Remove generated files"
+	@echo "  [Testing and Validation]"
 	@echo ""
+	@echo "  make benchmark        - Run benchmarking module."
+	@echo "  make validate         - Run validation module."
+	@echo "  make test [tb=MODE]   - Run all tests."
+	@echo ""
+	@echo "  Traceback options (tb):"
+	@echo "    auto   - Default pytest behavior."
+	@echo "    long   - Full traceback."
+	@echo "    short  - Shorter traceback."
+	@echo "    line   - Per-line summary."
+	@echo "    native - Python native formatting."
+	@echo "    no     - No traceback (default)."
+	@echo ""
+	@echo "    Example:"
+	@echo "      make test tb=short"
+	@echo "      make test tb=no"
+	@echo ""
+	@echo "  [Debugging]"
+	@echo ""
+	@echo "  make logs             - Open Docker logs."
+	@echo "  make shell            - Bash shell."
+	@echo "  make repl             - Python REPL."
+	@echo "  make stats            - Display container performance."
+	@echo "  make lint             - Run static code checkers."
+	@echo "  make clean            - Remove generated files."
+	@echo ""
+
+DRUN := docker compose run --rm
+MAIN := $(DRUN) main
+PY := $(MAIN) python3 -m
 
 run:
-	@docker compose up main
-
-dev:
-	@docker compose run --rm main
+	@$(MAIN)
 
 build:
 	@docker compose build
-
-down:
-	@docker compose down
 
 logs:
 	@docker compose logs -f
 
 shell:
-	@docker compose run --rm main bash
+	@$(MAIN) bash
 
 repl:
-	@docker compose run --rm repl
+	@$(DRUN) repl
 
 docs:
-	@docker compose run --rm docs
+	@$(DRUN) docs
 
 validate:
-	@docker compose run --rm validation
+	@$(DRUN) validation
 
 benchmark:
-	@docker compose run --rm benchmark
+	@$(DRUN) benchmark
 
+DSTATS_FORMAT := "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+stats:
+	@docker stats --format $(DSTATS_FORMAT)
+
+# auto | long | short | line | native | no
+tb ?= no
+PYTEST_TRACEBACK_MODE := $(tb)
 test:
-	@docker compose run --rm main \
-	python3 -m pytest /finds/test --tb=$(PYTEST_TRACEBACK_MODE)
+	@$(PY) pytest /finds/test --tb=$(PYTEST_TRACEBACK_MODE)
+
+FLAKE8_IGNORED := \
+E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E502,F541,W504,E731
 
 lint:
-	@echo "Running flake8..."
-	@docker compose run --rm main \
-		python3 -m flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/
-
-	@echo "Checking import order (isort)..."
-	@docker compose run --rm main isort finds/
-
-rebuild:
-	@docker compose down
-	@docker compose build --no-cache
+	@$(PY) flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/
+	@$(PY) isort finds/
+	@$(PY) mypy finds/ --ignore-missing-imports
 
 clean:
 	@docker compose down -v --remove-orphans
 	@rm -rf docs/build/*
 	@rm -rf output/*
-
-all: lint build docs test

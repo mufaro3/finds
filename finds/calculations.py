@@ -13,14 +13,24 @@ from .util import rejoin, split
 
 @dataclass
 class OctreeNode:
+    #: The center position of this octant.
     center: NDArray
+    #: The side length of this octant.
     side_length: float
-    children: list["OctreeNode"]
+    #: The list of child octants
+    children: list
+
+    #: The fish or clustered fish stored at this node.
     data: NDArray = None
+
+    #: The position of the front of the clustered fish for this octant.
     front_pos: NDArray = None
+
+    #: The position of the back of the clustered fish for this octant.
     back_pos: NDArray = None
+
+    #: Whether or not this node has children.
     is_leaf: bool = True
-    external: bool = False
 
     def __init__(self, center: NDArray, side_length: float):
         self.children = [None]*8

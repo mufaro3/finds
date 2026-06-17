@@ -64,6 +64,9 @@ docs:
 validate:
 	@docker compose run --rm validation
 
+benchmark:
+	@docker compose run --rm benchmark
+
 test:
 	@docker compose run --rm main \
 	python3 -m pytest /finds/test --tb=$(PYTEST_TRACEBACK_MODE)

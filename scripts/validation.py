@@ -343,106 +343,6 @@ def generate_octree_figure(output_dir: Path) -> None:
                 dpi=300, bbox_inches="tight")
 
 
-def generate_comparison_figure(output_dir: Path) -> None:
-    """
-    Generate timing comparison between brute-force and Barnes-Hut.
-    """
-
-    output_dir.mkdir(exist_ok=True, parents=True)
-
-    def perform_time_test(n: int,
-                          bh_ratio: float | None = None,
-                          repeats: int = 3) -> float:
-        """
-        Time a single derivative calculation.
-        """
-
-        example_system = generate_system(
-            distribution='random',
-            orientation='random',
-            n_random=n,
-            debug_print=False
-        )
-
-        use_barnes_hut = bh_ratio is not None
-
-        # warmup to exclude numba compilation
-        calculate_system_derivative(
-            example_system,
-            use_barnes_hut,
-            bh_ratio if bh_ratio is not None else 0.0
-        )
-
-        times = []
-
-        for _ in range(repeats):
-            start_time = time.perf_counter()
-
-            calculate_system_derivative(
-                example_system,
-                use_barnes_hut,
-                bh_ratio if bh_ratio is not None else 0.0
-            )
-
-            end_time = time.perf_counter()
-            times.append(end_time - start_time)
-
-        return np.mean(times)
-
-    # system sizes
-    nvalues = np.flip(np.arange(25, 500, step=25))
-
-    # Barnes-Hut opening angles
-    bh_ratios = np.arange(0.25, 1.0, step=0.25)
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    # brute-force baseline
-    brute_force_times = []
-
-    for n in tqdm(nvalues, desc='Brute Force Benchmark'):
-        brute_force_times.append(
-            perform_time_test(n, bh_ratio=None)
-        )
-
-    ax.plot(
-        nvalues,
-        brute_force_times,
-        label="Brute force",
-        linewidth=3
-    )
-
-    # Barnes-Hut curves
-    for bh_ratio in tqdm(bh_ratios, leave=False, desc='Barnes-Hut'):
-        bh_times = []
-
-        for n in tqdm(nvalues, leave=False, desc=f'BH Ratio={bh_ratio:.2f}'):
-            bh_times.append(perform_time_test(n, bh_ratio=bh_ratio))
-
-        ax.plot(
-            nvalues,
-            bh_times,
-            label=f"BH ratio={bh_ratio:.1f}"
-        )
-
-    ax.set_xlabel("Number of fish (N)")
-    ax.set_ylabel("Runtime (seconds)")
-    ax.set_title("Barnes–Hut vs Brute Force Runtime")
-    ax.legend()
-    ax.grid(True)
-
-    output_path = output_dir / "barnes_hut_comparison.png"
-
-    plt.savefig(
-        output_path,
-        dpi=300,
-        bbox_inches="tight"
-    )
-
-    plt.close(fig)
-
-    print(f"Saved comparison figure to {output_path}")
-
 def validation_main(
         use_barnes_hut: bool,
         barnes_hut_ratio: bool) -> None:
@@ -451,13 +351,12 @@ def validation_main(
     :cite:t:`mabrouk2024`.
     """
     output_dir = Path(f'output/{VALIDATION_OUTPUT_PATH}')
-
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     csim = lambda dtheta, dx, dy: coplanar_simulation(
         dtheta, dx, dy, use_barnes_hut, barnes_hut_ratio)
 
     # paper 1 figure 8
-    """
     build_quadra_plot(
         top_right    = csim(dtheta=0, dx=0.5, dy=0),
         top_left     = csim(dtheta=0, dx=5,   dy=0.5),
@@ -465,13 +364,10 @@ def validation_main(
         bottom_left  = csim(dtheta=0, dx=0.5, dy=1),
         output_dir   = output_dir
     )
-    """
 
     # paper 2 figure 16
-    #build_cylindrical_path_plot(output_dir, use_barnes_hut, barnes_hut_ratio)
-    #generate_octree_figure(output_dir)
-    generate_comparison_figure(output_dir)
-
+    build_cylindrical_path_plot(output_dir, use_barnes_hut, barnes_hut_ratio)
+    generate_octree_figure(output_dir)
 
 if __name__ == '__main__':
     validation_main(USE_BARNES_HUT, BARNES_HUT_RATIO)

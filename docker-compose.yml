@@ -12,11 +12,15 @@ services:
 
   main:
     <<: *base
-    command: python3 -m finds.main
+    command: python3 scripts/main.py
 
   validation:
     <<: *base
-    command: python3 -m finds.validation
+    command: python3 scripts/validation.py
+
+  benchmark:
+    <<: *base
+    command: python3 scripts/benchmark.py
 
   docs:
     <<: *base

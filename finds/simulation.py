@@ -1,11 +1,8 @@
-import time
-import sys
 from datetime import datetime
 from pathlib import Path
-from tqdm import trange, tqdm
 
-from numba import njit
 from numpy.typing import NDArray
+from tqdm import tqdm, trange
 
 from .calculations import calculate_system_derivative
 from .constants import DATA_FILE_NAME
@@ -37,6 +34,10 @@ def calculate_update_rk4(
 
     :param bh_ratio: The Barnes-Hut Ratio
     :type  bh_ratio: float
+
+    :param show_progress: Whether or not to display the progress of each
+      derivative computation as a progress bar.
+    :type  show_progress: bool
 
     :returns: The updated state after one time-step.
     :rtype: NDArray
@@ -76,19 +77,24 @@ def calculate_update_rk4(
     this is done through
     :py:func:`src.calculations.normalize_orientation_vectors`.
     """
+
+    # some simple aliases
     X0 = system
     f  = lambda X: calculate_system_derivative(
         X, use_barnes_hut, bh_ratio, show_progress)
     dt = time_step
 
+    # compute each quarter-step derivative
     k1 = f(X0)
     k2 = f(X0 + k1 * dt / 2)
     k3 = f(X0 + k2 * dt / 2)
     k4 = f(X0 + k3 * dt)
 
+    # average these out then compute the updated state
     k = (k1 + 2 * k2 + 2 * k3 + k4) / 6
     Xt = X0 + k * dt
 
+    # normalize the orientation vectors before returning
     return normalize_orientation_vectors(Xt)
 
 
@@ -119,8 +125,21 @@ def perform_simulation(
       approximation.
     :type  use_barnes_hut: bool
 
-    :param bh_ratio: The Barnes-Hut Ratio
+    :param bh_ratio: The Barnes-Hut maximum ratio :math:`\theta` for which to
+      compute the interactions using clustered nodes.
     :type  bh_ratio: float
+
+    :param print_iterations: Whether or not to show the progress of the
+      calculations for each iteration as a progress bar.
+    :type  print_iterations: bool
+
+    :param print_each_fish: Whether or not to show the progress of each fish
+      interaction calculation (for Barnes-Hut computations only).
+    :type  print_each_fish: bool
+
+    :param print_file_output: Whether or not to print the location of the
+      produced file.
+    :type  print_file_output: bool
 
     :returns: The path of the testing output directory.
     :rtype: Path

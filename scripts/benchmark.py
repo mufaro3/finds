@@ -1,21 +1,14 @@
-import shutil
+import time
 from pathlib import Path
-import argparse
 
-from tqdm import tqdm, trange
 import numpy as np
 from matplotlib import pyplot as plt
-from numpy.typing import NDArray
-import time
-from itertools import product, combinations
+from tqdm import tqdm
 
+from finds.calculations import calculate_system_derivative
+from finds.constants import VALIDATION_OUTPUT_PATH
 from finds.fish import generate_system
-from finds.constants import DATA_FILE_NAME, VALIDATION_OUTPUT_PATH
-from finds.io import close_filestream, init_input_filestream
-from finds.simulation import perform_simulation
-from finds.util import rejoin, split
-from finds.calculations import calculate_system_derivative, OctreeNode, \
-    build_octree
+
 
 def generate_comparison_figure(output_dir: Path) -> None:
     """
@@ -90,7 +83,9 @@ def generate_comparison_figure(output_dir: Path) -> None:
     for bh_ratio in tqdm(bh_ratios, leave=False, desc='Barnes-Hut'):
         bh_times = []
 
-        for logn in tqdm(lognvalues, leave=False, desc=f'BH Ratio={bh_ratio:.2f}'):
+        for logn in tqdm(lognvalues,
+                         leave=False,
+                         desc=f'BH Ratio={bh_ratio:.2f}'):
             bh_times.append(perform_time_test(2 ** logn, bh_ratio=bh_ratio))
 
         ax.plot(
@@ -117,7 +112,8 @@ def generate_comparison_figure(output_dir: Path) -> None:
 
     print(f"Saved comparison figure to {output_path}")
 
+
 if __name__ == '__main__':
-    output_dir = Path(f'output/benchmark')
+    output_dir = Path(VALIDATION_OUTPUT_PATH)
     output_dir.mkdir(parents=True, exist_ok=True)
     generate_comparison_figure(output_dir)

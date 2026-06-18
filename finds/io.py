@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,9 +14,21 @@ class IO:
     time_dataset:  h5py.Dataset
 
 
-def init_input_filestream(filepath: Path, cache_limit: int = None) -> IO:
+def init_input_filestream(
+        filepath: Path,
+        cache_limit: Optional[int] = None) -> IO:
     """
     Initializes an I/O filestream for reading.
+
+    :param filepath: The path to the H5 file to begin reading from.
+    :type  filepath: Path
+
+    :param cache_limit: The total size in bytes of the raw data
+      chunk cache for each dataset.
+    :type  cache_limit: Optional[int]
+
+    :returns: A read-only I/O object.
+    :rtype: IO
     """
     if not filepath.is_file():
         raise ValueError(f'Filepath {filepath} does not exist.')
@@ -39,8 +52,7 @@ def init_output_filestream(filepath: Path, n_fish: int) -> IO:
     :param n_fish: The number of fish within the system.
     :type  n_fish: int
 
-    :returns: The I/O filestream storing the open h5 file alongside
-      the state and time datasets for writing.
+    :returns: A write-only I/O filestream.
     :rtype: IO
     """
     h5file = h5py.File(filepath, 'w')
@@ -83,7 +95,8 @@ def close_filestream(io: IO) -> None:
 
 def serialize_to_file(system: NDArray, time: float, io: IO) -> None:
     """
-    Writes the system state to the datafile located at :code:`output_filename`.
+    Writes the system state to the datafile located at
+    :code:`output_filename`.
 
     :param system: The system.
     :type  system: NDArray

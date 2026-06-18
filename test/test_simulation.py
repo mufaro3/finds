@@ -1,9 +1,11 @@
-from .common import generate_random_matrix
-from finds.simulation import calculate_update_rk4
-from finds.calculations import calculate_system_derivative
-from finds.util import split
 import numpy as np
 from numpy.typing import NDArray
+
+from finds.calculations import calculate_system_derivative
+from finds.simulation import calculate_update_rk4
+from finds.util import split
+
+from .common import generate_random_matrix
 
 
 def test_calculate_update_rk4():

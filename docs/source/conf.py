@@ -10,7 +10,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath("../.."))
 
-
 project = 'FInDS'
 copyright = '2026, The University of Houston'
 author = 'Mufaro J. Machaya'
@@ -36,6 +35,7 @@ latex_documents = [
 ]
 
 latex_elements = {
+    "extraclassoptions": "openany",
     "pointsize": "12pt",
     'passoptionstopackages': r'''
 \PassOptionsToPackage{svgnames}{xcolor}
@@ -63,7 +63,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 #autodoc configuration
-autodoc_typehints = "description"
+autodoc_typehints = "none"
 autodoc_default_options = {
     "members": True,
     "undoc-members": True,
@@ -71,6 +71,35 @@ autodoc_default_options = {
 }
 autoclass_content = "class"
 napoleon_use_ivar = True
+
+# signature folding
+HIDE_SIGNATURES = {
+    "finds.io.IO",
+    "finds.postprocessing.process_data",
+    "finds.processingmodules.DensityAnimationGenerator.DensityAnimationGenerator",
+    "finds.processingmodules.AnimationGenerator.AnimationGenerator",
+}
+
+def process_signature(
+    app,
+    what,
+    name,
+    obj,
+    options,
+    signature,
+    return_annotation,
+):
+    if name in HIDE_SIGNATURES:
+        return "(...)", return_annotation
+
+    return signature, return_annotation
+
+
+def setup(app):
+    app.connect(
+        "autodoc-process-signature",
+        process_signature
+    )
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

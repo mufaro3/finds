@@ -1,6 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
+
 from finds.fish import generate_system
+
 
 def generate_random_matrix() -> tuple[int, NDArray]:
     r"""

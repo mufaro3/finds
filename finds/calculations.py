@@ -1,15 +1,71 @@
 import warnings
-import numpy as np
-from numba import float64, njit, prange
-from numba.typed import Dict
-from numpy.typing import NDArray
 from dataclasses import dataclass
-from tqdm import trange, tqdm
 
-from .fish import calculate_feature_positions
+import numpy as np
+from numba import njit, prange
+from numpy.typing import NDArray
+from tqdm import trange
+
 from .constants import (FISH_LENGTH, FISH_SELF_PROPELLED_SPEED,
                         VOLUMETRIC_FLOW_RATE)
 from .util import rejoin, split
+
+
+@njit
+def calculate_feature_positions(system: NDArray) -> NDArray:
+    r"""
+    Computes the front and back positions for each fish in the
+    system, returned in the following format:
+
+    .. math::
+
+       \mathbf{F} = \begin{bmatrix}
+       x_{f1} & y_{f1} & z_{f1} & x_{b1} & y_{b1} & z_{b1} \\
+       x_{f2} & y_{f2} & z_{f2} & x_{b2} & y_{b2} & z_{b2} \\
+       \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+       x_{fN} & y_{fN} & z_{fN} & x_{bN} & y_{bN} & z_{bN}
+       \end{bmatrix}
+
+
+    :param system: The system.
+    :type system: NDArray
+
+    :returns: The matrix storing the head and tail positions for
+      each fish.
+    :rtype: NDArray
+
+    The position of the front :math:`\mathbf{x}_{f}` and the position
+    of the back :math:`\mathbf{x}_{b}` for each fish are computed using
+    the center-of-mass position :math:`\mathbf{x}_c` and the orientation
+    :math:`\mathbf{n}` using the following formulas
+
+    .. math::
+        :nowrap:
+
+        \begin{align}
+         \mathbf{v}_f &= \mathbf{x}_c + \vec{\delta} \\
+         \mathbf{v}_b &= \mathbf{x}_c - \vec{\delta}
+        \end{align}
+
+    where
+
+    .. math::
+        :nowrap:
+
+        \begin{align}
+          \vec{\delta} = \frac{1}{2} \ell \mathbf{n}
+        \end{align}
+
+    is a half-length vector in the direction of the orientation.
+    """
+    pos, ori = split(system)
+
+    delta = ori * FISH_LENGTH / 2
+    heads = pos + delta
+    tails = pos - delta
+
+    return rejoin(heads, tails)
+
 
 @dataclass
 class OctreeNode:
@@ -160,11 +216,11 @@ class OctreeNode:
             if child_octant_index & dimension_bit:
 
                 # go forward in that dimension
-                offset[i] = offset_length
+                offset[child_octant_index] = offset_length
 
             else:
                 # otherwise, go backward
-                offset[i] = -offset_length
+                offset[child_octant_index] = -offset_length
 
         return self.center + offset
 
@@ -190,7 +246,7 @@ class OctreeNode:
 
             # then initialize it relative to this node
             self.children[octant_index] = OctreeNode(
-                center = self.calculate_child_center(quadrant),
+                center = self.calculate_child_center(octant_index),
                 side_length = self.side_length / 2,
             )
 
@@ -228,57 +284,97 @@ class OctreeNode:
 
     def calculate_feature_positions(self) -> None:
         r"""
-        Computes the positions of the front and back for each cluster average
-        within the greater Octree via recursion.
+        Recursively computes the positions of the front and back for each
+        cluster average within the greater Octree.
         """
+        # if this node has data
         if self.average is not None:
+            # calculate its feature positions
             feature_pos = calculate_feature_positions(self.average)
             self.front_pos, self.back_pos = split(feature_pos)
 
+        # if this node has children
         if not self.is_leaf:
+            # calculate the feature positions of its children (recursive)
             for octant_index in range(8):
                 if self.children[octant_index] is not None:
                     self.children[octant_index].calculate_feature_positions()
 
     def compute_interaction(self,
-            fish_pos: NDArray,
-            fish_front: NDArray,
-            fish_back: NDArray,
-            minimum_ratio: float) -> NDArray:
+                            fish_pos: NDArray,
+                            fish_front: NDArray,
+                            fish_back: NDArray,
+                            maximum_ratio: float) -> NDArray:
+        r"""
+        Recursively computes the interaction of the fish at :code:`fish_pos`
+        with all of the fish (and clustered fish) within this tree.
+
+        :param fish_pos: The position of the reference fish we're computing
+          the interaction with.
+        :type  fish_pos: NDArray
+
+        :param fish_front: The position of the front of the reference fish.
+        :type  fish_front: NDArray
+
+        :param fish_back: The position of the back of the reference fish.
+        :type  fish_back: NDArray
+
+        :param minimum_ratio: The Barnes-Hut Ratio :math:`\theta`, or the
+          minimum ratio :math:`s/d < \theta` of side length :math:`s` to
+          the distance from the reference fish to the center of the octant
+          :math:`d` to compute the interaction at this node rather than
+          summing the interaction at the child nodes via recursion.
+        :type  minimum_ratio: float
+
+        :returns: A 1-dimensional array of 6 values containing the front and
+          back interaction for the reference fish.
+        :rtype: NDArray
+        """
 
         if self.data is None:
             return np.zeros(6)
 
         # this is a leaf, so automatically calculate
         if self.is_leaf:
-            # this is the fish being calculated, so ignore it
+
+            # if this node stores the fish being calculated, ignore it
             if np.allclose(self.average[:3], fish_pos):
                 return np.zeros(6)
-            return calculate_fish_interaction(
-                fish_front, fish_back,
-                self.front_pos, self.back_pos)
 
-        # determine whether or not to calculate on this aggregate
-        distance = np.linalg.norm(fish_pos - self.center)
-        if np.isclose(distance, 0):
-            distance = 0.01
-            warnings.warn(f"Fish {fish_pos} is located at the same "+\
-                          f"position as the center {self.center}.")
-
-        ratio = self.side_length / distance
-        if ratio < minimum_ratio:
             return calculate_fish_interaction(
                 fish_front, fish_back,
                 self.front_pos, self.back_pos
             )
+
+        # distance from the reference fish to the center of this octant
+        distance = np.linalg.norm(fish_pos - self.center)
+
+        # if the reference fish is located exactly at the center of this
+        # octant, then we should automatically blow up the ratio so that
+        # we don't use the cluster
+        if np.isclose(distance, 0):
+            ratio = np.inf
+            warnings.warn(f"Fish {fish_pos} is located at the same "+\
+                          f"position as the center {self.center}.")
+        else:
+            ratio = self.side_length / distance
+
+        # if s/d > theta, compute interactions using the cluster
+        if ratio < maximum_ratio:
+            return calculate_fish_interaction(
+                fish_front, fish_back,
+                self.front_pos, self.back_pos
+            )
+
+        # otherwise, sum up the interactions for each child
         else:
             total_interaction = np.zeros(6)
-            for quadrant in range(8):
-                if self.children[quadrant] is not None:
+            for octant_index in range(8):
+                if self.children[octant_index] is not None:
                     total_interaction += \
-                        self.children[quadrant].compute_interaction(
+                        self.children[octant_index].compute_interaction(
                             fish_pos, fish_front,
-                            fish_back, minimum_ratio
+                            fish_back, maximum_ratio
                         )
             return total_interaction
 
@@ -290,16 +386,44 @@ def build_octree(system: NDArray) -> OctreeNode:
     :param system: The system matrix.
     :type  system: NDArray
 
+    :returns: The built Octree.
     :rtype: OctreeNode
+
+    This function builds an Octree out of a system matrix in three steps.
+    First, it determines the longest distance along any given axis between
+    two fish within the system as the maximum between the differences of the
+    maximums and minimums on each axis.
+
+    For example, if we had the points
+
+    .. math::
+        (1,1,3), (2,0,8), (3, 5, 4), (6, 2, 4), (11, 8, 3)
+
+    the minimums for each dimension would be :math:`(1,0,3)` and the maximums
+    would be :math:`(11,8,8)`, making the differences :math:`(10,8,5)` and the
+    longest distance would be 10.
+
+    Then, this value (increased slightly by :math:`0.1\%`) is used as the side
+    length for the root cube of the Octree, and the position of the center is
+    defined as half of the difference vector (which would be :math:`(5,4,2.5)`
+    in the previous example).
+
+    Then, each of the fish in the system are inserted sequentially into the
+    Octree using :py:func:`OctreeNode.insert_data`, and once all of the fish
+    are inserted into the tree (and all of the nodes are clustered), all of
+    the feature positions are calculated for the tree with
+    :py:func:`OctreeNode.calculate_feature_positions`.
     """
     positions, _ = split(system)
 
+    # compute the longest distance on any axis
     mins = np.min(positions, axis=0)
     maxs = np.max(positions, axis=0)
+    longest_distance = np.max(maxs - mins)
 
     # avoid boundary issues
     octree = OctreeNode(
-        side_length = np.max(maxs - mins) * 1.001,
+        side_length = longest_distance * 1.001,
         center = (mins + maxs) / 2
     )
 
@@ -315,7 +439,8 @@ def build_octree(system: NDArray) -> OctreeNode:
 
 @njit
 def calculate_feature_interaction(
-        feature_a_pos: NDArray, feature_b_pos: NDArray) -> NDArray:
+        feature_a_pos: NDArray,
+        feature_b_pos: NDArray) -> NDArray:
     r"""
     Computes the individual interaction vector between feature
     :math:`\alpha` of fish :math:`i` and feature :math:`\beta` of
@@ -405,7 +530,8 @@ def calculate_fish_interaction(
 
 
 def compute_interaction_barnes_hut(
-        system: NDArray, bh_ratio: float,
+        system: NDArray,
+        bh_ratio: float,
         show_progress: bool = False) -> NDArray:
     r"""
     Computes the interaction vectors using the Barnes-Hut approximation
@@ -414,8 +540,8 @@ def compute_interaction_barnes_hut(
     :param system: The system.
     :type  system: NDArray
 
-    :param bh_ratio: The minimum ratio :math:`\theta` of partition size
-      to particle distance for which to keep the particle.
+    :param bh_ratio: The maximum ratio :math:`\theta` of partition size
+      to particle distance for which to compute on clustered nodes.
     :type bh_ratio: float
 
     :param show_progress: Whether or not to show the calculation progress on
@@ -479,13 +605,19 @@ def compute_interaction_barnes_hut(
     interaction.
     """
     N = system.shape[0]
+    # build the octree for this time-step
     octree = build_octree(system)
     feature_positions = calculate_feature_positions(system)
     interactions = np.zeros((N,6))
 
+    # iterate over each fish in the system
+    # NOTE: this can (probably) be parallelized as the tree is static
     for i in trange(N, disable = not show_progress):
+        # compute the feature positions
         fish_pos, _ = split(system[i])
         fish_front, fish_back = split(feature_positions[i])
+
+        # compute the interactions using the octree
         interactions[i] = \
             octree.compute_interaction(
                 fish_pos, fish_front, fish_back, bh_ratio)
@@ -539,13 +671,16 @@ def compute_interaction_pairwise(system: NDArray) -> NDArray:
     for i in prange(N):
         fish_features = feature_positions[i]
         fish_front, fish_back = split(fish_features)
-
         interaction_total = np.zeros(6)
 
         for j in range(N):
+
+            # if this fish is the same as the fish we are comparing to,
+            # then skip
             if i == j:
                 continue
 
+            # obtain the other's feature positions and compute the interaction
             other_front, other_back = split(feature_positions[j])
             interaction_total += calculate_fish_interaction(
                 fish_front, fish_back,
@@ -610,7 +745,7 @@ def calculate_feature_velocities(
     _, orientations = split(system)
     internal_contrib_each = FISH_SELF_PROPELLED_SPEED * orientations
 
-    # extend it to (N,6) for each
+    # extend it to (N,6) for the front and back interactions
     internal_contrib = rejoin(internal_contrib_each, internal_contrib_each)
 
     interaction = None

@@ -1,8 +1,10 @@
-from finds.fish import generate_system, normalize_orientation_vectors
-from finds.util import split, rejoin
-from .common import generate_random_matrix
 import numpy as np
-from numpy.typing import NDArray, ArrayLike
+from numpy.typing import ArrayLike, NDArray
+
+from finds.fish import generate_system, normalize_orientation_vectors
+from finds.util import rejoin, split
+
+from .common import generate_random_matrix
 
 
 def test_positions_and_orientations():
@@ -77,6 +79,7 @@ def helper_test_fish(random_fish: NDArray, bounds: NDArray):
 
     assert in_bounds(position, bounds), \
         f'Fish at {position} is not within bounds of {-bounds} to {bounds}.'
+
 
 def helper_test_system(system: NDArray, bounds: ArrayLike):
     r"""

@@ -4,7 +4,7 @@ from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 
 from .util import rejoin, split
-from .constants import FISH_LENGTH
+
 
 @njit
 def normalize_orientation_vectors(system: NDArray) -> NDArray:
@@ -228,7 +228,8 @@ def generate_system(
     :type  distribution: 'random' | 'lattice' | 'sphere' |  'square' | 'circle'
 
     :param orientation: How the fish are oriented.
-    :type  orientation: 'random' | 'aligned' | 'radial outward' | 'radial inward'
+    :type  orientation: 'random' | 'aligned' | 'radial outward' |
+      'radial inward'
 
     :param n_random: The number of fish, provided that this is a random
       distribution. For all other distributions, the :code:`size` parameter is
@@ -272,7 +273,8 @@ def generate_system(
     else:
         raise ValueError(
             f'Invalid distribution parameter \"{distribution}\". '+\
-            'Must be one of: lattice, sphere, random, square, circle')
+            'Must be one of: lattice, sphere, random, square, circle'
+        )
 
     N = positions.shape[0]
 
@@ -286,9 +288,11 @@ def generate_system(
     elif orientation == 'radial inward':
         orientations = -positions.copy()
     else:
-        raise ValueError(f'Invalid orientation parameter \"{orientation}\". '+
-                         'Must be one of: \"random\", \"aligned\", \"radial outward\", '+
-                         '\"radial inward\".')
+        raise ValueError(
+            f'Invalid orientation parameter \"{orientation}\". '+
+            'Must be one of: \"random\", \"aligned\", \"radial outward\", '+
+            '\"radial inward\".'
+        )
 
     if angle_delta != 0:
         orientations = perturb_orientations(orientations, angle_delta)
@@ -305,58 +309,3 @@ def generate_system(
                    f"\"{orientation}\" orientation, N={N}.")
 
     return normalize_orientation_vectors(system_raw)
-
-@njit
-def calculate_feature_positions(system: NDArray) -> NDArray:
-    r"""
-    Computes the front and back positions for each fish in the
-    system, returned in the following format:
-
-    .. math::
-
-       \mathbf{F} = \begin{bmatrix}
-       x_{f1} & y_{f1} & z_{f1} & x_{b1} & y_{b1} & z_{b1} \\
-       x_{f2} & y_{f2} & z_{f2} & x_{b2} & y_{b2} & z_{b2} \\
-       \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-       x_{fN} & y_{fN} & z_{fN} & x_{bN} & y_{bN} & z_{bN}
-       \end{bmatrix}
-
-
-    :param system: The system.
-    :type system: NDArray
-
-    :returns: The matrix storing the head and tail positions for
-      each fish.
-    :rtype: NDArray
-
-    The position of the front :math:`\mathbf{x}_{f}` and the position
-    of the back :math:`\mathbf{x}_{b}` for each fish are computed using
-    the center-of-mass position :math:`\mathbf{x}_c` and the orientation
-    :math:`\mathbf{n}` using the following formulas
-
-    .. math::
-        :nowrap:
-
-        \begin{align}
-         \mathbf{v}_f &= \mathbf{x}_c + \vec{\delta} \\
-         \mathbf{v}_b &= \mathbf{x}_c - \vec{\delta}
-        \end{align}
-
-    where
-
-    .. math::
-        :nowrap:
-
-        \begin{align}
-          \vec{\delta} = \frac{1}{2} \ell \mathbf{n}
-        \end{align}
-
-    is a half-length vector in the direction of the orientation.
-    """
-    pos, ori = split(system)
-
-    delta = ori * FISH_LENGTH / 2
-    heads = pos + delta
-    tails = pos - delta
-
-    return rejoin(heads, tails)

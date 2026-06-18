@@ -77,12 +77,12 @@ test:
 	@$(PY) pytest /finds/test --tb=$(PYTEST_TRACEBACK_MODE)
 
 FLAKE8_IGNORED := \
-E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E502,F541,W504,E731
+E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E402,E502,F541,W504,E731
 
 lint:
-	@$(PY) flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/
-	@$(PY) isort finds/
-	@$(PY) mypy finds/ --ignore-missing-imports
+	@$(PY) flake8 --ignore=$(FLAKE8_IGNORED) finds/ test/ scripts/
+	@$(PY) isort finds/ test/ scripts/
+	@$(PY) mypy finds/ test/ scripts/ --ignore-missing-imports
 
 clean:
 	@docker compose down -v --remove-orphans

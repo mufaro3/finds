@@ -1,4 +1,3 @@
-- Prune unused functions
 - Re-lint and rewrite documentation for all files
 - Add tests for all files
 - Fix Barnes-Hut simplification

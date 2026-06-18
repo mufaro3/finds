@@ -1,9 +1,7 @@
 from finds.fish import generate_system
 from finds.postprocessing import process_data
 from finds.simulation import perform_simulation
-from tqdm import tqdm
 
-import numpy as np
 
 def main():
     system = generate_system(
@@ -25,7 +23,7 @@ def main():
         print_each_fish=True
     )
 
-    # process_data(output_dir)
+    process_data(output_dir)
 
 
 if __name__ == '__main__':

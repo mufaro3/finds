@@ -1,12 +1,16 @@
-from .common import generate_random_matrix
-
-from finds.calculations import calculate_feature_positions, \
-    calculate_feature_velocities, calculate_system_derivative, \
-    compute_interaction_pairwise, compute_interaction_barnes_hut
-from finds.constants import FISH_LENGTH
-from finds.util import split
 import numpy as np
 from numpy.typing import NDArray
+
+from finds.calculations import (calculate_feature_positions,
+                                calculate_feature_velocities,
+                                calculate_system_derivative,
+                                compute_interaction_barnes_hut,
+                                compute_interaction_pairwise)
+from finds.constants import FISH_LENGTH
+from finds.util import split
+
+from .common import generate_random_matrix
+
 
 def test_calculate_feature_positions():
     r"""

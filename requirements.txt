@@ -33,3 +33,4 @@ pytest-cov
 # jupyter
 jupyterlab
 ipykernel
+ipympl

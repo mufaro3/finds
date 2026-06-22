@@ -1,3 +1,7 @@
+import os
+os.environ["NUMBA_DISABLE_JIT"] = "1"
+
+from typing import Optional
 import time
 from pathlib import Path
 
@@ -6,114 +10,179 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from finds.calculations import calculate_system_derivative
-from finds.constants import VALIDATION_OUTPUT_PATH
+from finds.constants import BENCHMARK_OUTPUT_PATH
 from finds.fish import generate_system
 
+COMPARISON_FIGURE_OUTPUT_NAME='comparison.png'
 
-def generate_comparison_figure(output_dir: Path) -> None:
+def perform_time_test(n: int,
+                      bh_ratio: Optional[float] = None,
+                      repeats: int = 3) -> float:
+    r"""
+    Times a singular calculation for the state derivative of a random
+    system of size :math:`n`.
+
+    :param n: The system size.
+    :type  n: int
+
+    :param bh_ratio: The Barnes-Hut Ratio, if Barnes-Hut approximation is
+      to be used.
+    :type  bh_ratio: Optional[float]
+
+    :param repeats: The number of times to repeat the experiment for this
+      configuration (default 3).
+    :type  repeats: int
+
+    :returns: The mean runtime for computing :math:`d\mathbf{X}/dt` in
+      milliseconds.
+    :rtype: float
     """
-    Generate timing comparison between brute-force and Barnes-Hut.
-    """
+    # generate the random system
+    example_system = generate_system(
+        distribution='random',
+        orientation='random',
+        n_random=n,
+        debug_print=False
+    )
 
-    output_dir.mkdir(exist_ok=True, parents=True)
+    use_barnes_hut = bh_ratio is not None
 
-    def perform_time_test(n: int,
-                          bh_ratio: float | None = None,
-                          repeats: int = 3) -> float:
-        """
-        Time a single derivative calculation.
-        """
+    # a warmup to exclude numba compilation times
+    calculate_system_derivative(
+        example_system,
+        use_barnes_hut,
+        bh_ratio if bh_ratio is not None else 0.0
+    )
 
-        example_system = generate_system(
-            distribution='random',
-            orientation='random',
-            n_random=n,
-            debug_print=False
-        )
+    times = np.zeros(repeats)
 
-        use_barnes_hut = bh_ratio is not None
+    for i in range(repeats):
+        # begin the timer
+        start_time = time.perf_counter()
 
-        # warmup to exclude numba compilation
+        # compute the derivative of the system matrix
         calculate_system_derivative(
             example_system,
             use_barnes_hut,
             bh_ratio if bh_ratio is not None else 0.0
         )
 
-        times = []
+        # end the timer
+        end_time = time.perf_counter()
+        times[i] = end_time - start_time
 
-        for _ in range(repeats):
-            start_time = time.perf_counter()
+    # return only the mean
+    return np.mean(times)
 
-            calculate_system_derivative(
-                example_system,
-                use_barnes_hut,
-                bh_ratio if bh_ratio is not None else 0.0
-            )
 
-            end_time = time.perf_counter()
-            times.append(end_time - start_time)
+def generate_comparison_figure(
+        min_log_n: int = 1,
+        max_log_n: int = 5) -> None:
+    r"""
+    Generates the timing comparison between Brute-Force and Barnes-Hut.
 
-        return np.mean(times)
+    :param min_log_n: The starting :math:`\log_2 N` (default 1).
+    :type  min_log_n: int
 
-    # system sizes
-    lognvalues = np.flip(np.arange(1,3))
+    :param max_log_n: The ending :math:`\log_2 N` (default 5).
+    :type  max_log_n: int
+
+    The relationship between the input size :math:`N` and the output time
+    :math:`t` is defined as
+
+    .. math::
+        t_{BF} = \mathcal{O}(N^2) = k_{BF} N^2
+
+    for brute-force and
+
+    .. math::
+        t_{BH} = \mathcal{O}(N \log_2 N) = k_{BH} N \log_2 N
+
+    for the Barnes-Hut approximation. The proportionality constants,
+    :math:`k_{BF}` and :math:`k_{BH}`, represent the inherent, non-algorithmic
+    system load from how I've written the program across the two systems, and
+    as a result of performing object-based recursion for Barnes-Hut and
+    utilizing Numba (and parallelization) for Brute-Force, we can be fairly
+    confident that :math:`k_{BF} << k_{BH}` (which makes this comparison
+    somewhat difficult at low :math:`N`, as the proportionality coefficients
+    will dominate there).
+
+    Given these relationships, the produced plot is made logarithmic, i.e.,
+
+    .. math::
+        \log_2 t_{BF} = \log_2 k_{BF} + 2 \log_2 N
+
+    for brute-force and
+
+    .. math::
+        \log_2 t_{BH} = \log_2 k_{BH} + \log_2 N + \log_2 \log_2 N
+
+    for the barnes-hut approximation. These functions are essentially linear,
+    given :math:`y := \log_2 t, b := \log_2 k`, :math:`x := \log_2 N`, and the
+    fact that :math:`\log_2 \log_2 N` is essentially constant at high
+    :math:`N`, thus we can perform linear regression to compute the
+    proportionality constants as the :math:`y`-intercept, and validate the
+    functional forms of each.
+    """
+    tqdm.write('Beginning benchmark.')
+
+    # Generate the system sizes from the input
+    lognvalues = np.flip(np.arange(min_log_n, max_log_n + 1))
 
     # Barnes-Hut opening angles
     bh_ratios = np.arange(0.25, 1.0, step=0.25)
-
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # brute-force baseline
     brute_force_times = []
 
     for logn in tqdm(lognvalues, desc='Brute Force Benchmark'):
-        brute_force_times.append(
-            perform_time_test(2 ** logn, bh_ratio=None)
-        )
+        time=perform_time_test(2 ** logn, bh_ratio=None)
+        brute_force_times.append(np.log2(time))
+
+    slope_bf, intercept_bf = np.polyfit(lognvalues, brute_force_times, 1)
+    prop_const_bf = 2 **  intercept_bf
 
     ax.plot(
-        lognvalues,
-        brute_force_times,
-        label="Brute force",
+        lognvalues, brute_force_times,
+        label=f"Brute Force, $k={prop_const_bf:1e}$, slope={slope_bf:.1f}",
         linewidth=3
     )
 
     # Barnes-Hut curves
     for bh_ratio in tqdm(bh_ratios, leave=False, desc='Barnes-Hut'):
+
+        # compute the times
         bh_times = []
+        for logn in tqdm(lognvalues, desc=f'Barnes-Hut, Theta={bh_ratio:.2f}'):
+            time = perform_time_test(2 ** logn, bh_ratio=bh_ratio)
+            bh_times.append(np.log2(time))
 
-        for logn in tqdm(lognvalues,
-                         leave=False,
-                         desc=f'BH Ratio={bh_ratio:.2f}'):
-            bh_times.append(perform_time_test(2 ** logn, bh_ratio=bh_ratio))
+        slope_bh, intercept_bh = np.polyfit(lognvalues, bh_times, 1)
+        prop_const_bh = 2 ** intercept_bh
 
+        # plot
         ax.plot(
-            lognvalues,
-            bh_times,
-            label=f"BH ratio={bh_ratio:.1f}"
+            lognvalues, bh_times,
+            label=f'Barnes-Hut, $\\theta=={bh_ratio:.2f}$, '+\
+            f'$k={prop_const_bh:1e}, slope={slope_bh:1f}$',
+            linewidth=3
         )
 
-    ax.set_xlabel(r"Number of fish, $\log_2 N$")
-    ax.set_ylabel("Runtime (seconds)")
-    ax.set_title("Barnes–Hut vs Brute Force Runtime")
+    # set labels and title
+    ax.set_xlabel(r"Logarithmic Number of Fish, $\log_2 N$")
+    ax.set_ylabel(r"Logarithmic Runtime ($\log_2$ seconds)")
+    ax.set_title("Barnes–Hut vs Brute Force Logarithmic Runtime")
     ax.legend()
     ax.grid(True)
 
-    output_path = output_dir / "barnes_hut_comparison.png"
-
-    plt.savefig(
-        output_path,
-        dpi=300,
-        bbox_inches="tight"
-    )
-
+    BENCHMARK_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+    output_path = BENCHMARK_OUTPUT_PATH / COMPARISON_FIGURE_OUTPUT_NAME
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
-    print(f"Saved comparison figure to {output_path}")
+    tqdm.write(f"Saved comparison figure to {output_path}")
 
 
 if __name__ == '__main__':
-    output_dir = Path(VALIDATION_OUTPUT_PATH)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    generate_comparison_figure(output_dir)
+    generate_comparison_figure()

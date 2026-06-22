@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 
 #: Characteristic fish length (m)
 FISH_LENGTH: float = 1.0
@@ -12,8 +13,17 @@ FISH_SELF_PROPELLED_SPEED: float = (
     (4 * np.pi * FISH_LENGTH**2)
 )
 
+#: The root output path
+ROOT_OUTPUT_PATH=Path('output')
+
+#: The output path for simulation files
+SIMULATION_OUTPUT_NAME='sim'
+
 #: The output path for validation files
-VALIDATION_OUTPUT_PATH='validation'
+VALIDATION_OUTPUT_PATH=ROOT_OUTPUT_PATH / Path('validation')
+
+#: The output path for benchmark files
+BENCHMARK_OUTPUT_PATH=ROOT_OUTPUT_PATH / Path('benchmark')
 
 #: The name of all calculation data files
-DATA_FILE_NAME = 'data.h5'
+DATA_FILE_NAME='data.h5'

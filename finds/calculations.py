@@ -43,8 +43,8 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
         :nowrap:
 
         \begin{align}
-         \mathbf{v}_f &= \mathbf{x}_c + \vec{\delta} \\
-         \mathbf{v}_b &= \mathbf{x}_c - \vec{\delta}
+         \mathbf{x}_f &= \mathbf{x}_c + \vec{\delta} \\
+         \mathbf{x}_b &= \mathbf{x}_c - \vec{\delta}
         \end{align}
 
     where
@@ -110,6 +110,8 @@ class OctreeNode:
         self.side_length = side_length
         self.is_leaf = True
         self.cluster_size = 0
+        self.cluster = np.zeros(6)
+        self.data = None
 
     def calculate_octant_index(self, position: NDArray) -> int:
         r"""
@@ -216,11 +218,11 @@ class OctreeNode:
             if child_octant_index & dimension_bit:
 
                 # go forward in that dimension
-                offset[child_octant_index] = offset_length
+                offset[dimension_index] = offset_length
 
             else:
                 # otherwise, go backward
-                offset[child_octant_index] = -offset_length
+                offset[dimension_index] = -offset_length
 
         return self.center + offset
 
@@ -260,27 +262,22 @@ class OctreeNode:
         :param fish: The fish to be inserted.
         :type  fish: NDArray
 
-        This follows the Barnes-Hut hierarchical tree generation algorithm.
-
-        TODO: finish this
+        This follows the Barnes-Hut hierarchical tree generation algorithm,
+        exactly as stated online.
         """
-        # this node is free
-        if self.cluster_size == 0:
-            self.cluster = fish.copy()
-            self.cluster_size = 1
-            self.average = fish.copy()
-            return
-
-        # we have a collision, so we need to subdivide
-        old_cluster = self.cluster
-        self.cluster_size += 1
-        self.cluster += fish
-        self.average = self.cluster / self.cluster_size
-
-        self.insert_into_children(fish)
-        if self.is_leaf:
-            self.insert_into_children(old_cluster)
+        if self.is_leaf and self.data is None:
+            self.data = fish
+        elif self.is_leaf and self.data is not None:
+            old_data = self.data
             self.is_leaf = False
+            self.insert_into_children(fish)
+            self.insert_into_children(old_data)
+        elif not self.is_leaf:
+            self.insert_into_children(fish)
+
+        self.cluster += fish
+        self.cluster_size += 1
+        self.average = self.cluster / self.cluster_size
 
     def calculate_feature_positions(self) -> None:
         r"""

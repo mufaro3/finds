@@ -38,3 +38,15 @@ services:
       from test.common import *;
       print("FInDS REPL loaded");
       EOF
+
+  jupyter:
+    <<: *base
+    build: .
+    ports:
+      - "8888:8888"
+    command: >
+      python3 -m jupyterlab
+      --ip=0.0.0.0
+      --port=8888
+      --no-browser
+      --allow-root

@@ -1,5 +1,3 @@
-import os
-import sys
 from pathlib import Path
 from typing import override
 
@@ -10,8 +8,7 @@ from tqdm import tqdm
 
 from .ProcessingModule import ProcessingModule
 
-sys.path.insert(0, os.path.abspath(".."))
-from .util import split
+from ..util import split
 
 
 class DensityAnimationGenerator(ProcessingModule):

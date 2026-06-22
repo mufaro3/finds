@@ -29,3 +29,7 @@ mypy
 # testing
 pytest
 pytest-cov
+
+# jupyter
+jupyterlab
+ipykernel

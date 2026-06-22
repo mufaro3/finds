@@ -1,5 +1,5 @@
-.PHONY: help run build logs shell clean \
-        docs test lint validate benchmark stats repl
+.PHONY: help run build logs shell clean docs test lint validate benchmark \
+        stats repl jupyter
 help:
 	@echo ""
 	@echo "(FINDS) AVAILABLE COMMANDS"
@@ -33,6 +33,7 @@ help:
 	@echo "  make logs             - Open Docker logs."
 	@echo "  make shell            - Bash shell."
 	@echo "  make repl             - Python REPL."
+	@echo "  make jupyter          - Launch Jupyter Lab."
 	@echo "  make stats            - Display container performance."
 	@echo "  make lint             - Run static code checkers."
 	@echo "  make clean            - Remove generated files."
@@ -65,6 +66,9 @@ validate:
 
 benchmark:
 	@$(DRUN) benchmark
+
+jupyter:
+	@docker compose up jupyter
 
 DSTATS_FORMAT := "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 stats:

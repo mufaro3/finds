@@ -149,7 +149,8 @@ def perform_simulation(
     # generate a new file at output/test-{timestamp}/path.csv
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    output_dir = Path(f"output/test-{timestamp}")
+    output_dir = ROOT_OUTPUT_PATH / \
+        Path(f"{SIMULATION_OUTPUT_NAME}-{timestamp}")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_filename = output_dir / DATA_FILE_NAME

@@ -1,6 +1,6 @@
-from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import h5py
 import numpy as np

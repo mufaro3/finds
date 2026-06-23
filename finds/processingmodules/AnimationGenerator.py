@@ -6,9 +6,8 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FFMpegWriter
 from numpy.typing import ArrayLike, NDArray
 
-from .ProcessingModule import ProcessingModule
-
 from ..util import split
+from .ProcessingModule import ProcessingModule
 
 
 class AnimationGenerator(ProcessingModule):

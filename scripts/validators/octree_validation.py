@@ -2,6 +2,7 @@ import os
 import sys
 from itertools import combinations, product
 
+from typing import Optional
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -36,16 +37,13 @@ def draw_wireframe_cube(center: NDArray, side_length: float, ax: Axes) -> None:
 
     # connect the corners (draw the edges)
     for start, end in combinations(corners, 2):
-        diff = np.abs(start - end)
+        num_shared_axes: int = np.sum(np.abs(start - end) > 1e-12)
 
-        # if these two edges are different, then plot the line
-        # connecting them
-        if np.sum(diff > 1e-12) == 1:
-            ax.plot(
-                [start[0], end[0]],
-                [start[1], end[1]],
-                [start[2], end[2]]
-            )
+        # if these two vertices have exactly one common axis, then we'll
+        # draw the line that joins them
+        if num_shared_axes == 1:
+            connecting_line = np.hstack((start, end))
+            ax.plot(*connecting_line, color='black')
 
 
 def draw_octree_3d_recurse(
@@ -53,7 +51,7 @@ def draw_octree_3d_recurse(
         ax: Axes,
         current_depth: int = 0,
         *,
-        max_depth: int = None,
+        max_depth: Optional[int] = None,
         particle_size: int = 20) -> None:
     r"""
     Recurses through each of the Octree nodes and draws the associated data
@@ -87,7 +85,7 @@ def draw_octree_3d_recurse(
     # draw fish position
     if current_node.average is not None:
         pos = current_node.average[:3]
-        ax.scatter(*pos, s=particle_size)
+        ax.scatter(*pos, markersize=particle_size)
 
     # recurse children
     if not current_node.is_leaf:
@@ -139,13 +137,160 @@ def draw_octree_3d(octree: OctreeNode, max_depth: int = None) -> None:
 
     plt.savefig(draw_octree_3d.filepath, dpi=300, bbox_inches="tight")
 
+def compute_octree_2d_positions_recurse(
+        node: OctreeNode,
+        positions: dict,
+        depth: int,
+        x: int,
+        dx: float,
+        dy: float) -> tuple[int, int]:
+    """
+    Recursively builds a list of where each of the nodes for the Octree should
+    go when placed in 2-D space based on the Octant indices.
+
+    :param node: The current node.
+    :type  node: OctreeNode
+
+    :param positions: The current (global) dictionary of past positions. This
+      is passed by reference, so this dictionary will be appended to
+      throughout all recursive calls.
+    :type  positions: dict
+
+    :param depth: The current depth of this recursion, starting from 0 (the
+      root node).
+    :type  depth: int
+
+    :param x: The current :math:`x`-position of this node, starting from 0
+      (the center of the image).
+    :type  x: int
+
+    :param dx: The horizontal spacing.
+    :type  dx: float
+
+    :param dy: The vertical spacing.
+    :type  dy: float
+
+    :returns: A tuple storing the range of :math:`x`-positions (min, max) for
+      this tree (to use when producing the canvas.
+    :rtype: tuple[int, int]
+    """
+    if node is None:
+        return x, x
+
+    nid = id(node)
+
+    # the center x-position
+    x_pos = dx * x
+
+    # same y-position for all things on this level
+    y_pos = dy * -depth
+
+    if node.is_leaf:
+        positions[nid] = x_pos, y_pos
+        return x, x
+
+    child_ranges = []
+    next_x = x
+
+    # loop through each of the children
+    for child in node.children:
+
+        if child is not None:
+            # obtain the range for that child
+            left, right = compute_octree_2d_positions_recurse(
+                child, positions, depth + 1, next_x, dx, dy)
+            child_ranges.append((left, right))
+
+            # move further right (greater octant indices go to the right)
+            next_x = right + 1
+
+    # there were any produced ranges
+    if child_ranges:
+
+        # obtain the farthest left
+        left  = child_ranges[0][0]
+
+        # and the farthest right
+        right = child_ranges[-1][1]
+
+        # then take the middle
+        child_range_center = (left + right) / 2
+
+        # and set that as the position for this node
+        positions[nid] = child_range_center * dx, y_pos
+
+        return left, right
+
+    positions[nid] = x_pos, y_pos
+    return x, x
+
+def draw_octree_node_2d_recurse(
+        node: OctreeNode,
+        positions: dict,
+        ax: Axes,
+        label_offset: float) -> None:
+    """
+    Draws this node and its children to the specified axes.
+
+    :param node: The current node.
+    :type  node: OctreeNode
+
+    :param positions: The dictionary mapping OctreeNode ID's to image
+      coordinates.
+    :type  positions: dict
+
+    :param ax: The MatPlotLib axes to draw to.
+    :type  ax: Axes
+
+    :param label_offset: The horizontal offset for each node label.
+    :type  label_offset: float
+    """
+    if node is None:
+        return
+
+    pos = positions[id(node)]
+
+    # draw the node
+    ax.scatter(*pos, s=100, zorder=3)
+
+    # draw its label
+    if node.average is not None:
+        vals = node.average[:3]
+
+        label = f"({vals[0]:.2f}, {vals[1]:.2f}, {vals[2]:.2f})"
+
+        ax.annotate(
+            label, pos,
+            xytext=(0, label_offset),
+            textcoords="offset points",
+            ha="center",
+            fontsize=8
+        )
+
+    # draw its children
+    for i, child in enumerate(node.children):
+        if child is None:
+            continue
+
+        # connect the child position to this node's position
+        child_pos = positions[id(child)]
+        connecting_line = np.hstack((pos, child_pos))
+        connection_label_pos = (pos + child_pos) / 2
+
+        # draw the connecting line and its associated label
+        ax.plot(*connecting_line, "k-", lw=1, zorder=1)
+        ax.text(*connection_label_pos, str(i), fontsize=7, ha="center")
+
+        # recurse onto the child
+        draw_octree_node_2d_recurse(child, positions, ax, label_offset)
+
 
 @produces_validation(name='octree-2d')
 def draw_octree_2d(
         octree: OctreeNode,
         horizontal_spacing: float = 2.0,
         vertical_spacing: float = 3.0,
-        label_offset: float = 20) -> None:
+        label_offset: float = 20) -> Axes:
     """
     Draw an octree as a 2D parent-child tree.
 
@@ -157,123 +302,32 @@ def draw_octree_2d(
 
     :param label_offset: Distance in points between node and text label.
     :type  label_offset: float
+
+    :returns: The MatPlotLib Axes that the Octree was drawn to.
+    :rtype: Axes
     """
+    # setup the figure to be fairly wide
+    fig, ax = plt.subplots(figsize=(16, 8))
 
-    fig, ax = plt.subplots(figsize=(12, 8))
-
+    # compute where all of the nodes should go
     positions = {}
 
-    def compute_positions(node, depth=0, x=0):
-        if node is None:
-            return x, x
+    compute_octree_2d_positions_recurse(
+        node=octree,
+        positions=positions,
+        depth=0,
+        x=0,
+        dx=horizontal_spacing,
+        dy=vertical_spacing
+    )
 
-        if node.is_leaf:
-            positions[id(node)] = (
-                x * horizontal_spacing,
-                -depth * vertical_spacing
-            )
-            return x, x
-
-        child_ranges = []
-        next_x = x
-
-        for child in node.children:
-            if child is not None:
-                left, right = compute_positions(
-                    child,
-                    depth + 1,
-                    next_x
-                )
-
-                child_ranges.append((left, right))
-                next_x = right + 1
-
-        if child_ranges:
-            left = child_ranges[0][0]
-            right = child_ranges[-1][1]
-
-            positions[id(node)] = (
-                ((left + right) / 2) * horizontal_spacing,
-                -depth * vertical_spacing
-            )
-
-            return left, right
-
-        positions[id(node)] = (
-            x * horizontal_spacing,
-            -depth * vertical_spacing
-        )
-
-        return x, x
-
-    compute_positions(octree)
-
-    def draw_node(node):
-        if node is None:
-            return
-
-        x0, y0 = positions[id(node)]
-
-        # draw node
-        ax.scatter(
-            x0,
-            y0,
-            s=100,
-            zorder=3
-        )
-
-        # draw label
-        if node.average is not None:
-            vals = node.average[:3]
-
-            label = (
-                f"({vals[0]:.2f}, "
-                f"{vals[1]:.2f}, "
-                f"{vals[2]:.2f})"
-            )
-
-            ax.annotate(
-                label,
-                (x0, y0),
-                xytext=(0, label_offset),
-                textcoords="offset points",
-                ha="center",
-                fontsize=8
-            )
-
-        # draw children
-        if not node.is_leaf:
-            for i, child in enumerate(node.children):
-                if child is None:
-                    continue
-
-                x1, y1 = positions[id(child)]
-
-                ax.plot(
-                    [x0, x1],
-                    [y0, y1],
-                    "k-",
-                    lw=1,
-                    zorder=1
-                )
-
-                # octant label
-                ax.text(
-                    (x0 + x1) / 2,
-                    (y0 + y1) / 2,
-                    str(i),
-                    fontsize=7,
-                    ha="center"
-                )
-
-                draw_node(child)
-
-    draw_node(octree)
+    # draw the nodes to those positions
+    draw_octree_node_2d_recurse(octree, positions, ax, label_offset)
 
     ax.axis("off")
-
     plt.tight_layout()
 
+    # return the figure
     return ax
 
 

@@ -105,13 +105,13 @@ class OctreeNode:
     """
 
     def __init__(self, center: NDArray, side_length: float):
-        self.children = [None]*8
-        self.center = center
-        self.side_length = side_length
-        self.is_leaf = True
-        self.cluster_size = 0
-        self.cluster = np.zeros(6)
-        self.data = None
+        self.children: list[OctreeNode] = [None]*8
+        self.center: NDArray = center
+        self.side_length: float = side_length
+        self.is_leaf: bool = True
+        self.cluster_size: int = 0
+        self.cluster: NDArray = np.zeros(6)
+        self.data: NDArray = None
 
     def calculate_octant_index(self, position: NDArray) -> int:
         r"""
@@ -262,8 +262,26 @@ class OctreeNode:
         :param fish: The fish to be inserted.
         :type  fish: NDArray
 
-        This follows the Barnes-Hut hierarchical tree generation algorithm,
-        exactly as stated online.
+        This follows the Barnes-Hut hierarchical tree generation algorithm as
+        written from :cite:t:`ventimiglia_wayne_barnes_hut`.
+
+          **Constructing the Barnes-Hut tree**
+
+          To construct the Barnes-Hut tree, insert the bodies one after
+          another. To insert a body b into the tree rooted at node x, use
+          the following recursive procedure:
+
+          1. If node x does not contain a body, put the new body b here.
+          2. If node x is an internal node, update the center-of-mass and
+             total mass of x. Recursively insert the body b in the appropriate
+             quadrant.
+          3. If node x is an external node, say containing a body named c, then
+             there are two bodies b and c in the same region. Subdivide the
+             region further by creating four children. Then, recursively insert
+             both b and c into the appropriate quadrant(s). Since and c may
+             still end up in the same quadrant, there may be several
+             subdivisions during a single insertion. Finally, update the
+             center-of-mass and total mass of x.
         """
         if self.is_leaf and self.data is None:
             self.data = fish

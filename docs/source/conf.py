@@ -10,7 +10,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath("../.."))
 
-project = 'FInDS'
+project = 'FINDS'
 copyright = '2026, The University of Houston'
 author = 'Mufaro J. Machaya'
 
@@ -28,7 +28,7 @@ latex_documents = [
     (
         'index',                 # 1. Start doc (usually 'index')
         'finds.tex',             # 2. Target name (This determines the PDF filename!)
-        'FInDS: A Fish Interaction and Dynamics Simulator', # 3. Document Title
+        'FINDS: The Fish INteraction and Dynamics Simulator', # 3. Document Title
         'Mufaro J. Machaya',     # 4. Author
         'manual'                 # 5. Document class (e.g., manual, howto)
     ),
@@ -106,3 +106,4 @@ def setup(app):
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+html_favicon = '_static/favicon.ico'

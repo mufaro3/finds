@@ -1,11 +1,12 @@
 from datetime import datetime
 from pathlib import Path
 
+from typing import Optional
 from numpy.typing import NDArray
 from tqdm import tqdm, trange
 
 from .calculations import calculate_system_derivative
-from .constants import DATA_FILE_NAME
+from .constants import DATA_FILE_NAME, ROOT_OUTPUT_PATH, SIMULATION_OUTPUT_NAME
 from .fish import normalize_orientation_vectors
 from .io import close_filestream, init_output_filestream, serialize_to_file
 
@@ -13,8 +14,9 @@ from .io import close_filestream, init_output_filestream, serialize_to_file
 def calculate_update_rk4(
         system: NDArray,
         time_step: float,
+        *,
         use_barnes_hut: bool=False,
-        bh_ratio: float=None,
+        bh_ratio: Optional[float] = None,
         show_progress: bool=False) -> NDArray:
     r"""
     Computes the updated state of the school after the next time step
@@ -102,8 +104,9 @@ def perform_simulation(
         initial_state: NDArray,
         time_step: float,
         end_time: float,
+        *,
         use_barnes_hut: bool = False,
-        bh_ratio: float = None,
+        bh_ratio: Optional[float] = None,
         print_iterations: bool = False,
         print_each_fish: bool = False,
         print_file_output: bool = True) -> Path:

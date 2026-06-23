@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-FInDS: The Fish Interaction and Dynamics Simulator
+FINDS: The Fish INteraction and Dynamics Simulator
 ==================================================
 
 .. toctree::

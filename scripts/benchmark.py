@@ -1,9 +1,10 @@
+# disable any numba speedhacking
 import os
+
 os.environ["NUMBA_DISABLE_JIT"] = "1"
 
-from typing import Optional
 import time
-from pathlib import Path
+from typing import Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -14,6 +15,7 @@ from finds.constants import BENCHMARK_OUTPUT_PATH
 from finds.fish import generate_system
 
 COMPARISON_FIGURE_OUTPUT_NAME='comparison.png'
+
 
 def perform_time_test(n: int,
                       bh_ratio: Optional[float] = None,
@@ -76,8 +78,8 @@ def perform_time_test(n: int,
 
 
 def generate_comparison_figure(
-        min_log_n: int = 1,
-        max_log_n: int = 5) -> None:
+        min_log_n: int,
+        max_log_n: int) -> None:
     r"""
     Generates the timing comparison between Brute-Force and Barnes-Hut.
 
@@ -123,15 +125,38 @@ def generate_comparison_figure(
     :math:`N`, thus we can perform linear regression to compute the
     proportionality constants as the :math:`y`-intercept, and validate the
     functional forms of each.
+
+    In addition to this form, the benchmarker also produces a plot of
+    :math:`k` as a function of :math:`N` for both Brute-Force and Barnes-Hut
+    by normalizing the non-logarithmic runtime by the algorithmic growth
+    function. For Brute-Force, this is
+
+    .. math::
+        y := k_{BF} = \frac{t_{BF}}{N^2}
+
+    and for Barnes-Hut, this is
+
+    .. math::
+        y := k_{BH} = \frac{t_{BH}}{N \log_2 N},
+
+    and this should produce either a flat/constant or an asymptotic curve as
+    :math:`k` should be roughly constant (and ideally, quite small). This acts
+    as a verification measure, because if this curve shows that :math:`k` is
+    a function of :math:`N` in a nonnegligible way, then the algorithm is
+    likely contains a bug.
     """
     tqdm.write('Beginning benchmark.')
 
     # Generate the system sizes from the input
     lognvalues = np.flip(np.arange(min_log_n, max_log_n + 1))
+    nvalues = np.exp2(lognvalues)
 
     # Barnes-Hut opening angles
     bh_ratios = np.arange(0.25, 1.0, step=0.25)
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(16, 6))
+
+    log_plot_ax = axes[0]
+    k_asympt_ax = axes[1]
 
     # brute-force baseline
     brute_force_times = []
@@ -143,10 +168,21 @@ def generate_comparison_figure(
     slope_bf, intercept_bf = np.polyfit(lognvalues, brute_force_times, 1)
     prop_const_bf = 2 **  intercept_bf
 
-    ax.plot(
+    # formats exponents
+    def fe(x):
+        mantissa, exponent = f"{x:.6e}".split("e")
+        return f"{float(mantissa):.2f} \\times 10^{{{int(exponent)}}}"
+
+    log_plot_ax.plot(
         lognvalues, brute_force_times,
-        label=f"Brute Force, $k={prop_const_bf:1e}$, slope={slope_bf:.1f}",
+        label=f"Brute Force, $k={fe(prop_const_bf)}$, slope={slope_bf:.1f}",
         linewidth=3
+    )
+
+    k_asympt_ax.plot(
+        nvalues,
+        np.exp2(brute_force_times) / (nvalues ** 2),
+        label=r'Brute Force, $T(N)/N^2$'
     )
 
     # Barnes-Hut curves
@@ -162,19 +198,33 @@ def generate_comparison_figure(
         prop_const_bh = 2 ** intercept_bh
 
         # plot
-        ax.plot(
+        log_plot_ax.plot(
             lognvalues, bh_times,
-            label=f'Barnes-Hut, $\\theta=={bh_ratio:.2f}$, '+\
-            f'$k={prop_const_bh:1e}, slope={slope_bh:1f}$',
+            label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, '+\
+            f'$k={fe(prop_const_bh)}$, Slope$={slope_bh:.1f}$',
             linewidth=3
         )
 
+        k_asympt_ax.plot(
+            nvalues,
+            np.exp2(bh_times) / (nvalues * np.log2(nvalues)),
+            label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, $T(N)/(N \\log_2 N)$'
+        )
+
     # set labels and title
-    ax.set_xlabel(r"Logarithmic Number of Fish, $\log_2 N$")
-    ax.set_ylabel(r"Logarithmic Runtime ($\log_2$ seconds)")
-    ax.set_title("Barnes–Hut vs Brute Force Logarithmic Runtime")
-    ax.legend()
-    ax.grid(True)
+    log_plot_ax.set_xlabel(r"Logarithmic Number of Fish, $\log_2 N$")
+    log_plot_ax.set_ylabel(r"Logarithmic Runtime ($\log_2$ seconds)")
+    log_plot_ax.set_title("Barnes–Hut vs Brute Force\n"+\
+                          r"$\dot{\mathbf{X}}$ Computation Runtime")
+    log_plot_ax.legend()
+    log_plot_ax.grid(True)
+
+    k_asympt_ax.set_xlabel(r'Number of Fish, $N$')
+    k_asympt_ax.set_ylabel(
+        r'Proportionality Cofficient $k$\\(seconds per fish)')
+    k_asympt_ax.set_title('Normalized Algorithmic Runtime Growth vs. $N$')
+    k_asympt_ax.legend()
+    k_asympt_ax.grid(True)
 
     BENCHMARK_OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
     output_path = BENCHMARK_OUTPUT_PATH / COMPARISON_FIGURE_OUTPUT_NAME
@@ -185,4 +235,4 @@ def generate_comparison_figure(
 
 
 if __name__ == '__main__':
-    generate_comparison_figure()
+    generate_comparison_figure(1, 6)

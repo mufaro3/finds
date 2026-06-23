@@ -1,5 +1,0 @@
-- Re-lint and rewrite documentation for all files
-- Add tests for all files
-- Fix Barnes-Hut simplification
-- Add a maximum depth for the interaction calculation of Barnes-Hut
-- Fix def insert_data(self, fish: NDArray)

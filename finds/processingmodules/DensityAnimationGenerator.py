@@ -6,9 +6,8 @@ from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from .ProcessingModule import ProcessingModule
-
 from ..util import split
+from .ProcessingModule import ProcessingModule
 
 
 class DensityAnimationGenerator(ProcessingModule):

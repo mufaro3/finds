@@ -1,12 +1,12 @@
-from .validators.common import VALIDATION_OUTPUT_DIR
-from .validators.figure_reproduction import (reproduce_2025_fig_16,
-                                             reproduce_2026_fig_6)
-from .validators.octree_validation import generate_octree_figures
+from validators.common import VALIDATION_OUTPUT_DIR
+from validators.figure_reproduction import (reproduce_2024_fig_16,
+                                             reproduce_2025_fig_8)
+from validators.octree_validation import generate_octree_figures
 
 
 def validation_main() -> None:
-    reproduce_2026_fig_6()
-    reproduce_2025_fig_16()
+    reproduce_2025_fig_8()
+    reproduce_2024_fig_16()
     generate_octree_figures(n=5)
 
 

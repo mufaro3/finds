@@ -17,10 +17,10 @@ def main():
         system,
         time_step=0.01,
         end_time=5,
-        use_barnes_hut=True,
+        use_barnes_hut=False,
         bh_ratio=0.5,
         print_iterations=True,
-        print_each_fish=True
+        print_each_fish=False
     )
 
     process_data(output_dir)

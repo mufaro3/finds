@@ -6,7 +6,8 @@ from numpy.typing import NDArray
 from tqdm import tqdm, trange
 
 from .calculations import calculate_system_derivative
-from .constants import DATA_FILE_NAME, ROOT_OUTPUT_PATH, SIMULATION_OUTPUT_NAME
+from .constants import DATA_FILE_NAME, SIMULATION_OUTPUT_DIR, \
+    SIMULATION_OUTPUT_NAME
 from .fish import normalize_orientation_vectors
 from .io import close_filestream, init_output_filestream, serialize_to_file
 
@@ -152,7 +153,7 @@ def perform_simulation(
     # generate a new file at output/test-{timestamp}/path.csv
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    output_dir = ROOT_OUTPUT_PATH / \
+    output_dir = SIMULATION_OUTPUT_DIR / \
         Path(f"{SIMULATION_OUTPUT_NAME}-{timestamp}")
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -169,7 +170,10 @@ def perform_simulation(
 
         # compute the next state via RK4
         system = calculate_update_rk4(
-            system, time_step, use_barnes_hut, bh_ratio, print_each_fish)
+            system, time_step,
+            use_barnes_hut=use_barnes_hut,
+            bh_ratio=bh_ratio,
+            show_progress=print_each_fish)
 
         # update the iteration indices
         simulation_index += 1

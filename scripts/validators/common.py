@@ -1,6 +1,6 @@
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Any, Protocol
+from typing import Callable, Any, Protocol, cast
 
 from tqdm import tqdm
 

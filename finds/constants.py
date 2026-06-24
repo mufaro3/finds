@@ -17,6 +17,9 @@ FISH_SELF_PROPELLED_SPEED: float = (
 #: The root output path
 ROOT_OUTPUT_PATH=Path('output')
 
+#: The output path for all of the simulation files
+SIMULATION_OUTPUT_DIR=ROOT_OUTPUT_PATH / Path('simulations')
+
 #: The output path for simulation files
 SIMULATION_OUTPUT_NAME='sim'
 

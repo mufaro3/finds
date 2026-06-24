@@ -37,12 +37,12 @@ def draw_wireframe_cube(center: NDArray, side_length: float, ax: Axes) -> None:
 
     # connect the corners (draw the edges)
     for start, end in combinations(corners, 2):
-        num_shared_axes: int = np.sum(np.abs(start - end) > 1e-12)
+        num_shared_axes: int = np.sum(np.isclose(start, end))
 
-        # if these two vertices have exactly one common axis, then we'll
+        # if these two vertices have exactly two common axes, then we'll
         # draw the line that joins them
-        if num_shared_axes == 1:
-            connecting_line = np.hstack((start, end))
+        if num_shared_axes == 2:
+            connecting_line = np.vstack((start, end)).T
             ax.plot(*connecting_line, color='black')
 
 
@@ -85,7 +85,7 @@ def draw_octree_3d_recurse(
     # draw fish position
     if current_node.average is not None:
         pos = current_node.average[:3]
-        ax.scatter(*pos, markersize=particle_size)
+        ax.scatter(*pos, s=particle_size)
 
     # recurse children
     if not current_node.is_leaf:
@@ -135,7 +135,8 @@ def draw_octree_3d(octree: OctreeNode, max_depth: int = None) -> None:
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
 
-    plt.savefig(draw_octree_3d.filepath, dpi=300, bbox_inches="tight")
+    plt.savefig(draw_octree_3d.filename, dpi=300, bbox_inches="tight")
+    plt.close()
 
 def compute_octree_2d_positions_recurse(
         node: OctreeNode,
@@ -186,7 +187,7 @@ def compute_octree_2d_positions_recurse(
     y_pos = dy * -depth
 
     if node.is_leaf:
-        positions[nid] = x_pos, y_pos
+        positions[nid] = np.array([x_pos, y_pos])
         return x, x
 
     child_ranges = []
@@ -204,24 +205,26 @@ def compute_octree_2d_positions_recurse(
             # move further right (greater octant indices go to the right)
             next_x = right + 1
 
+
     # there were any produced ranges
     if child_ranges:
+        child_ranges = np.array(child_ranges)
 
         # obtain the farthest left
-        left  = child_ranges[0][0]
+        left  = child_ranges[0,0]
 
         # and the farthest right
-        right = child_ranges[-1][1]
+        right = child_ranges[-1,1]
 
         # then take the middle
         child_range_center = (left + right) / 2
 
         # and set that as the position for this node
-        positions[nid] = child_range_center * dx, y_pos
+        positions[nid] = np.array([child_range_center * dx, y_pos])
 
         return left, right
 
-    positions[nid] = x_pos, y_pos
+    positions[nid] = np.array([x_pos, y_pos])
     return x, x
 
 def draw_octree_node_2d_recurse(
@@ -274,7 +277,7 @@ def draw_octree_node_2d_recurse(
 
         # connect the child position to this node's position
         child_pos = positions[id(child)]
-        connecting_line = np.hstack((pos, child_pos))
+        connecting_line = np.vstack((pos, child_pos)).T
         connection_label_pos = (pos + child_pos) / 2
 
         # draw the connecting line and its associated label
@@ -327,9 +330,8 @@ def draw_octree_2d(
     ax.axis("off")
     plt.tight_layout()
 
-    # return the figure
-    return ax
-
+    plt.savefig(draw_octree_2d.filename, dpi=300, bbox_inches="tight")
+    plt.close()
 
 def generate_octree_figures(n: int) -> None:
     data = generate_system(

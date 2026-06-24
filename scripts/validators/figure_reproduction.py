@@ -1,4 +1,7 @@
+# disable numba because we are at low N
 import os
+os.environ["NUMBA_DISABLE_JIT"] = "1"
+
 import shutil
 import sys
 
@@ -19,7 +22,7 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
     r"""
     Produces a coplanar simulation based on the parameters :math:`\Delta
     \theta`, :math:`\Delta x`, and :math:`\Delta y` as seen in figure 8 of
-    :cite:t:`mabrouk2024`.
+    :cite:t:`mabrouk2025`.
 
     :param dtheta: The angular separation between the fish.
     :type  dtheta: float
@@ -80,14 +83,14 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
     return trajectories
 
 
-@produces_validation(name='2026-8')
-def reproduce_2026_fig_8():
+@produces_validation(name='2025-8')
+def reproduce_2025_fig_8():
     """
-    Reproduces figure 8 of :cite:t:`mabrouk2026`.
+    Reproduces figure 8 of :cite:t:`mabrouk2025`.
     """
-    top_right    = coplanar_simulation(dtheta=0, dx=0.5, dy=0),
-    top_left     = coplanar_simulation(dtheta=0, dx=5,   dy=0.5),
-    bottom_right = coplanar_simulation(dtheta=0, dx=1,   dy=1),
+    top_right    = coplanar_simulation(dtheta=0, dx=0.5, dy=0)
+    top_left     = coplanar_simulation(dtheta=0, dx=5,   dy=0.5)
+    bottom_right = coplanar_simulation(dtheta=0, dx=1,   dy=1)
     bottom_left  = coplanar_simulation(dtheta=0, dx=0.5, dy=1)
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
@@ -120,7 +123,7 @@ def reproduce_2026_fig_8():
     axes[0, 0].legend()
     plt.tight_layout()
 
-    plt.savefig(reproduce_2026_fig_8.filename, dpi=300, bbox_inches='tight')
+    plt.savefig(reproduce_2025_fig_8.filename, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 
@@ -146,10 +149,10 @@ def generate_fish_circle(r: int, n: int, x: int) -> NDArray:
     return system
 
 
-@produces_validation(name='2025-16')
-def reproduce_2025_fig_16():
+@produces_validation(name='2024-16')
+def reproduce_2024_fig_16():
     """
-    Reproduces figure 16 of :cite:t:`mabrouk2025`.
+    Reproduces figure 16 of :cite:t:`mabrouk2024`.
     """
     initial_state = np.concatenate((
         generate_fish_circle(r=2.5, n=6, x=0),
@@ -207,5 +210,5 @@ def reproduce_2025_fig_16():
     ax.set_box_aspect([1, 1, 1])
     plt.tight_layout()
 
-    plt.savefig(reproduce_2025_fig_16.filename, dpi=300)
+    plt.savefig(reproduce_2024_fig_16.filename, dpi=300)
     plt.close(fig)

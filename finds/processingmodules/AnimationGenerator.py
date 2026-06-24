@@ -26,9 +26,14 @@ class AnimationGenerator(ProcessingModule):
       The resolution of the video in dots per inch. Defaults to 100.
 
     video_output_filename: str
+      The output filename of the video to generate. Default is
+      :code:`animation3d.mp4`
 
-    :param max_bounds: bruh
-    :type max_bounds: ArrayLike
+    max_bounds: ArrayLike
+      The maximum (unsigned) bounds for the perspective. Putting in
+      :math:`(x_0, y_0, z_0)` means that the :math:`x`-axis varies from
+      :math:`-x_0` to :math:`x_0`, and so on. Default is
+      :math:`(100, 100, 100)`.
     """
     def __init__(
             self, *,

@@ -1,6 +1,5 @@
 # disable any numba speedhacking
 import os
-
 os.environ["NUMBA_DISABLE_JIT"] = "1"
 
 import time

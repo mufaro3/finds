@@ -8,6 +8,7 @@ from typing import Optional
 import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
+from matplotlib.ticker import MultipleLocator
 
 from finds.calculations import calculate_system_derivative
 from finds.constants import BENCHMARK_OUTPUT_PATH
@@ -148,7 +149,7 @@ def generate_comparison_figure(
 
     # Generate the system sizes from the input
     lognvalues = np.flip(np.arange(min_log_n, max_log_n + 1))
-    nvalues = np.exp2(lognvalues)
+    nvalues = 10 ** lognvalues
 
     # Barnes-Hut opening angles
     bh_ratios = np.arange(0.25, 1.0, step=0.25)
@@ -160,12 +161,13 @@ def generate_comparison_figure(
     # brute-force baseline
     brute_force_times = []
 
-    for logn in tqdm(lognvalues, desc='Brute Force Benchmark'):
-        time=perform_time_test(2 ** logn, bh_ratio=None)
-        brute_force_times.append(np.log2(time))
+    for n in tqdm(nvalues, desc='Brute Force Benchmark'):
+        brute_force_times.append(perform_time_test(n, bh_ratio=None))
 
-    slope_bf, intercept_bf = np.polyfit(lognvalues, brute_force_times, 1)
-    prop_const_bf = 2 **  intercept_bf
+    log_brute_force_times = np.log10(brute_force_times)
+
+    slope_bf, intercept_bf = np.polyfit(lognvalues, log_brute_force_times, 1)
+    prop_const_bf = 10 ** intercept_bf
 
     # formats exponents
     def fe(x):
@@ -173,14 +175,14 @@ def generate_comparison_figure(
         return f"{float(mantissa):.2f} \\times 10^{{{int(exponent)}}}"
 
     log_plot_ax.plot(
-        lognvalues, brute_force_times,
+        lognvalues, log_brute_force_times,
         label=f"Brute Force, $k={fe(prop_const_bf)}$, slope={slope_bf:.1f}",
         linewidth=3
     )
 
     k_asympt_ax.plot(
         nvalues,
-        np.exp2(brute_force_times) / (nvalues ** 2),
+        brute_force_times / (nvalues ** 2),
         label=r'Brute Force, $T(N)/N^2$'
     )
 
@@ -189,16 +191,17 @@ def generate_comparison_figure(
 
         # compute the times
         bh_times = []
-        for logn in tqdm(lognvalues, desc=f'Barnes-Hut, Theta={bh_ratio:.2f}'):
-            time = perform_time_test(2 ** logn, bh_ratio=bh_ratio)
-            bh_times.append(np.log2(time))
+        for n in tqdm(nvalues, desc=f'Barnes-Hut, Theta={bh_ratio:.2f}'):
+            bh_times.append(perform_time_test(n, bh_ratio=bh_ratio))
 
-        slope_bh, intercept_bh = np.polyfit(lognvalues, bh_times, 1)
-        prop_const_bh = 2 ** intercept_bh
+        log_bh_times = np.log10(bh_times)
+
+        slope_bh, intercept_bh = np.polyfit(lognvalues, log_bh_times, 1)
+        prop_const_bh = 10 ** intercept_bh
 
         # plot
         log_plot_ax.plot(
-            lognvalues, bh_times,
+            lognvalues, log_bh_times,
             label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, '+\
             f'$k={fe(prop_const_bh)}$, Slope$={slope_bh:.1f}$',
             linewidth=3
@@ -206,13 +209,14 @@ def generate_comparison_figure(
 
         k_asympt_ax.plot(
             nvalues,
-            np.exp2(bh_times) / (nvalues * np.log2(nvalues)),
-            label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, $T(N)/(N \\log_2 N)$'
+            bh_times / (nvalues * lognvalues),
+            label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, $T(N)/(N \\log N)$'
         )
 
     # set labels and title
-    log_plot_ax.set_xlabel(r"Logarithmic Number of Fish, $\log_2 N$")
-    log_plot_ax.set_ylabel(r"Logarithmic Runtime ($\log_2$ seconds)")
+    log_plot_ax.xaxis.set_major_locator(MultipleLocator(1))
+    log_plot_ax.set_xlabel(r"Logarithmic Fish Count, $\log N$")
+    log_plot_ax.set_ylabel(r"Logarithmic Runtime ($\log$ seconds)")
     log_plot_ax.set_title("Barnes–Hut vs Brute Force\n"+\
                           r"$\dot{\mathbf{X}}$ Computation Runtime")
     log_plot_ax.legend()
@@ -220,7 +224,7 @@ def generate_comparison_figure(
 
     k_asympt_ax.set_xlabel(r'Number of Fish, $N$')
     k_asympt_ax.set_ylabel(
-        r'Proportionality Cofficient $k$\\(seconds per fish)')
+        'Proportionality Cofficient $k$\n(seconds/fish)')
     k_asympt_ax.set_title('Normalized Algorithmic Runtime Growth vs. $N$')
     k_asympt_ax.legend()
     k_asympt_ax.grid(True)
@@ -234,4 +238,4 @@ def generate_comparison_figure(
 
 
 if __name__ == '__main__':
-    generate_comparison_figure(1, 6)
+    generate_comparison_figure(0, 2)

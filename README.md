@@ -18,39 +18,84 @@ implementation of approximation algorithms and speed tricks commonly used
 in Particle dynamics, starting with the Barnes-Hut approximation, which
 decreases the computational complexity to O(N log N).
 
-### SETUP
+## SETUP
 
 All that is required to install FInDS is Docker and GNU Make. For
-Windows users, I highly recommend using WSL[1] and following the Linux
-instructions to keep your life simple, but this program can be run
+Windows users, I highly recommend using WSL
+[1](https://learn.microsoft.com/en-us/windows/wsl/install) and following the
+Linux instructions to keep your life simple, but this program can be run
 purely on windows regardless due to containerization.
 
-DOCKER - LINUX
+### Setup Example for Debian-Derived Systems
 
-All that is needed is the Docker CLI. Follow the instructions here:
+1. Download prerequisites (docker and make)
 
-  <https://docs.docker.com/engine/install/>
+```shell
+sudo apt update
+sudo apt install git make
+sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-doc \
+	podman-docker containerd runc | cut -f1)
 
-DOCKER - WINDOWS AND MACOS
+# Add Docker's official GPG key:
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o \
+	/etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-You probably will need Docker Desktop. Follow the instructions here:
+# Add the repository to Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/debian
+Suites: $(. /etc/os-release && echo "$VERSION_CODENAME")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
 
-  <https://docs.docker.com/desktop/>
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin \
+	docker-compose-plugin
+```
 
-GNU MAKE - LINUX AND MACOS
+2. Clone the Repository
+
+```shell
+git clone https://github.com/mufaro3/finds.git
+```
+
+3. `cd` into the repository and build the container and the documentation
+
+```shell
+cd finds
+make build
+make docs
+```
+
+4. FINDS is now ready for use. Take a look at `make help` for options on what
+   you can do further from there.
+
+### Docker
+
+#### Docker - Linux
+
+All that is needed is the Docker CLI. Follow the instructions on the
+[Docker Website](https://docs.docker.com/engine/install/).
+
+#### Docker - Windows and MacOS
+
+You probably will need Docker Desktop. Follow the instructions on the
+[Docker Website](https://docs.docker.com/desktop/).
+
+### GNU Make
+
+#### GNU Make - Linux and MacOS
 
 Your system likely comes with Make preinstalled, but if not, follow
 the instructions provided by the GNU foundation (ideally, download it
-via your package manager):
+via your package manager) at [GNU](https://www.gnu.org/software/make/).
 
-  <https://www.gnu.org/software/make/>
+#### GNU Make - Windows
 
-GNU MAKE - WINDOWS
-
-Alternative packagers like Chocolatey[2] or Scoop[3] for PowerShell
-can be used to install Make.
-
-
-[1] https://learn.microsoft.com/en-us/windows/wsl/install
-[2] https://chocolatey.org/
-[3] https://scoop.sh/
+Alternative packagers like Chocolatey [2](https://chocolatey.org/) or Scoop
+[3](https://scoop.sh/) for PowerShell can be used to install Make.

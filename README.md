@@ -21,8 +21,8 @@ decreases the computational complexity to O(N log N).
 ## SETUP
 
 All that is required to install FInDS is Docker and GNU Make. For
-Windows users, I highly recommend using WSL
-[1](https://learn.microsoft.com/en-us/windows/wsl/install) and following the
+Windows users, I highly recommend using
+[WSL](https://learn.microsoft.com/en-us/windows/wsl/install) and following the
 Linux instructions to keep your life simple, but this program can be run
 purely on windows regardless due to containerization.
 
@@ -97,5 +97,5 @@ via your package manager) at [GNU](https://www.gnu.org/software/make/).
 
 #### GNU Make - Windows
 
-Alternative packagers like Chocolatey [2](https://chocolatey.org/) or Scoop
-[3](https://scoop.sh/) for PowerShell can be used to install Make.
+Alternative packagers like [Chocolatey](https://chocolatey.org/) or
+[Scoop](https://scoop.sh/) for PowerShell can be used to install Make.

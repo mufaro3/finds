@@ -6,10 +6,10 @@ from numpy.typing import NDArray
 @njit
 def split(mat: NDArray) -> tuple[NDArray, NDArray]:
     """
-    Splits a matrix of shape (N,6) into two matrices of (N,3) and
-    (N,3), or the top and bottom halves of the original matrix.
+    Splits a matrix of shape (N,m) into two matrices of (N,m/2) and
+    (N,m/2), or the top and bottom halves of the original matrix.
 
-    :param mat: The original matrix of shape :math:`(N,6)`.
+    :param mat: The original matrix of shape :math:`(N,m)`.
     :type  mat: NDArray
 
     :returns: The top and bottom halves of the matrix.
@@ -18,20 +18,15 @@ def split(mat: NDArray) -> tuple[NDArray, NDArray]:
     if mat is None:
         raise ValueError('Matrix is NoneType.')
 
+    m = mat.shape[-1]
+
     if mat.ndim == 1:
-        vec = mat
-
-        if vec.size != 6:
-            raise ValueError('Vector does not contain 6 elements.')
-
-        return vec[:3], vec[3:]
+        return mat[:m//2], mat[m//2:]
 
     if mat.ndim != 2:
-        raise ValueError('Expected 2D matrix.')
-    if mat.shape[1] != 6:
-        raise ValueError("Expected matrix with shape (N,6).")
+        raise ValueError('Expected 1D or 2D matrix.')
 
-    return mat[:, :3], mat[:, 3:]
+    return mat[:, :m//2], mat[:, m//2:]
 
 
 @njit

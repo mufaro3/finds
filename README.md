@@ -7,16 +7,24 @@ schools, birds flying in groups, drones/bugs flying in swarms, and so on.
 This fundamentally follows the N-body problem, as each fish-like particle
 (which I have equivalently called "fish automatons," "autofish," "fish-
 particles," and even just "particles" in various places) affects each other
-fish-like particle in the simulation. At a group size of N=3, an analytical
+fish-like particle in the simulation. At a group size of $N=3$, an analytical
 solution is no longer possible, and numerical calculation is needed. As the
-group size N increases, the computational complexity in performing these
+group size $N$ increases, the computational complexity in performing these
 numerical calculations grows as a function of $N^2$.
 
 As such, the fundamental goal of 'Fish' was to simplify the calculations
 to reduce the effect of this bottleneck on Floryan's research through the
 implementation of approximation algorithms and speed tricks commonly used
 in Particle dynamics, starting with the Barnes-Hut approximation, which
-decreases the computational complexity to O(N log N).
+decreases the computational complexity to $O(N \log N)$.
+
+Long term, the goal for the project is to try and reach computational parity
+with modern particle dynamics codes used in Astrophysics (and the like), such
+as [REBOUND](https://rebound.hanno-rein.de/),
+[GADGET-4](https://wwwmpa.mpa-garching.mpg.de/gadget4/), and
+[similar](https://github.com/pmocz/awesome-astrophysical-simulation-codes)
+applied to fish simulation. This is, of course, an ambitious goal for a
+one-man project, but we'll see how this fares.
 
 ## SETUP
 

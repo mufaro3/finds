@@ -14,7 +14,7 @@ help:
 	@echo ""
 	@echo "  make benchmark        - Run benchmarking module."
 	@echo "  make validate         - Run validation module."
-	@echo "  make test [tb=MODE]   - Run all tests."
+	@echo "  make test [tb=] [tf=] - Run tests."
 	@echo ""
 	@echo "  Traceback options (tb):"
 	@echo "    auto   - Default pytest behavior."
@@ -27,6 +27,12 @@ help:
 	@echo "    Example:"
 	@echo "      make test tb=short"
 	@echo "      make test tb=no"
+	@echo ""
+	@echo "  Test file input (tf): All tests by default, or specify a file"
+	@echo "  under the finds/test/ directory."
+	@echo ""
+	@echo "    Example:"
+	@echo "      make test tf=test_calculations.py"
 	@echo ""
 	@echo "  [Debugging]"
 	@echo ""
@@ -77,8 +83,18 @@ stats:
 # auto | long | short | line | native | no
 tb ?= no
 PYTEST_TRACEBACK_MODE := $(tb)
+COVERAGE_PACKAGE := finds
+COVERAGE_DIR := /finds/output/coverage
+
+# example: test_simulation.py
+tf ?= .
+TESTING_DIR_OR_FILE := $(tf)
+
 test:
-	@$(PY) pytest /finds/test --tb=$(PYTEST_TRACEBACK_MODE)
+	@$(PY) pytest /finds/test/$(TESTING_DIR_OR_FILE) \
+		--tb=$(PYTEST_TRACEBACK_MODE) \
+		--cov=$(COVERAGE_PACKAGE) \
+		--cov-report=html:$(COVERAGE_DIR)
 
 FLAKE8_IGNORED := \
 E201,E202,E203,E221,E222,E225,E226,E231,E241,E251,E252,E402,E502,F541,W504,E731

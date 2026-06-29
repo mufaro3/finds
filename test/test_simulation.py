@@ -1,14 +1,15 @@
 import numpy as np
 from numpy.typing import NDArray
+import pytest
 
 from finds.calculations import calculate_system_derivative
-from finds.simulation import calculate_update_rk4
+from finds.simulation import calculate_update
 from finds.util import split
 
 from .common import generate_random_matrix
 
-
-def test_calculate_update_rk4():
+@pytest.mark.filterwarnings("ignore:Time step is zero!")
+def test_calculate_update():
     r"""
     For an input shape of :math:`(N,6)`:
 
@@ -34,13 +35,13 @@ def test_calculate_update_rk4():
         N, random_matrix = generate_random_matrix()
 
         # TEST 1
-        advanced_matrix = calculate_update_rk4(random_matrix, time_step=0.01)
+        advanced_matrix = calculate_update(random_matrix, time_step=0.01)
         assert advanced_matrix.shape == random_matrix.shape, \
             f'Output shape {advanced_matrix.shape} is not the same '+\
             f'as the input shape {random_matrix.shape}.'
 
         # TEST 2
-        no_change_matrix = calculate_update_rk4(random_matrix, time_step=0)
+        no_change_matrix = calculate_update(random_matrix, time_step=0)
         assert np.allclose(no_change_matrix, random_matrix), \
             'calculate_update_rk4 should produce no change with a '+\
             'zero time step.'
@@ -49,7 +50,7 @@ def test_calculate_update_rk4():
         derivative = calculate_system_derivative(
             random_matrix, use_barnes_hut=False, bh_ratio=None)
         sdt_euler = random_matrix + derivative * small_dt
-        sdt_rk4 = calculate_update_rk4(random_matrix, time_step=small_dt)
+        sdt_rk4 = calculate_update(random_matrix, time_step=small_dt)
 
         # TEST 3
         assert np.all(np.abs(random_matrix - sdt_rk4) < \
@@ -72,10 +73,6 @@ def test_calculate_update_rk4():
             'RK4 produced a non-normalized matrix.'
 
         # TEST 6
-        advanced_matrix_2 = calculate_update_rk4(random_matrix, time_step=0.01)
+        advanced_matrix_2 = calculate_update(random_matrix, time_step=0.01)
         assert np.allclose(advanced_matrix, advanced_matrix_2), \
             'RK4 produced differing results after two identical calls.'
-
-
-def test_perform_simulation():
-    pass

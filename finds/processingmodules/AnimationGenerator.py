@@ -34,6 +34,28 @@ class AnimationGenerator(ProcessingModule):
       :math:`(x_0, y_0, z_0)` means that the :math:`x`-axis varies from
       :math:`-x_0` to :math:`x_0`, and so on. Default is
       :math:`(100, 100, 100)`.
+
+    particle_radius: int
+      The radius for each particle (default 30).
+
+    orientation_width: int
+      The width for the line depicting the orientation (default 5).
+
+    orientation_length: int
+      The length for the line depicting the orientation (default 5).
+
+    padding: float
+      The padding for the viewport/unit box (default 0.1).
+
+    figsize: tuple[int]
+      The size of the resulting figure (not the viewport, default
+      :math:`(8,8)`).
+
+    particle_color: str
+      The color of the particle, default :code:`tab:cyan`.
+
+    orientation_color: str
+      The color of the orientation line, default :code:`tab:orange`.
     """
     def __init__(
             self, *,
@@ -51,8 +73,6 @@ class AnimationGenerator(ProcessingModule):
             figsize: tuple[int] = (8,8),
 
             # color scheme
-            head_color: str = 'tab:red',
-            tail_color: str = 'tab:blue',
             particle_color: str = 'tab:cyan',
             orientation_color: str = 'tab:orange'
     ):
@@ -67,8 +87,6 @@ class AnimationGenerator(ProcessingModule):
         self.padding = padding
         self.figsize = figsize
 
-        self.head_color = head_color
-        self.tail_color = tail_color
         self.particle_color = particle_color
         self.orientation_color = orientation_color
 

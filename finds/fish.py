@@ -229,7 +229,7 @@ def generate_system(
 
     :param orientation: How the fish are oriented.
     :type  orientation: 'random' | 'aligned' | 'radial outward' |
-      'radial inward'
+      'radial inward' | 'swirl'
 
     :param n_random: The number of fish, provided that this is a random
       distribution. For all other distributions, the :code:`size` parameter is
@@ -287,11 +287,19 @@ def generate_system(
         orientations = positions.copy()
     elif orientation == 'radial inward':
         orientations = -positions.copy()
+    elif orientation == 'swirl':
+        theta = np.atan2(positions[:, 1], positions[:, 0])
+
+        orientations = np.column_stack((
+            -np.sin(theta),
+            np.cos(theta),
+            np.zeros_like(theta)
+        ))
     else:
         raise ValueError(
             f'Invalid orientation parameter \"{orientation}\". '+
             'Must be one of: \"random\", \"aligned\", \"radial outward\", '+
-            '\"radial inward\".'
+            '\"radial inward\", or \"swirl\".'
         )
 
     if angle_delta != 0:

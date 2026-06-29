@@ -18,13 +18,14 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
     system, returned in the following format:
 
     .. math::
+        :label: fish_shape
 
-       \mathbf{F} = \begin{bmatrix}
-       x_{f1} & y_{f1} & z_{f1} & x_{b1} & y_{b1} & z_{b1} \\
-       x_{f2} & y_{f2} & z_{f2} & x_{b2} & y_{b2} & z_{b2} \\
-       \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
-       x_{fN} & y_{fN} & z_{fN} & x_{bN} & y_{bN} & z_{bN}
-       \end{bmatrix}
+        \mathbf{F} = \begin{bmatrix}
+        x_{f1} & y_{f1} & z_{f1} & x_{b1} & y_{b1} & z_{b1} \\
+        x_{f2} & y_{f2} & z_{f2} & x_{b2} & y_{b2} & z_{b2} \\
+        \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+        x_{fN} & y_{fN} & z_{fN} & x_{bN} & y_{bN} & z_{bN}
+        \end{bmatrix}
 
     :param system: The system.
     :type system: NDArray
@@ -39,21 +40,17 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
     :math:`\mathbf{n}` using the following formulas
 
     .. math::
-        :nowrap:
+        :label: feature_positions
 
-        \begin{align}
-         \mathbf{x}_f &= \mathbf{x}_c + \vec{\delta} \\
-         \mathbf{x}_b &= \mathbf{x}_c - \vec{\delta}
-        \end{align}
+        \mathbf{x}_f &= \mathbf{x}_c + \vec{\delta} \\
+        \mathbf{x}_b &= \mathbf{x}_c - \vec{\delta}
 
     where
 
     .. math::
-        :nowrap:
+        :label: fish_delta
 
-        \begin{align}
-          \vec{\delta} = \frac{1}{2} \ell \mathbf{n}
-        \end{align}
+        \vec{\delta} = \frac{1}{2} \ell \mathbf{n}
 
     is a half-length vector in the direction of the orientation.
     """
@@ -462,18 +459,18 @@ def calculate_feature_interaction(
     divided by the cube of its norm:
 
     .. math::
-        \begin{align}
+        :label: individual_interaction
+
         \mathbf{c}_{\alpha\beta} = \frac{\mathbf{r}_{\alpha\beta}}
         {r_{\alpha\beta}^3}
-        \end{align}
 
     where
 
     .. math::
-        \begin{align}
+        :label: individual_interaction_displacement
+
         \mathbf{r}_{\alpha\beta} = \mathbf{x}_{\alpha,i} -
         \mathbf{x}_{\beta,j}.
-        \end{align}
 
     :param feature_a_pos: The position of the first feature,
       :math:`\mathbf{x}_{\alpha,i}`.
@@ -518,17 +515,17 @@ def calculate_fish_interaction(
     interactions
 
     .. math::
-        \begin{align}
+        :label: front_interaction
+
         \mathbf{h}_{f,ij} = \mathbf{c}_{ff} - \mathbf{c}_{fb}
-        \end{align}
 
     and the back interaction is defined as the difference between the back-to-
     front and back-to-back interactions
 
     .. math::
-        \begin{align}
+        :label: back_interaction
+
         \mathbf{h}_{b,ij} = \mathbf{c}_{bf} - \mathbf{c}_{bb}.
-        \end{align}
     """
     # front interactions
     front_front = calculate_feature_interaction(fish_front, other_front)

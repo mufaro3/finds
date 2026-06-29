@@ -59,8 +59,8 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
         initial_state,
         time_step=0.01,
         end_time=20,
-        print_iterations=False,
-        print_each_fish=False,
+        print_iterations=True,
+        print_each_fish=True,
         print_file_output=False
     )
 

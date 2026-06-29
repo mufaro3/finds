@@ -2,7 +2,7 @@
         stats repl jupyter
 help:
 	@echo ""
-	@echo "(FINDS) AVAILABLE COMMANDS"
+	@echo "FINDS - AVAILABLE COMMANDS"
 	@echo ""
 	@echo "  [Building, Running, and Documentation]"
 	@echo ""

@@ -24,8 +24,8 @@ services:
 
   docs:
     <<: *base
-    working_dir: /finds/docs
-    command: make all
+    working_dir: /finds
+    command: make docs
 
   repl:
     <<: *base

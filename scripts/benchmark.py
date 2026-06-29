@@ -1,14 +1,25 @@
-# disable any numba speedhacking
 import os
-os.environ["NUMBA_DISABLE_JIT"] = "1"
-
+import sys
 import time
 from typing import Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import rc
 from tqdm import tqdm
 from matplotlib.ticker import MultipleLocator
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 11})
+rc('text', usetex=True)
+
+USE_NUMBA = sys.argv[1] == 'enable'
+NUMBA_WARMED_UP = False
+
+if not USE_NUMBA:
+    # disable numba
+    print('Numba Disabled')
+    os.environ["NUMBA_DISABLE_JIT"] = "1"
+else:
+    print('Numba Enabled')
 
 from finds.calculations import calculate_system_derivative
 from finds.constants import BENCHMARK_OUTPUT_PATH
@@ -16,7 +27,12 @@ from finds.fish import generate_system
 
 COMPARISON_FIGURE_OUTPUT_NAME='comparison.png'
 
-
+TRIVIAL_SYSTEM = generate_system(
+    distribution='random',
+    orientation='random',
+    n_random=5,
+    debug_print=False
+)
 def perform_time_test(n: int,
                       bh_ratio: Optional[float] = None,
                       repeats: int = 3) -> float:
@@ -49,12 +65,15 @@ def perform_time_test(n: int,
 
     use_barnes_hut = bh_ratio is not None
 
-    # a warmup to exclude numba compilation times
-    calculate_system_derivative(
-        example_system,
-        use_barnes_hut,
-        bh_ratio if bh_ratio is not None else 0.0
-    )
+    global NUMBA_WARMED_UP
+    if USE_NUMBA and not NUMBA_WARMED_UP:
+        # a warmup to exclude numba compilation times
+        calculate_system_derivative(
+            TRIVIAL_SYSTEM,
+            use_barnes_hut,
+            bh_ratio if bh_ratio is not None else 0.0
+        )
+        NUMBA_WARMED_UP = True
 
     times = np.zeros(repeats)
 
@@ -148,7 +167,7 @@ def generate_comparison_figure(
     tqdm.write('Beginning benchmark.')
 
     # Generate the system sizes from the input
-    lognvalues = np.flip(np.arange(min_log_n, max_log_n + 1))
+    lognvalues = np.arange(min_log_n, max_log_n + 1)
     nvalues = 10 ** lognvalues
 
     # Barnes-Hut opening angles
@@ -174,10 +193,12 @@ def generate_comparison_figure(
         mantissa, exponent = f"{x:.6e}".split("e")
         return f"{float(mantissa):.2f} \\times 10^{{{int(exponent)}}}"
 
-    log_plot_ax.plot(
-        lognvalues, log_brute_force_times,
+    log_plot_ax.loglog(
+        nvalues, brute_force_times,
         label=f"Brute Force, $k={fe(prop_const_bf)}$, slope={slope_bf:.1f}",
-        linewidth=3
+        linewidth=1,
+        marker='v',
+        markersize=3
     )
 
     k_asympt_ax.plot(
@@ -195,30 +216,30 @@ def generate_comparison_figure(
             bh_times.append(perform_time_test(n, bh_ratio=bh_ratio))
 
         log_bh_times = np.log10(bh_times)
-
         slope_bh, intercept_bh = np.polyfit(lognvalues, log_bh_times, 1)
         prop_const_bh = 10 ** intercept_bh
 
         # plot
-        log_plot_ax.plot(
-            lognvalues, log_bh_times,
+        log_plot_ax.loglog(
+            nvalues, bh_times,
             label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, '+\
             f'$k={fe(prop_const_bh)}$, Slope$={slope_bh:.1f}$',
-            linewidth=3
+            linewidth=1,
+            marker='*',
+            markersize=3
         )
 
         k_asympt_ax.plot(
             nvalues,
-            bh_times / (nvalues * lognvalues),
+            np.array(bh_times) / (nvalues * lognvalues),
             label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, $T(N)/(N \\log N)$'
         )
 
     # set labels and title
-    log_plot_ax.xaxis.set_major_locator(MultipleLocator(1))
-    log_plot_ax.set_xlabel(r"Logarithmic Fish Count, $\log N$")
-    log_plot_ax.set_ylabel(r"Logarithmic Runtime ($\log$ seconds)")
+    log_plot_ax.set_xlabel(r"Fish Count $N$")
+    log_plot_ax.set_ylabel(r"Runtime (seconds)")
     log_plot_ax.set_title("Barnes–Hut vs Brute Force\n"+\
-                          r"$\dot{\mathbf{X}}$ Computation Runtime")
+                          r"Derivative Computation Runtime")
     log_plot_ax.legend()
     log_plot_ax.grid(True)
 
@@ -238,4 +259,4 @@ def generate_comparison_figure(
 
 
 if __name__ == '__main__':
-    generate_comparison_figure(0, 2)
+    generate_comparison_figure(1, 2)

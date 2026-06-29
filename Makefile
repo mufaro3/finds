@@ -12,7 +12,15 @@ help:
 	@echo ""
 	@echo "  [Testing and Validation]"
 	@echo ""
-	@echo "  make benchmark        - Run benchmarking module."
+	@echo "  make benchmark [numba=]  - Run benchmarking module."
+	@echo ""
+	@echo "    Use Numba (numba): whether or not to use Numba performance"
+	@echo "    optimizations (disabled by default)."
+	@echo ""
+	@echo "      Example:"
+	@echo "        make benchmark numba=enable"
+	@echo "        make benchmark numba=disable"
+	@echo ""
 	@echo "  make validate         - Run validation module."
 	@echo "  make test [tb=] [tf=] - Run tests."
 	@echo ""
@@ -70,8 +78,11 @@ docs:
 validate:
 	@$(DRUN) validation
 
+# enable | disable
+numba ?= disable
+BENCHMARK_USENUMBA := $(numba)
 benchmark:
-	@$(DRUN) benchmark
+	@$(DRUN) benchmark python3 scripts/benchmark.py $(BENCHMARK_USENUMBA)
 
 jupyter:
 	@docker compose up jupyter

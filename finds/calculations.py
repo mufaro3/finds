@@ -26,7 +26,6 @@ def calculate_feature_positions(system: NDArray) -> NDArray:
        x_{fN} & y_{fN} & z_{fN} & x_{bN} & y_{bN} & z_{bN}
        \end{bmatrix}
 
-
     :param system: The system.
     :type system: NDArray
 

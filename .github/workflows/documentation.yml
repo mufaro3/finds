@@ -12,17 +12,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  docs:
+  documentation:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker compose build
+        run: make build
 
       - name: Build documentation
-        run: docker compose run --rm main make docs
+        run: make docs
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -30,7 +30,7 @@ jobs:
           path: docs/build/html
 
   deploy:
-    needs: docs
+    needs: documentation
 
     runs-on: ubuntu-latest
 

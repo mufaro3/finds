@@ -2,14 +2,13 @@ from finds.fish import generate_system
 from finds.postprocessing import process_data
 from finds.simulation import perform_simulation
 
-
 def main():
     system = generate_system(
-        distribution='lattice',
+        distribution='sphere',
         orientation='swirl',
         angle_delta=0,
-        size=100,
-        spacing=25,
+        size=50,
+        spacing=10,
         debug_print=True
     )
 
@@ -19,12 +18,12 @@ def main():
 
         # Barnes-Hut
         use_barnes_hut=True,
-        bh_ratio=0.5,
+        bh_ratio=0.75,
 
         # Integration
         integration_method = 'RK45',
-        rtol = 1e-6,
-        atol = 1e-8,
+        rtol = 1e-3,
+        atol = 1e-4,
         time_step = 0.01,
 
         # Debug Printing

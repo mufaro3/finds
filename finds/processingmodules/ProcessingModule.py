@@ -23,7 +23,8 @@ class ProcessingModule(ABC):
         self.output_dir = output_dir
 
     @abstractmethod
-    def append_state(self, system: NDArray, time: float) -> None:
+    def append_state(self, system: NDArray, time: float,
+                     frame: int, num_frames: int) -> None:
         r"""
         Appends the state :math:`\mathbf{X}` and time :math:`t` to the current
         process being generated (whether by animating it, including it in a
@@ -34,6 +35,12 @@ class ProcessingModule(ABC):
 
         :param time: The time, :math:`t`.
         :type  time: float
+
+        :param frame: The index for this frame
+        :type  frame: int
+
+        :param num_frames: The total number of frames for this simulation
+        :type  num_frames: int
         """
         pass
 

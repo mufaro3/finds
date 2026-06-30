@@ -276,6 +276,10 @@ def generate_system(
             'Must be one of: lattice, sphere, random, square, circle'
         )
 
+    # remove the fish at the origin
+    origin_mask = ~np.all(np.isclose(positions, 0.0, atol=1e-8), axis=1)
+    positions = positions[origin_mask]
+
     N = positions.shape[0]
 
     if orientation == 'random':

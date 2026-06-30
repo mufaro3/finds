@@ -1,0 +1,138 @@
+from pathlib import Path
+from typing import override
+
+import numpy as np
+from matplotlib import pyplot as plt
+from numpy.typing import NDArray
+from tqdm import tqdm
+
+from ..util import split
+from .ProcessingModule import ProcessingModule
+
+
+class CrossSectionGenerator(ProcessingModule):
+    """
+    Generates a cross-section for the first frame along the xy-plane at z=0.
+
+    Attributes
+    ==========
+    particle_radius: int
+      The radius for each particle (default 30).
+
+    orientation_width: int
+      The width for the line depicting the orientation (default 0.25).
+
+    orientation_length: int
+      The length for the line depicting the orientation (default 5).
+
+    figsize: tuple[int]
+      The size of the resulting figure (not the viewport, default
+      :math:`(10,10)`).
+
+    particle_color: str
+      The color of the particle, default :code:`tab:cyan`.
+
+    orientation_color: str
+      The color of the orientation line, default :code:`tab:orange`.
+
+    output_filename: str
+      The output filename of the image to generate. Default is
+      :code:`animation3d.mp4`
+
+    generated: bool
+      Whether or not we have already generated the cross-section figure.
+
+    dpi: int
+      The resolution of the fig in dots per inch. Defaults to 200.
+    """
+
+    __slots__ = (
+        'z_thickness',
+        'particle_radius',
+        'orientation_width',
+        'orientation_length',
+        'figsize',
+        'particle_color',
+        'orientation_color',
+        'output_filename',
+        'generated',
+        'output_dir'
+    )
+
+    @override
+    def __init__(
+        self,
+        *,
+        z_thickness: float = 0.25,
+        particle_radius: float = 30,
+        orientation_width: int = 0.25,
+        orientation_length: int = 1,
+        figsize: tuple[int, int] = (10, 10),
+        particle_color: str = 'tab:cyan',
+        orientation_color: str = 'tab:orange',
+        output_filename: str = "cross_section.png",
+        dpi: int = 200
+    ):
+        self.z_thickness = z_thickness
+        self.particle_radius = particle_radius
+        self.orientation_width = orientation_width
+        self.orientation_length = orientation_length
+        self.figsize = figsize
+        self.particle_color = particle_color
+        self.orientation_color = orientation_color
+        self.output_filename = output_filename
+        self.dpi = dpi
+
+    @override
+    def begin(self, output_dir: Path):
+        self.output_dir = output_dir
+        self.generated = False
+
+    @override
+    def append_state(self, system: NDArray, time: float,
+                     frame: int, num_frames: int):
+
+        if self.generated or frame != 1:
+            return
+
+        positions_raw, _ = split(system)
+
+        # keep particles near z = 0 within z_thickness
+        z_mask = np.abs(positions_raw[:, 2]) <= self.z_thickness
+        positions, orientations = split(system[z_mask])
+
+        fig, ax = plt.subplots(figsize=self.figsize)
+
+        ax.scatter(
+            positions[:, 0], positions[:, 1],
+            s=self.particle_radius,
+            c=self.particle_color
+        )
+
+        ax.quiver(
+            positions[:, 0],
+            positions[:, 1],
+            orientations[:, 0] * self.orientation_length,
+            orientations[:, 1] * self.orientation_length,
+            color=self.orientation_color,
+            width=self.orientation_width / 100,
+        )
+
+        ax.set_aspect("equal")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_title(
+            f"$(xy, z=0)$-plane cross section at $t = 0$, "+\
+            f"$|z| \\le {self.z_thickness}$"
+        )
+
+        output = self.output_dir / self.output_filename
+        fig.savefig(output, dpi=self.dpi, bbox_inches="tight")
+        plt.close(fig)
+
+        self.generated = True
+        tqdm.write(f"Saved cross section to {output}")
+
+    @override
+    def end(self):
+        pass

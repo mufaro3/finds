@@ -99,9 +99,14 @@ def perform_simulation(
         output_filename, initial_state.shape[0])
 
     # progress bar
-    pbar = tqdm(total   = end_time,
-                disable = not print_time_progression,
-                desc    = 'Time Progression')
+    pbar = tqdm(
+        total      = end_time,
+        disable    = not print_time_progression,
+        desc       = 'Time Progression',
+        # disable time estimation (because its not iteration-based)
+        bar_format = "{l_bar}{bar}| {n_fmt}/{total_fmt}{postfix} s [{elapsed}]"
+    )
+
     last_t = 0.0
 
     # right hand sum derivative function for SciPy

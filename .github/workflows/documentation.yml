@@ -21,6 +21,9 @@ jobs:
       - name: Build Docker image
         run: make build
 
+      - name: Fix workspace permissions
+        run: chmod -R u+rwX .
+
       - name: Build documentation
         run: make docs
 

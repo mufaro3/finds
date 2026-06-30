@@ -23,7 +23,7 @@ class AnimationGenerator(ProcessingModule):
       be. Default is 30 FPS.
 
     dpi: int
-      The resolution of the video in dots per inch. Defaults to 100.
+      The resolution of the video in dots per inch. Defaults to 300.
 
     video_output_filename: str
       The output filename of the video to generate. Default is
@@ -57,11 +57,12 @@ class AnimationGenerator(ProcessingModule):
     orientation_color: str
       The color of the orientation line, default :code:`tab:orange`.
     """
+
     def __init__(
             self, *,
             # video quality and information
             fps: int = 30,
-            dpi: int = 100,
+            dpi: int = 300,
             video_output_filename: str = 'animation3d.mp4',
 
             # sizing
@@ -143,7 +144,8 @@ class AnimationGenerator(ProcessingModule):
         self.writer.setup(self.fig, str(self.output_filename), dpi=self.dpi)
 
     @override
-    def append_state(self, system: NDArray, time: float) -> None:
+    def append_state(self, system: NDArray, time: float,
+                     frame: int, num_frames: int) -> None:
         r"""
         Draws the current state to the animation.
         """

@@ -20,11 +20,14 @@ class DensityAnimationGenerator(ProcessingModule):
     fps: int
       The frames-per-second of the animation. Default 30 FPS.
 
+    dpi: int
+      The dots-per-inch of the animation. Default 300.
+
     n_bins: int
       The number of bins to use in the histogram. Default 30.
 
     max_radius: float
-      The maximum radius to display on the histogram. Default 50.
+      The maximum radius to display on the histogram. Default 100.
 
     figsize: tuple[int]
       The MatPlotLib figure dimensions for the video.
@@ -32,16 +35,19 @@ class DensityAnimationGenerator(ProcessingModule):
     video_output_filename: str
       The filename to output the video to.
     """
+
     @override
     def __init__(
         self, *,
         fps: int = 30,
+        dpi: int = 300,
         n_bins: int = 30,
-        max_radius: float = 50.0,
+        max_radius: float = 100.0,
         figsize: tuple[int] = (6,4),
         video_output_filename: str = 'density_animation.mp4'
     ):
         self.fps = fps
+        self.dpi = dpi
         self.n_bins = n_bins
         self.max_radius = max_radius
         self.figsize = figsize
@@ -72,10 +78,11 @@ class DensityAnimationGenerator(ProcessingModule):
         # setup the video writer
         self.output_filename = self.output_dir / self.video_output_filename
         self.writer = plt.matplotlib.animation.FFMpegWriter(fps=self.fps)
-        self.writer.setup(self.fig, str(self.output_filename), dpi=100)
+        self.writer.setup(self.fig, str(self.output_filename), dpi=self.dpi)
 
     @override
-    def append_state(self, system: NDArray, time: float) -> None:
+    def append_state(self, system: NDArray, time: float,
+                     frame: int, num_frames: int) -> None:
         positions, _ = split(system)
 
         # compute the center of mass

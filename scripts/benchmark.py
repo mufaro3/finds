@@ -11,14 +11,14 @@ from matplotlib.ticker import MultipleLocator
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 11})
 rc('text', usetex=True)
 
-USE_NUMBA = sys.argv[1] == 'enable'
+USE_NUMBA =  __name__ == '__main__' and sys.argv[1] == 'enable'
 NUMBA_WARMED_UP = False
 
-if not USE_NUMBA:
+if not USE_NUMBA and __name__ == '__main__':
     # disable numba
     print('Numba Disabled')
     os.environ["NUMBA_DISABLE_JIT"] = "1"
-else:
+elif  __name__ == '__main__':
     print('Numba Enabled')
 
 from finds.calculations import calculate_system_derivative
@@ -27,12 +27,6 @@ from finds.fish import generate_system
 
 COMPARISON_FIGURE_OUTPUT_NAME='comparison.png'
 
-TRIVIAL_SYSTEM = generate_system(
-    distribution='random',
-    orientation='random',
-    n_random=5,
-    debug_print=False
-)
 def perform_time_test(n: int,
                       bh_ratio: Optional[float] = None,
                       repeats: int = 3) -> float:
@@ -68,8 +62,15 @@ def perform_time_test(n: int,
     global NUMBA_WARMED_UP
     if USE_NUMBA and not NUMBA_WARMED_UP:
         # a warmup to exclude numba compilation times
+        trivial_system = generate_system(
+            distribution='random',
+            orientation='random',
+            n_random=5,
+            debug_print=False
+        )
+
         calculate_system_derivative(
-            TRIVIAL_SYSTEM,
+            trivial_system,
             use_barnes_hut,
             bh_ratio if bh_ratio is not None else 0.0
         )
@@ -195,7 +196,7 @@ def generate_comparison_figure(
 
     log_plot_ax.loglog(
         nvalues, brute_force_times,
-        label=f"Brute Force, $k={fe(prop_const_bf)}$, slope={slope_bf:.1f}",
+        label=f"Brute Force, $k={fe(prop_const_bf)}$, Slope $={slope_bf:.1f}$",
         linewidth=1,
         marker='v',
         markersize=3
@@ -223,7 +224,7 @@ def generate_comparison_figure(
         log_plot_ax.loglog(
             nvalues, bh_times,
             label=f'Barnes-Hut, $\\theta={bh_ratio:.2f}$, '+\
-            f'$k={fe(prop_const_bh)}$, Slope$={slope_bh:.1f}$',
+            f'$k={fe(prop_const_bh)}$, Slope $={slope_bh:.1f}$',
             linewidth=1,
             marker='*',
             markersize=3
@@ -246,7 +247,7 @@ def generate_comparison_figure(
     k_asympt_ax.set_xlabel(r'Number of Fish, $N$')
     k_asympt_ax.set_ylabel(
         'Proportionality Cofficient $k$\n(seconds/fish)')
-    k_asympt_ax.set_title('Normalized Algorithmic Runtime Growth vs. $N$')
+    k_asympt_ax.set_title('Proportionality Cofficient vs. $N$')
     k_asympt_ax.legend()
     k_asympt_ax.grid(True)
 
@@ -257,6 +258,5 @@ def generate_comparison_figure(
 
     tqdm.write(f"Saved comparison figure to {output_path}")
 
-
 if __name__ == '__main__':
-    generate_comparison_figure(1, 2)
+    generate_comparison_figure(1, 3)

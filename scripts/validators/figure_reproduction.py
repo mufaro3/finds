@@ -1,9 +1,6 @@
-# disable numba because we are at low N
-import os
-os.environ["NUMBA_DISABLE_JIT"] = "1"
-
 import shutil
 import sys
+import os
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -59,8 +56,8 @@ def coplanar_simulation(dtheta: float, dx: float, dy: float) -> NDArray:
         initial_state,
         time_step=0.01,
         end_time=20,
-        print_iterations=True,
-        print_each_fish=True,
+        print_time_progression=False,
+        print_each_fish=False,
         print_file_output=False
     )
 
@@ -164,7 +161,7 @@ def reproduce_2024_fig_16():
         initial_state,
         time_step=0.01,
         end_time=20,
-        print_iterations=False,
+        print_time_progression=False,
         print_each_fish=False,
         print_file_output=False
     )

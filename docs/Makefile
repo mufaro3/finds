@@ -28,8 +28,8 @@ html:
 		"$(SOURCEDIR)" \
 		"$(TMP_HTML)"
 
-	@mkdir -p /tmp/final-html
-	@cp -r $(TMP_HTML)/* /tmp/final-html/
+	@mkdir -p "$(BUILDDIR)/html"
+	@cp -r $(TMP_HTML)/* "$(BUILDDIR)/html/"
 
 # ---------- PDF ----------
 latexpdf:

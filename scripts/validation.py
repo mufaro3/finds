@@ -1,3 +1,6 @@
+import os
+os.environ["NUMBA_DISABLE_JIT"] = "1"
+
 from scripts.validators.common import VALIDATION_OUTPUT_DIR
 from scripts.validators.figure_reproduction import (reproduce_2024_fig_16,
                                              reproduce_2025_fig_8)

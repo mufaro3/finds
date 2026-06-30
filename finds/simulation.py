@@ -25,8 +25,8 @@ def perform_simulation(
 
         # defaults are set to the SciPy defaults
         integration_method: str = 'RK45',
-        rtol: Optional[float]   = None,
-        atol: Optional[float]   = None,
+        rtol: Optional[float]   = 1e-6,
+        atol: Optional[float]   = 1e-8,
         time_step: float        = 1e-2,
 
         # debug print options

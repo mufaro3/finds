@@ -35,12 +35,10 @@ system of swimmers :math:`\mathbf{X}` can be defined as a matrix consisting of
 each of these fish vectors as rows. Thus, for a system of size :math:`N`,
 the system matrix is :math:`N \times 6` or of shape :math:`(N,6)`.
 
-A simple analogy for the far-field model for fish is as treating swimmers like
-bar-magnets in free-space, or simple linear dipoles separated by the fish
-length :math:`\ell` such that the head (or front) of the fish is a source (or
-the north end of the magnet) given that the head pushes fluid away radially
-and the tail (or back) of the fish is a sink (or south end of the magnet) given
-that water re-accumulates at the tail of the fish.
+The fundamental approximation of the far-field model is treating fish as
+self-propelled dipoles moving in free space, with the head of the fish being
+the source and the tail of the fish being the sink. The head and the tail for
+each fish are separated :math:`\ell` apart, or the length of the fish.
 
 Mathematically, these two ends can differ only up to a sign (so the head and
 tail also form positive and negative ends respectively) due to the conservation
@@ -61,15 +59,15 @@ can be computed as
 .. math::
    :label: feature_positions
 
-   \mathbf{x}_f &= \mathbf{x}_c + \vec{\delta} \\
-   \mathbf{x}_b &= \mathbf{x}_c - \vec{\delta}
+   \mathbf{x}_{f,i} &= \mathbf{x}_{c,i} + \vec{\delta}_i \\
+   \mathbf{x}_b &= \mathbf{x}_{c,i} - \vec{\delta}_i
 
 where
 
 .. math::
    :label: fish_delta
 
-   \vec{\delta} = \frac{1}{2} \ell \hat{n}
+   \vec{\delta}_i = \frac{1}{2} \ell \hat{n}_i
 
 and this is returned as the following matrix
 
@@ -95,8 +93,8 @@ a feature (some source or sink of a fish),
    \mathbf{u} = \pm \frac{\sigma}{4\pi} \frac{\mathbf{r}}{|\mathbf{r}|^3}
 
 where :math:`\sigma` is the volumetric flow rate of the source or sink.
-Sources produce positive velocities as they repel bodies outward and sinks
-produce negative velocities as they attract bodies toward them.
+Sources produce outward velocities as they repel bodies outward and sinks
+produce inward velocities as they attract bodies toward them.
 
 In essence, this equation is used to develop the differential time-derivative
 of the full state, as the velocity for a single feature is defined as the
@@ -109,7 +107,8 @@ This idea leads to the feature velocity equation
 .. math::
    :label: feature_velocity
 
-   \mathbf{v}_\alpha = U \hat{n} + \frac{\sigma}{4\pi} \mathbf{h}_\alpha
+   \mathbf{v}_{\alpha,i} = U \hat{n}_i + \frac{\sigma}{4\pi}
+   \mathbf{h}_{\alpha,i}
 
 (see :py:func:`finds.calculations.calculate_feature_velocities`)
 that computes the velocity of some feature :math:`\alpha` (which would be
@@ -121,7 +120,7 @@ self-propelled velocity) defined as
 .. math::
    :label: interal_contribution
 
-   U \hat{n} = \frac{\sigma}{4 \pi \ell^2} \hat{n},
+   U \hat{n}_i = \frac{\sigma}{4 \pi \ell^2} \hat{n}_i,
 
 and the external contribution term that encodes the total velocity
 contribution from all features (sources and sinks) external to this fish,
@@ -206,9 +205,9 @@ and the rotational velocity is defined as
 .. math::
    :label: fish_rotational_derivative
 
-   \frac{d \hat{n}}{dt} = \frac{\delta \mathbf{v} + 2 \lambda \hat{n}}{\ell}
+   \frac{d \hat{n}}{dt} = \frac{\Delta \mathbf{v} + 2 \lambda \hat{n}}{\ell}
 
-where :math:`\Delta v = \mathbf{v}_f - \mathbf{v}_b` is the difference in
+where :math:`\Delta \mathbf{v} = \mathbf{v}_f - \mathbf{v}_b` is the difference in
 velocity between the front and back of the fish and
 
 .. math::

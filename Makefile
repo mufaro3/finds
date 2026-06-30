@@ -6,9 +6,10 @@ help:
 	@echo ""
 	@echo "  [Building, Running, and Documentation]"
 	@echo ""
-	@echo "  make run              - Build and run main."
-	@echo "  make build            - Build the container image."
-	@echo "  make docs             - Build documentation as HTML and PDF."
+	@echo "  make run         - Build and run main."
+	@echo "  make build       - Build the container image."
+	@echo "  make docs        - Build documentation as HTML and PDF."
+	@echo "  make report      - Build the report PDF."
 	@echo ""
 	@echo "  [Testing and Validation]"
 	@echo ""
@@ -74,6 +75,11 @@ repl:
 
 docs:
 	@$(DRUN) docs
+
+report:
+	@mkdir -p paper/output
+	@cd paper && latexmk -pdf -output-directory=output paper.tex
+	@[ -f paper/output/paper.pdf ] && mv paper/output/paper.pdf paper/paper.pdf
 
 validate:
 	@$(DRUN) validation

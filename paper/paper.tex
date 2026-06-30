@@ -1,9 +1,52 @@
-\documentclass{article}
+% Edited from https://latextemplates.com/template/journal-article
+% by Vel (vel@latextemplates.com)
+%
+% CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-\usepackage{graphicx}
-\usepackage{multicol}
+\documentclass[letterpaper, 12pt, twoside]{LTJournalArticle}
+\addbibresource{references.bib}
+\runninghead{FINDS: The Fish INteraction and Dynamics Simulator}
+
 \usepackage{lipsum}
+\setcounter{secnumdepth}{0}
+\setcounter{page}{1}
+
+\title{FINDSv1: A Python Framework for Simulating Passive Hydrodynamic School
+  Evolution}
+
+\author{
+  Mufaro Machaya\textsuperscript{1,2}
+  \thanks{Corresponding author:
+    \href{mailto:mufaro2@student.ubc.ca}{mufaro2@student.ubc.ca}},
+  Mohamed Niged Mabrouk\textsuperscript{1}, and
+  Daniel Floryan\textsuperscript{1} \\
+}
+
+\date{
+  August 2026 \vspace{1em} \\
+  \footnotesize\textsuperscript{1}Department
+  of Mechanical and Aerospace Engineering, University of Houston \\
+  \footnotesize\textsuperscript{2}Department
+  of Physics and Astronomy, University of British Columbia
+}
+
+\renewcommand{\maketitlehookd}{
+  \begin{abstract}
+    \noindent \lipsum[1]
+  \end{abstract}
+}
 
 \begin{document}
-\lipsum{0}
+
+\maketitle
+
+\section{Introduction}
+
+\lipsum[1]
+
+\section{Discussion}
+
+\lipsum[1]
+
+\printbibliography
 \end{document}

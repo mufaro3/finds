@@ -22,7 +22,9 @@ jobs:
         run: make build
 
       - name: Pre-create build directory with open permissions
-        run: mkdir -p build/html && chmod -R 777 build
+        run: |
+          mkdir -p docs/build
+          chmod -R 777 docs/build 2>/dev/null || true
 
       - name: Build documentation
         run: make docs

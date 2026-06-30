@@ -1,5 +1,7 @@
 import warnings
+import os
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from numba import njit, prange
@@ -70,6 +72,11 @@ class OctreeNode:
     is_leaf: bool
       Whether or not this node has children.
     """
+
+    __slots__ = (
+        'children', 'center', 'side_length', 'is_leaf', 'cluster_size',
+        'cluster', 'data', 'average', 'front_pos', 'back_pos'
+    )
 
     def __init__(self, center: NDArray, side_length: float):
         self.children: list[OctreeNode] = [None]*8
@@ -524,17 +531,27 @@ def compute_interaction_barnes_hut(
     feature_positions = calculate_feature_positions(system)
     interactions = np.zeros((N,6))
 
-    # iterate over each fish in the system
-    # NOTE: this can (probably) be parallelized as the tree is static
-    for i in trange(N, disable = not show_progress):
+    def compute_interaction_worker(fish_index: int):
         # compute the feature positions
-        fish_pos, _ = split(system[i])
-        fish_front, fish_back = split(feature_positions[i])
+        fish_pos, _ = split(system[fish_index])
+        fish_front, fish_back = split(feature_positions[fish_index])
 
         # compute the interactions using the octree
-        interactions[i] = \
-            octree.compute_interaction(
-                fish_pos, fish_front, fish_back, bh_ratio)
+        return octree.compute_interaction(
+            fish_pos, fish_front, fish_back, bh_ratio)
+
+    # using numba as a blanket speedhack checker
+    numba_disabled = "NUMBA_DISABLE_JIT" in os.environ and \
+        os.environ["NUMBA_DISABLE_JIT"] == "1"
+
+    # iterate over each fish in the system
+    if numba_disabled:
+        for i in trange(N, disable = not show_progress):
+            interactions[i] = compute_interaction_worker(i)
+    else:
+        with ThreadPoolExecutor() as pool:
+            interaction_map = pool.map(compute_interaction_worker, range(N))
+            interactions = np.asarray(list(interaction_map))
 
     return interactions
 

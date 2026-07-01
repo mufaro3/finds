@@ -2,11 +2,6 @@ name: Build and Deploy Documentation
 
 on: [push, pull_request, workflow_dispatch]
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -14,7 +9,8 @@ concurrency:
 jobs:
   documentation:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +34,10 @@ jobs:
     needs: documentation
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
 
     environment:
       name: github-pages

@@ -20,6 +20,9 @@ ROOT_OUTPUT_PATH=Path('output')
 #: The output path for all of the simulation files
 SIMULATION_OUTPUT_DIR=ROOT_OUTPUT_PATH / Path('simulations')
 
+#: The output directory for the latest simulation
+SIMULATION_LATEST_DIR='latest_simulation'
+
 #: The output path for simulation files
 SIMULATION_OUTPUT_NAME='sim'
 

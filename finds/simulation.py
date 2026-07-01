@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 import warnings
 from typing import Optional
+import errno
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,7 +11,7 @@ from scipy import integrate
 
 from .calculations import calculate_system_derivative
 from .constants import DATA_FILE_NAME, SIMULATION_OUTPUT_DIR, \
-    SIMULATION_OUTPUT_NAME
+    SIMULATION_OUTPUT_NAME, SIMULATION_LATEST_DIR
 from .fish import normalize_orientation_vectors
 from .io import close_filestream, init_output_filestream, serialize_to_file
 
@@ -94,6 +95,22 @@ def perform_simulation(
         Path(f"{SIMULATION_OUTPUT_NAME}-{timestamp}")
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    try:
+        latest_dir = SIMULATION_OUTPUT_DIR / SIMULATION_LATEST_DIR
+        if latest_dir.is_symlink() or latest_dir.exists():
+            latest_dir.unlink()
+        latest_dir.symlink_to(Path(output_dir.name))
+    except OSError as e:
+        if e.errno == errno.EACCES:
+            tqdm.write(f"Warning: Could not update 'latest' symlink due to "+
+                       "permission restrictions: {e.strerror}")
+            tqdm.write("Tip: Run your script with elevated privileges "+
+                       "(sudo/Administrator) or enable Windows Developer "+
+                       "Mode.")
+        else:
+            tqdm.write(f"Warning: 'latest' symlink shortcut could not be "+
+                       "created. Error: {e}")
+
     output_filename = output_dir / DATA_FILE_NAME
     output_io = init_output_filestream(
         output_filename, initial_state.shape[0])
@@ -139,6 +156,7 @@ def perform_simulation(
     # close filestream
     close_filestream(output_io)
     if print_file_output:
-        tqdm.write(f'Saved simulation data to {output_filename}')
+        tqdm.write(f'Saved simulation data to {output_dir} and '+\
+                   f'{latest_dir}')
 
     return output_dir

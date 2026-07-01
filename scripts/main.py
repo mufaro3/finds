@@ -13,7 +13,7 @@ def main():
 
     output_dir = perform_simulation(
         system,
-        end_time=50,
+        end_time=1,
 
         # Barnes-Hut
         use_barnes_hut=False,

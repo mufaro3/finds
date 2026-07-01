@@ -10,11 +10,13 @@ from .processingmodules.DensityAnimationGenerator import \
     DensityAnimationGenerator
 from .processingmodules.ProcessingModule import ProcessingModule
 from .processingmodules.CrossSectionGenerator import CrossSectionGenerator
+from .processingmodules.MeanRadialDistancePlot import MeanRadialDistancePlot
 
 DEFAULT_MODULES_LIST=[
     AnimationGenerator(),
     DensityAnimationGenerator(),
-    CrossSectionGenerator()
+    CrossSectionGenerator(),
+    MeanRadialDistancePlot()
 ]
 
 

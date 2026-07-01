@@ -1,5 +1,5 @@
 .PHONY: help run build logs shell clean docs test lint validate benchmark \
-        stats repl jupyter
+        stats repl jupyter paper derivative
 help:
 	@echo ""
 	@echo "FINDS - AVAILABLE COMMANDS"
@@ -9,9 +9,9 @@ help:
 	@echo "  make run         - Build and run main."
 	@echo "  make build       - Build the container image."
 	@echo "  make docs        - Build documentation as HTML and PDF."
-	@echo "  make report      - Build the report PDF."
+	@echo "  make paper       - Build the report PDF."
 	@echo ""
-	@echo "  [Testing and Validation]"
+	@echo "  [Benchmarking, Testing and Validation]"
 	@echo ""
 	@echo "  make benchmark [numba=]  - Run benchmarking module."
 	@echo ""
@@ -21,6 +21,17 @@ help:
 	@echo "      Example:"
 	@echo "        make benchmark numba=enable"
 	@echo "        make benchmark numba=disable"
+	@echo ""
+	@echo "  make derivative [theta=] [n=] - Time a singule derivative"
+	@echo "                                  calculation"
+	@echo "    Barnes-Hut Minimum Ratio (theta) - Where theta = 0, then"
+	@echo "    the Barnes-Hut approximation is not used (0 by default)."
+	@echo ""
+	@echo "    Number of fish (n) - (10 by default)"
+	@echo ""
+	@echo "      Example:"
+	@echo "        make derivative theta=0.75 n=100000"
+	@echo "        make derivative theta=0.5  n=1000"
 	@echo ""
 	@echo "  make validate         - Run validation module."
 	@echo "  make test [tb=] [tf=] - Run tests."
@@ -76,7 +87,7 @@ repl:
 docs:
 	@$(DRUN) docs
 
-report:
+paper:
 	@mkdir -p paper/output
 	@cd paper && latexmk -pdf -output-directory=output paper.tex
 	@[ -f paper/output/paper.pdf ] && mv paper/output/paper.pdf paper/paper.pdf
@@ -89,6 +100,14 @@ numba ?= disable
 BENCHMARK_USENUMBA := $(numba)
 benchmark:
 	@$(DRUN) benchmark python3 scripts/benchmark.py $(BENCHMARK_USENUMBA)
+
+theta ?= 0
+n ?= 10
+DERIVATIVE_THETA := $(theta)
+DERIVATIVE_N := $(n)
+derivative:
+	@$(DRUN) benchmark python3 scripts/time_single_derivative.py \
+		--theta $(DERIVATIVE_THETA) $(DERIVATIVE_N)
 
 jupyter:
 	@docker compose up jupyter

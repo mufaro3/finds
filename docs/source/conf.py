@@ -78,6 +78,8 @@ HIDE_SIGNATURES = {
     "finds.postprocessing.process_data",
     "finds.processingmodules.DensityAnimationGenerator.DensityAnimationGenerator",
     "finds.processingmodules.AnimationGenerator.AnimationGenerator",
+    "finds.processingmodules.CrossSectionGenerator.CrossSectionGenerator",
+    "finds.processingmodules.MeanRadialDistancePlot.MeanRadialDistancePlot"
 }
 
 def process_signature(

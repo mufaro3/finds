@@ -46,19 +46,6 @@ class CrossSectionGenerator(ProcessingModule):
       The resolution of the fig in dots per inch. Defaults to 200.
     """
 
-    __slots__ = (
-        'z_thickness',
-        'particle_radius',
-        'orientation_width',
-        'orientation_length',
-        'figsize',
-        'particle_color',
-        'orientation_color',
-        'output_filename',
-        'generated',
-        'output_dir'
-    )
-
     @override
     def __init__(
         self,
@@ -101,6 +88,11 @@ class CrossSectionGenerator(ProcessingModule):
         z_mask = np.abs(positions_raw[:, 2]) <= self.z_thickness
         positions, orientations = split(system[z_mask])
 
+        if positions.shape[0] == 0:
+            tqdm.write('No positions found on xy,z=0 plane. '+\
+                       'Not drawing cross section.')
+            return
+
         fig, ax = plt.subplots(figsize=self.figsize)
 
         ax.scatter(
@@ -109,14 +101,17 @@ class CrossSectionGenerator(ProcessingModule):
             c=self.particle_color
         )
 
-        ax.quiver(
-            positions[:, 0],
-            positions[:, 1],
-            orientations[:, 0] * self.orientation_length,
-            orientations[:, 1] * self.orientation_length,
-            color=self.orientation_color,
-            width=self.orientation_width / 100,
-        )
+        try:
+            ax.quiver(
+                positions[:, 0],
+                positions[:, 1],
+                orientations[:, 0] * self.orientation_length,
+                orientations[:, 1] * self.orientation_length,
+                color=self.orientation_color,
+                width=self.orientation_width / 100,
+            )
+        except Exception as e:
+            tqdm.write(f"Failed to draw the arrows! - {e}")
 
         ax.set_aspect("equal")
         ax.set_xlabel("x")

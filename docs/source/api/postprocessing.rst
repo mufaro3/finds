@@ -28,3 +28,13 @@ Post-Processing Modules
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: finds.processingmodules.CrossSectionGenerator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: finds.processingmodules.MeanRadialDistancePlot
+   :members:
+   :undoc-members:
+   :show-inheritance:

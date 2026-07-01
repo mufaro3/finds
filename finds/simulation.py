@@ -104,18 +104,12 @@ def perform_simulation(
         disable    = not print_time_progression,
         desc       = 'Time Progression',
         # disable time estimation (because its not iteration-based)
-        bar_format = "{l_bar}{bar}| {n_fmt}/{total_fmt}{postfix} s [{elapsed}]"
+        bar_format = "{l_bar}{bar}| {n:.2f}/{total_fmt} s [{elapsed}]",
     )
-
-    last_t = 0.0
 
     # right hand sum derivative function for SciPy
     def rhs_derivative(t, y):
-        t_rounded = np.round(t, 2)
-        nonlocal last_t
-        if t_rounded > last_t:
-            pbar.update(t_rounded - last_t)
-            last_t = t_rounded
+        pbar.update(t - pbar.n)
 
         return calculate_system_derivative(
             y.reshape(initial_state.shape),

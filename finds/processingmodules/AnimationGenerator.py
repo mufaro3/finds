@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override
+from typing import override, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -92,13 +92,13 @@ class AnimationGenerator(ProcessingModule):
         self.orientation_color = orientation_color
 
     @override
-    def begin(self, output_dir: Path) -> None:
+    def begin(self, output_dir: Path, use_pdf: bool) -> None:
         r"""
         Sets up the MatPlotLib animation for rendering.
 
         :type max_bounds: ArrayLike
         """
-        super().begin(output_dir)
+        super().begin(output_dir, use_pdf)
 
         # set the figure and axis
         self.fig = plt.figure(figsize=self.figsize)

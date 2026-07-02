@@ -11,18 +11,21 @@ from .processingmodules.DensityAnimationGenerator import \
 from .processingmodules.ProcessingModule import ProcessingModule
 from .processingmodules.CrossSectionGenerator import CrossSectionGenerator
 from .processingmodules.MeanRadialDistancePlot import MeanRadialDistancePlot
+from finds.processingmodules.TrajectoryPlot import TrajectoryPlot
 
 DEFAULT_MODULES_LIST=[
     AnimationGenerator(),
     DensityAnimationGenerator(),
     CrossSectionGenerator(),
-    MeanRadialDistancePlot()
+    MeanRadialDistancePlot(),
+    TrajectoryPlot()
 ]
 
 
 def process_data(
         output_dir: Path,
-        modules: list[ProcessingModule] = DEFAULT_MODULES_LIST) -> None:
+        modules: list[ProcessingModule] = DEFAULT_MODULES_LIST,
+        use_pdf: bool = False) -> None:
     r"""
     Processes the data stored within the output directory. Each state and
     simulation time are read in sequentially, one at a time, so the data is
@@ -35,18 +38,25 @@ def process_data(
     :param generate_animation: Whether or not to generate an animation of the
       simulation.
     :type  generate_animation: bool
+
+    :param use_pdf: Whether or not to output all image files to PDF (intended
+      for inclusion in PDF documents, like reports). False by default.
+    :type  use_pdf: bool
     """
-    rc('font', **{
+    fontconfig = {
         'family': 'serif',
         'serif': ['Computer Modern'],
-        'size': 14})
+        'size': 14
+    }
+    rc('font', **fontconfig)
     rc('text', usetex=True)
+    rc('svg', fonttype='none')
 
     datafile = output_dir / DATA_FILE_NAME
     io = init_input_filestream(datafile, cache_limit=1024**2)
 
     for module in modules:
-        module.begin(output_dir)
+        module.begin(output_dir, use_pdf)
 
     num_frames = len(io.time_dataset)
 

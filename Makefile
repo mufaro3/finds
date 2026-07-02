@@ -144,3 +144,5 @@ clean:
 	@docker compose down -v --remove-orphans
 	@rm -rf docs/build/*
 	@rm -rf output/*
+	@rm -rf paper/output/*
+	@rm -rf paper/paper.pdf

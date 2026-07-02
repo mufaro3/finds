@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override
+from typing import override, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -33,21 +33,27 @@ class MeanRadialDistancePlot(ProcessingModule):
         self, *,
         dpi: int = 300,
         figsize: tuple[int] = (10,10),
-        plot_output_filename: str = 'mean_radial_distance.png'
+        plot_output_filename: str = 'mean_radial_distance'
     ):
         self.dpi = dpi
         self.figsize = figsize
         self.plot_output_filename = plot_output_filename
 
     @override
-    def begin(self, output_dir: Path) -> None:
+    def begin(self, output_dir: Path, use_pdf: Optional[bool]) -> None:
         self.output_dir = output_dir
-        self.output_filename = self.output_dir / self.plot_output_filename
 
         # statistics counters
         self.mean_radial_distances = []
         self.std_radial_distances = []
         self.times = []
+
+        if use_pdf is True:
+            self.plot_output_filename = self.plot_output_filename + '.pdf'
+        else:
+            self.plot_output_filename = self.plot_output_filename + '.png'
+
+        self.output_filename = self.output_dir / self.plot_output_filename
 
     @override
     def append_state(self, system: NDArray, time: float,

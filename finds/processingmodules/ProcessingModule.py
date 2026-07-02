@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 from numpy.typing import NDArray
 
@@ -10,17 +11,20 @@ class ProcessingModule(ABC):
     operate in parallel to reduce the amount of data read to the disk at one
     time (such as generating figures, performing calculations, etc).
     """
-    output_dir: Path
 
-    def begin(self, output_dir: Path):
+    def begin(self, output_dir: Path, use_pdf: Optional[bool]):
         """
         Instructs the processing module to initialize such that it can
         produce data.
 
         :param output_dir: The output directory to write to.
         :type  output_dir: Path
+
+        :param use_pdf: Whether or not to output to SVG.
+        :type  use_pdf: bool
         """
         self.output_dir = output_dir
+        # pdf usage is for each subclass
 
     @abstractmethod
     def append_state(self, system: NDArray, time: float,

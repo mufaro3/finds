@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override
+from typing import override, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -54,8 +54,9 @@ class DensityAnimationGenerator(ProcessingModule):
         self.video_output_filename = video_output_filename
 
     @override
-    def begin(self, output_dir: Path) -> None:
+    def begin(self, output_dir: Path, use_pdf: Optional[bool]) -> None:
         self.output_dir = output_dir
+        # eps output ignored due to video output
 
         # define the figure, axis, and bar plot bins
         self.fig, self.ax = plt.subplots(figsize=self.figsize)

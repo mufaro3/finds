@@ -6,14 +6,14 @@ def main():
     system = generate_system(
         distribution='sphere',
         orientation='swirl inward',
-        size=50,
+        size=20,
         spacing=10,
         debug_print=True
     )
 
     output_dir = perform_simulation(
         system,
-        end_time=1,
+        end_time=25,
 
         # Barnes-Hut
         use_barnes_hut=False,
@@ -21,16 +21,16 @@ def main():
 
         # Integration
         integration_method = 'RK45',
-        rtol = 1e-1,
-        atol = 1e-2,
-        time_step = 1,
+        rtol = 1e-3,
+        atol = 1e-6,
+        time_step = 0.5,
 
         # Debug Printing
         print_time_progression=True,
         print_each_fish=False
     )
 
-    process_data(output_dir)
+    process_data(output_dir, use_pdf=True)
 
 
 if __name__ == '__main__':

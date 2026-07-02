@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override
+from typing import override, Optional
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -37,7 +37,7 @@ class CrossSectionGenerator(ProcessingModule):
 
     output_filename: str
       The output filename of the image to generate. Default is
-      :code:`animation3d.mp4`
+      :code:`cross_section`
 
     generated: bool
       Whether or not we have already generated the cross-section figure.
@@ -57,7 +57,7 @@ class CrossSectionGenerator(ProcessingModule):
         figsize: tuple[int, int] = (10, 10),
         particle_color: str = 'tab:cyan',
         orientation_color: str = 'tab:orange',
-        output_filename: str = "cross_section.png",
+        output_filename: str = "cross_section",
         dpi: int = 200
     ):
         self.z_thickness = z_thickness
@@ -71,9 +71,14 @@ class CrossSectionGenerator(ProcessingModule):
         self.dpi = dpi
 
     @override
-    def begin(self, output_dir: Path):
+    def begin(self, output_dir: Path, use_pdf: Optional[bool]):
         self.output_dir = output_dir
         self.generated = False
+
+        if use_pdf:
+            self.output_filename = self.output_filename + '.pdf'
+        else:
+            self.output_filename = self.output_filename + '.png'
 
     @override
     def append_state(self, system: NDArray, time: float,
@@ -95,12 +100,6 @@ class CrossSectionGenerator(ProcessingModule):
 
         fig, ax = plt.subplots(figsize=self.figsize)
 
-        ax.scatter(
-            positions[:, 0], positions[:, 1],
-            s=self.particle_radius,
-            c=self.particle_color
-        )
-
         try:
             ax.quiver(
                 positions[:, 0],
@@ -112,6 +111,12 @@ class CrossSectionGenerator(ProcessingModule):
             )
         except Exception as e:
             tqdm.write(f"Failed to draw the arrows! - {e}")
+
+        ax.scatter(
+            positions[:, 0], positions[:, 1],
+            s=self.particle_radius,
+            c=self.particle_color
+        )
 
         ax.set_aspect("equal")
         ax.set_xlabel("x")

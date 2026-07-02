@@ -1,7 +1,8 @@
-import warnings
 import os
-from dataclasses import dataclass
+import warnings
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from typing import Optional, cast
 
 import numpy as np
 from numba import njit, prange
@@ -79,13 +80,13 @@ class OctreeNode:
     )
 
     def __init__(self, center: NDArray, side_length: float):
-        self.children: list[OctreeNode] = [None]*8
+        self.children: list[Optional[OctreeNode]] = [None]*8
         self.center: NDArray = center
         self.side_length: float = side_length
         self.is_leaf: bool = True
         self.cluster_size: int = 0
         self.cluster: NDArray = np.zeros(6)
-        self.data: NDArray = None
+        self.data: Optional[NDArray] = None
 
     def calculate_octant_index(self, position: NDArray) -> int:
         r"""
@@ -227,7 +228,7 @@ class OctreeNode:
             )
 
         # then we can insert the data
-        self.children[octant_index].insert_data(fish)
+        self.children[octant_index].insert_data(fish)  # type: ignore
 
     def insert_data(self, fish: NDArray) -> None:
         r"""
@@ -287,8 +288,9 @@ class OctreeNode:
         if not self.is_leaf:
             # calculate the feature positions of its children (recursive)
             for octant_index in range(8):
-                if self.children[octant_index] is not None:
-                    self.children[octant_index].calculate_feature_positions()
+                child = self.children[octant_index]
+                if child is not None:
+                    cast(OctreeNode, child).calculate_feature_positions()
 
     def compute_interaction(self,
                             fish_pos: NDArray,
@@ -343,11 +345,11 @@ class OctreeNode:
         # octant, then we should automatically blow up the ratio so that
         # we don't use the cluster
         if np.isclose(distance, 0):
-            ratio = np.inf
+            ratio = float('inf')
             warnings.warn(f"Fish {fish_pos} is located at the same "+\
                           f"position as the center {self.center}.")
         else:
-            ratio = self.side_length / distance
+            ratio = float(self.side_length / distance)
 
         # if s/d > theta, compute interactions using the cluster
         if ratio < maximum_ratio:
@@ -360,9 +362,10 @@ class OctreeNode:
         else:
             total_interaction = np.zeros(6)
             for octant_index in range(8):
-                if self.children[octant_index] is not None:
+                child = self.children[octant_index]
+                if child is not None:
                     total_interaction += \
-                        self.children[octant_index].compute_interaction(
+                        cast(OctreeNode, child).compute_interaction(
                             fish_pos, fish_front,
                             fish_back, maximum_ratio
                         )

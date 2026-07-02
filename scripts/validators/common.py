@@ -1,11 +1,11 @@
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Any, Protocol, cast
+from typing import Any, Callable, Protocol, cast
 
 from tqdm import tqdm
 
-#: The validation output directory
-VALIDATION_OUTPUT_DIR = Path(f'output/validation')
+from finds.constants import VALIDATION_OUTPUT_PATH
+
 
 class ValidationFunction(Protocol):
     """
@@ -23,7 +23,9 @@ class ValidationFunction(Protocol):
     name: str
     filename: Path
 
-    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        pass
+
 
 def produces_validation(*, name: str, output_type: str = 'png'):
     """
@@ -37,11 +39,11 @@ def produces_validation(*, name: str, output_type: str = 'png'):
       (default is :code:`.png`).
     :type  output_type: str
     """
-    def decorator(function_raw: Callable[..., Any]) -> ValidationFunction:
+    def decorator(function_raw: Callable[..., Any]):
         function = cast(ValidationFunction, function_raw)
 
         function.name = name
-        function.filename = VALIDATION_OUTPUT_DIR /\
+        function.filename = VALIDATION_OUTPUT_PATH /\
             f'validation-{name}.{output_type}'
 
         @wraps(function)

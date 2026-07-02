@@ -1,19 +1,19 @@
+import errno
 from datetime import datetime
 from pathlib import Path
-import warnings
 from typing import Optional
-import errno
 
 import numpy as np
 from numpy.typing import NDArray
-from tqdm import tqdm
 from scipy import integrate
+from tqdm import tqdm
 
 from .calculations import calculate_system_derivative
-from .constants import DATA_FILE_NAME, SIMULATION_OUTPUT_DIR, \
-    SIMULATION_OUTPUT_NAME, SIMULATION_LATEST_DIR
+from .constants import (DATA_FILE_NAME, SIMULATION_LATEST_DIR,
+                        SIMULATION_OUTPUT_DIR, SIMULATION_OUTPUT_NAME)
 from .fish import normalize_orientation_vectors
 from .io import close_filestream, init_output_filestream, serialize_to_file
+
 
 def perform_simulation(
         initial_state: NDArray,
@@ -45,7 +45,9 @@ def perform_simulation(
     :param end_time: The time to stop the simulation at.
     :type  end_time: float
 
-    .. _scipy's solve_ivp documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html#scipy.integrate.solve_ivp
+    .. _scipy's solve_ivp documentation:
+       https://docs.scipy.org/doc/scipy/reference/generated/
+       scipy.integrate.solve_ivp.html#scipy.integrate.solve_ivp
 
     :param use_barnes_hut: Whether or not to simplify with Barnes-Hut
       approximation.

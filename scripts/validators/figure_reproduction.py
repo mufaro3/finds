@@ -1,6 +1,6 @@
+import os
 import shutil
 import sys
-import os
 
 import numpy as np
 from matplotlib import pyplot as plt

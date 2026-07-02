@@ -2,6 +2,7 @@ from finds.fish import generate_system
 from finds.postprocessing import process_data
 from finds.simulation import perform_simulation
 
+
 def main():
     system = generate_system(
         distribution='sphere',

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override, Optional
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -21,8 +21,8 @@ class TrajectoryPlot(ProcessingModule):
     dpi: int
       The dots-per-inch of the animation. Default 300.
 
-    figsize: tuple[int]
-      The MatPlotLib figure dimensions for the video.
+    figsize: tuple[int,int]
+      The MatPlotLib figure dimensions for the video. Default (10,10).
 
     plot_output_filename: str
       The filename to output the figure to (default
@@ -36,7 +36,7 @@ class TrajectoryPlot(ProcessingModule):
     def __init__(
         self, *,
         dpi: int = 300,
-        figsize: tuple[int] = (10,10),
+        figsize: tuple[int, int] = (10,10),
         output_filename: str = 'trajectory_plot',
         particle_radius: int = 30
     ):
@@ -50,14 +50,14 @@ class TrajectoryPlot(ProcessingModule):
         self.output_dir = output_dir
 
         # statistics counters
-        self.position_frames = []
+        self.position_frames: list[NDArray] = []
 
         if use_pdf is True:
             self.output_filename = self.output_filename + '.pdf'
         else:
             self.output_filename = self.output_filename + '.png'
 
-        self.output_filename = self.output_dir / self.output_filename
+        self.output_filepath = self.output_dir / self.output_filename
 
     @override
     def append_state(self, system: NDArray, time: float,
@@ -90,7 +90,7 @@ class TrajectoryPlot(ProcessingModule):
         ax.set_box_aspect([1, 1, 1])
         plt.tight_layout()
 
-        fig.savefig(self.output_filename, dpi=self.dpi, bbox_inches="tight")
+        fig.savefig(self.output_filepath, dpi=self.dpi, bbox_inches="tight")
         plt.close(fig)
 
-        tqdm.write(f'Saved trajectory plot to {self.output_filename}')
+        tqdm.write(f'Saved trajectory plot to {self.output_filepath}')

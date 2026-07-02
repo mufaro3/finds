@@ -1,10 +1,8 @@
-import h5py
-from pathlib import Path
 import numpy as np
 
 from finds.constants import ROOT_OUTPUT_PATH
-from finds.io import IO, init_input_filestream, init_output_filestream, \
-    close_filestream, serialize_to_file
+from finds.io import (close_filestream, init_input_filestream,
+                      init_output_filestream, serialize_to_file)
 
 from .common import generate_random_matrix
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override, Optional
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -47,7 +47,7 @@ class AnimationGenerator(ProcessingModule):
     padding: float
       The padding for the viewport/unit box (default 0.1).
 
-    figsize: tuple[int]
+    figsize: tuple[int,int]
       The size of the resulting figure (not the viewport, default
       :math:`(8,8)`).
 
@@ -71,7 +71,7 @@ class AnimationGenerator(ProcessingModule):
             orientation_width: int = 5,
             orientation_length: int = 5,
             padding: float = 0.1,
-            figsize: tuple[int] = (8,8),
+            figsize: tuple[int,int] = (8,8),
 
             # color scheme
             particle_color: str = 'tab:cyan',
@@ -92,7 +92,7 @@ class AnimationGenerator(ProcessingModule):
         self.orientation_color = orientation_color
 
     @override
-    def begin(self, output_dir: Path, use_pdf: bool) -> None:
+    def begin(self, output_dir: Path, use_pdf: Optional[bool]) -> None:
         r"""
         Sets up the MatPlotLib animation for rendering.
 

@@ -1,17 +1,18 @@
 from pathlib import Path
 
-from tqdm import trange
 from matplotlib import rc
+from tqdm import trange
+
+from finds.processingmodules.TrajectoryPlot import TrajectoryPlot
 
 from .constants import DATA_FILE_NAME
 from .io import close_filestream, init_input_filestream
 from .processingmodules.AnimationGenerator import AnimationGenerator
+from .processingmodules.CrossSectionGenerator import CrossSectionGenerator
 from .processingmodules.DensityAnimationGenerator import \
     DensityAnimationGenerator
-from .processingmodules.ProcessingModule import ProcessingModule
-from .processingmodules.CrossSectionGenerator import CrossSectionGenerator
 from .processingmodules.MeanRadialDistancePlot import MeanRadialDistancePlot
-from finds.processingmodules.TrajectoryPlot import TrajectoryPlot
+from .processingmodules.ProcessingModule import ProcessingModule
 
 DEFAULT_MODULES_LIST=[
     AnimationGenerator(),

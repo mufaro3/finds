@@ -1,8 +1,8 @@
 import os
 import sys
 from itertools import combinations, product
-
 from typing import Optional
+
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -85,7 +85,7 @@ def draw_octree_3d_recurse(
     # draw fish position
     if current_node.average is not None:
         pos = current_node.average[:3]
-        ax.scatter(*pos, s=particle_size)
+        ax.scatter(x=pos[0], y=pos[1], z=pos[2], s=particle_size)
 
     # recurse children
     if not current_node.is_leaf:
@@ -95,7 +95,7 @@ def draw_octree_3d_recurse(
 
 
 @produces_validation(name='octree-3d')
-def draw_octree_3d(octree: OctreeNode, max_depth: int = None) -> None:
+def draw_octree_3d(octree: OctreeNode, max_depth: Optional[int] = None):
     """
     Produces a 3-D octree plot of :code:`root`, similar to Figure 2 of
     :cite:t:`barnes1986bh`.
@@ -105,7 +105,7 @@ def draw_octree_3d(octree: OctreeNode, max_depth: int = None) -> None:
 
     :param max_depth: The maximum recursive depth to draw (default None,
       meaning no limit).
-    :type  max_depth: int
+    :type  max_depth: Optional[int]
     """
     root = octree
 
@@ -137,6 +137,7 @@ def draw_octree_3d(octree: OctreeNode, max_depth: int = None) -> None:
 
     plt.savefig(draw_octree_3d.filename, dpi=300, bbox_inches="tight")
     plt.close()
+
 
 def compute_octree_2d_positions_recurse(
         node: OctreeNode,
@@ -205,16 +206,15 @@ def compute_octree_2d_positions_recurse(
             # move further right (greater octant indices go to the right)
             next_x = right + 1
 
-
     # there were any produced ranges
     if child_ranges:
-        child_ranges = np.array(child_ranges)
+        child_ranges_arr = np.array(child_ranges)
 
         # obtain the farthest left
-        left  = child_ranges[0,0]
+        left  = child_ranges_arr[0,0]
 
         # and the farthest right
-        right = child_ranges[-1,1]
+        right = child_ranges_arr[-1,1]
 
         # then take the middle
         child_range_center = (left + right) / 2
@@ -227,11 +227,12 @@ def compute_octree_2d_positions_recurse(
     positions[nid] = np.array([x_pos, y_pos])
     return x, x
 
+
 def draw_octree_node_2d_recurse(
         node: OctreeNode,
         positions: dict,
         ax: Axes,
-        label_offset: float) -> None:
+        label_offset: float):
     """
     Draws this node and its children to the specified axes.
 
@@ -254,7 +255,7 @@ def draw_octree_node_2d_recurse(
     pos = positions[id(node)]
 
     # draw the node
-    ax.scatter(*pos, s=100, zorder=3)
+    ax.scatter(pos[0], pos[1], s=100, zorder=3)
 
     # draw its label
     if node.average is not None:
@@ -278,11 +279,11 @@ def draw_octree_node_2d_recurse(
         # connect the child position to this node's position
         child_pos = positions[id(child)]
         connecting_line = np.vstack((pos, child_pos)).T
-        connection_label_pos = (pos + child_pos) / 2
+        cl_pos_x, cl_pos_y = ((pos + child_pos) / 2).astype(float)
 
         # draw the connecting line and its associated label
         ax.plot(*connecting_line, "k-", lw=1, zorder=1)
-        ax.text(*connection_label_pos, str(i), fontsize=7, ha="center")
+        ax.text(cl_pos_x, cl_pos_y, str(i), fontsize=7, ha="center")
 
         # recurse onto the child
         draw_octree_node_2d_recurse(child, positions, ax, label_offset)
@@ -293,7 +294,7 @@ def draw_octree_2d(
         octree: OctreeNode,
         horizontal_spacing: float = 2.0,
         vertical_spacing: float = 3.0,
-        label_offset: float = 20) -> Axes:
+        label_offset: float = 20):
     """
     Draw an octree as a 2D parent-child tree.
 
@@ -313,7 +314,7 @@ def draw_octree_2d(
     fig, ax = plt.subplots(figsize=(16, 8))
 
     # compute where all of the nodes should go
-    positions = {}
+    positions: dict[int, tuple[float]] = {}
 
     compute_octree_2d_positions_recurse(
         node=octree,
@@ -332,6 +333,7 @@ def draw_octree_2d(
 
     plt.savefig(draw_octree_2d.filename, dpi=300, bbox_inches="tight")
     plt.close()
+
 
 def generate_octree_figures(n: int) -> None:
     data = generate_system(

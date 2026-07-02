@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override, Optional
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -21,10 +21,10 @@ class MeanRadialDistancePlot(ProcessingModule):
     dpi: int
       The dots-per-inch of the animation. Default 300.
 
-    figsize: tuple[int]
-      The MatPlotLib figure dimensions for the video.
+    figsize: tuple[int,int]
+      The MatPlotLib figure dimensions for the video. Default (10,10).
 
-    plot_output_filename: str
+    output_filename: str
       The filename to output the figure to.
     """
 
@@ -32,28 +32,28 @@ class MeanRadialDistancePlot(ProcessingModule):
     def __init__(
         self, *,
         dpi: int = 300,
-        figsize: tuple[int] = (10,10),
-        plot_output_filename: str = 'mean_radial_distance'
+        figsize: tuple[int, int] = (10,10),
+        output_filename: str = 'mean_radial_distance'
     ):
         self.dpi = dpi
         self.figsize = figsize
-        self.plot_output_filename = plot_output_filename
+        self.output_filename = output_filename
 
     @override
     def begin(self, output_dir: Path, use_pdf: Optional[bool]) -> None:
         self.output_dir = output_dir
 
         # statistics counters
-        self.mean_radial_distances = []
-        self.std_radial_distances = []
-        self.times = []
+        self.mean_radial_distances: list[float] = []
+        self.std_radial_distances: list[float] = []
+        self.times: list[float] = []
 
         if use_pdf is True:
-            self.plot_output_filename = self.plot_output_filename + '.pdf'
+            self.output_filename = self.output_filename + '.pdf'
         else:
-            self.plot_output_filename = self.plot_output_filename + '.png'
+            self.output_filename = self.output_filename + '.png'
 
-        self.output_filename = self.output_dir / self.plot_output_filename
+        self.output_filepath = self.output_dir / self.output_filename
 
     @override
     def append_state(self, system: NDArray, time: float,
@@ -96,8 +96,8 @@ class MeanRadialDistancePlot(ProcessingModule):
         ax.set_title('Mean Radial Distance vs. Time')
 
         ax.legend()
-        fig.savefig(self.output_filename, dpi=self.dpi, bbox_inches="tight")
+        fig.savefig(self.output_filepath, dpi=self.dpi, bbox_inches="tight")
         plt.close(fig)
 
         tqdm.write('Saved mean radial distance plot to '+\
-                   f'{self.output_filename}')
+                   f'{self.output_filepath}')

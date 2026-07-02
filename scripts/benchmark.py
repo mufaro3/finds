@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import rc
 from tqdm import tqdm
-from matplotlib.ticker import MultipleLocator
+
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 11})
 rc('text', usetex=True)
 
@@ -18,7 +18,7 @@ if not USE_NUMBA and __name__ == '__main__':
     # disable numba
     print('Numba Disabled')
     os.environ["NUMBA_DISABLE_JIT"] = "1"
-elif  __name__ == '__main__':
+elif __name__ == '__main__':
     print('Numba Enabled')
 
 from finds.calculations import calculate_system_derivative
@@ -26,6 +26,7 @@ from finds.constants import BENCHMARK_OUTPUT_PATH
 from finds.fish import generate_system
 
 COMPARISON_FIGURE_OUTPUT_NAME='comparison.png'
+
 
 def perform_time_test(n: int,
                       bh_ratio: Optional[float] = None,
@@ -94,7 +95,7 @@ def perform_time_test(n: int,
         times[i] = end_time - start_time
 
     # return only the mean
-    return np.mean(times)
+    return float(np.mean(times))
 
 
 def generate_comparison_figure(
@@ -257,6 +258,7 @@ def generate_comparison_figure(
     plt.close(fig)
 
     tqdm.write(f"Saved comparison figure to {output_path}")
+
 
 if __name__ == '__main__':
     generate_comparison_figure(1, 3)

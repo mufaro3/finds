@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override, Optional
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -19,13 +19,13 @@ class CrossSectionGenerator(ProcessingModule):
     particle_radius: int
       The radius for each particle (default 30).
 
-    orientation_width: int
+    orientation_width: float
       The width for the line depicting the orientation (default 0.25).
 
-    orientation_length: int
+    orientation_length: float
       The length for the line depicting the orientation (default 5).
 
-    figsize: tuple[int]
+    figsize: tuple[int,int]
       The size of the resulting figure (not the viewport, default
       :math:`(10,10)`).
 
@@ -52,8 +52,8 @@ class CrossSectionGenerator(ProcessingModule):
         *,
         z_thickness: float = 0.25,
         particle_radius: float = 30,
-        orientation_width: int = 0.25,
-        orientation_length: int = 1,
+        orientation_width: float = 0.25,
+        orientation_length: float = 1,
         figsize: tuple[int, int] = (10, 10),
         particle_color: str = 'tab:cyan',
         orientation_color: str = 'tab:orange',

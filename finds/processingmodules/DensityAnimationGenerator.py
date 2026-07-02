@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import override, Optional
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.animation import FFMpegWriter
 from numpy.typing import NDArray
 from tqdm import tqdm
 
@@ -29,8 +30,8 @@ class DensityAnimationGenerator(ProcessingModule):
     max_radius: float
       The maximum radius to display on the histogram. Default 100.
 
-    figsize: tuple[int]
-      The MatPlotLib figure dimensions for the video.
+    figsize: tuple[int,int]
+      The MatPlotLib figure dimensions for the video. Default (6,4).
 
     video_output_filename: str
       The filename to output the video to.
@@ -43,7 +44,7 @@ class DensityAnimationGenerator(ProcessingModule):
         dpi: int = 300,
         n_bins: int = 30,
         max_radius: float = 100.0,
-        figsize: tuple[int] = (6,4),
+        figsize: tuple[int, int] = (6,4),
         video_output_filename: str = 'density_animation.mp4'
     ):
         self.fps = fps
@@ -78,7 +79,7 @@ class DensityAnimationGenerator(ProcessingModule):
 
         # setup the video writer
         self.output_filename = self.output_dir / self.video_output_filename
-        self.writer = plt.matplotlib.animation.FFMpegWriter(fps=self.fps)
+        self.writer = FFMpegWriter(fps=self.fps)
         self.writer.setup(self.fig, str(self.output_filename), dpi=self.dpi)
 
     @override

@@ -308,7 +308,7 @@ def generate_system(
 
         orientations = np.column_stack((
             -np.sin(theta) * sin_a - np.cos(theta) * cos_a,
-             np.cos(theta) * sin_a - np.sin(theta) * cos_a,
+            np.cos(theta) * sin_a - np.sin(theta) * cos_a,
             np.zeros_like(theta)
         ))
     elif orientation == 'saddle':

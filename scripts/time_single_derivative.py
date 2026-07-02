@@ -1,9 +1,10 @@
 import argparse
 import time
+
 from tqdm import tqdm
 
-from finds.fish import generate_system
 from finds.calculations import calculate_system_derivative
+from finds.fish import generate_system
 
 
 def format_duration(seconds: float) -> str:

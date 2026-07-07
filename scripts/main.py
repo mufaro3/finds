@@ -16,8 +16,8 @@ def main():
         system,
         end_time=25,
 
-        # Barnes-Hut
-        use_barnes_hut=False,
+        # Interaction computation schema
+        method='barnes hut',
         bh_ratio=0.75,
 
         # Integration
@@ -27,8 +27,7 @@ def main():
         time_step = 0.5,
 
         # Debug Printing
-        print_time_progression=True,
-        print_each_fish=False
+        print_time_progression=True
     )
 
     process_data(output_dir, use_pdf=True)

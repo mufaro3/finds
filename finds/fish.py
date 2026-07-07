@@ -7,6 +7,100 @@ from .util import rejoin, split
 
 
 @njit
+def split(system: NDArray) -> tuple[NDArray, NDArray]:
+    """
+    Splits a 2D or 3D system matrix or fish vector into position, orientation,
+    and data (length, volumetric flow) parameters.
+
+    :param mat: The original matrix of shape :math:`(N,m)`.
+    :type  mat: NDArray
+
+    :returns: The top and bottom halves of the matrix.
+    :rtype: tuple[NDArray, NDArray]
+    """
+    if system is None:
+        raise ValueError('Matrix is NoneType.')
+
+    dimensions = mat.ndim
+    is_vector = dimensions == 1
+    is_matrix = dimensions == 2
+
+    if not (is_vector or is_matrix):
+        raise ValueError('System matrix is not a vector or a matrix.')
+
+    m = mat.shape[-1]
+    is_2d = m == 6
+    is_3d = m == 8
+
+    if not (is_2d or is_3d):
+        raise ValueError('System matrix is not 2-D or 3-D.')
+
+    # cartesian vector length, not the number of tensor dimensions
+    ndim = 3 # implicit is_3d
+    if is_2d:
+        ndim = 2
+
+    if is_vector:
+        return system[:ndim], system[ndim:ndim*2], system[ndim*2:]
+    elif is_matrix:
+        return system[:,:ndim], system[:,ndim:ndim*2], system[:,ndim*2:]
+
+
+@njit
+def rejoin(positions: NDArray,
+           orientations: NDArray,
+           data: NDArray) -> NDArray:
+    """
+    Rejoins the top and bottom halves of a system matrix of similar.
+    Requires that :code:`tophalf` and :code:`bottomhalf` have the
+    same shape, :math:`(N,6)`.
+
+    :type positions: NDArray
+    :type orientations: NDArray
+    :type data: NDArray
+
+    :returns: The rejoined matrix.
+    :rtype: NDArray
+    """
+    return np.concatenate((positions, orientations, data), axis=-1)
+
+
+@njit
+def calculate_feature_positions(system: NDArray) -> NDArray:
+    r"""
+    Computes the front and back positions for each fish in the
+    system per equation :eq:`feature_positions` in format
+    :eq:`feature_positions_matrix`.
+
+    :param system: The system.
+    :type system: NDArray
+
+    :returns: The matrix storing the head and tail positions for
+      each fish.
+    :rtype: NDArray
+    """
+    pos, ori, _ = split(system)
+
+    delta = ori * FISH_LENGTH / 2
+    heads = pos + delta
+    tails = pos - delta
+
+    return np.vstack((heads, tails))
+
+
+@njit
+def calculate_sp_speed(length: float, vol_flow_rate: float) -> float:
+    """
+    Calculates the self-propelled speed for a swimmer based on the equation
+
+    .. math::
+        :label: spspeed
+
+        U_i = \frac{\sigma_i}{4\pi\ell_i^2}
+    """
+    return vol_flow_rate / (4 * np.pi * length ** 2)
+
+@njit
 def normalize_orientation_vectors(system: NDArray) -> NDArray:
     r"""
     Normalizes the orientation vectors for the given system.
@@ -17,11 +111,11 @@ def normalize_orientation_vectors(system: NDArray) -> NDArray:
     :returns: The system, with normalized orientation vectors.
     :rtype:   NDArray
     """
-    pos, ori = split(system)
+    pos, ori, data = split(system)
     norms = np.sqrt(np.sum(ori**2, axis=1))
 
     normalized_ori = ori / norms[:, np.newaxis]
-    return rejoin(pos, normalized_ori)
+    return rejoin(pos, normalized_ori, data)
 
 
 def perturb_orientations(orientations: NDArray, angle_delta: float) -> NDArray:

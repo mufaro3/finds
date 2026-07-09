@@ -8,126 +8,83 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.integrate import solve_ivp
 from tqdm import tqdm
-from numba import njit, prange, optional, int32, float32
+from numba import njit, prange, optional, int64, float64, float64, boolean, \
+     uint64
 from numba.experimental import jitclass
 from numba.types import Array
 
-NDIMENSIONS=2
-BOUNDS=np.array([20,20])
+NDIM=2
+BOUNDS=np.array([200,200])
 ORIENTATION_LENGTH=1
 
-# NOTE TO SELF
-#
-# i have to manually define getters and setters for the array in order for
-# this to actually work with Numba and SciPy simultaneously FUCK MY LIFE
+LENGTH_RANGE=(5,20)
+VOLUMETRIC_FLOW_RANGE=(5,30)
 
-# setters have to work on a single position
+# fish type
+# position (3) orientation (3) length volumetric-flow
 
+POSITION=slice(0,NDIM)
+ORIENTATION=slice(NDIM,NDIM*2)
+LENGTH=slice(NDIM*2,NDIM*2+1)
+VOL_FLOW_RATE=slice(NDIM*2+1,NDIM*2+2)
 
-START = 0
-END   = 1
+DATA_SLOTS=2
+FISH_SLOTS=2*NDIM+DATA_SLOTS
 
-@njit(inline='always')
-def index_range(start: int, width: int):
-    return (start, start + width)
+@njit
+def norm(arr):
+    if arr.ndim == 1:
+        return np.linalg.norm(arr)
 
-@njit(inline='always')
-def index_range_extend(previous_range: tuple[int, int], width: int):
-    return index_range(previous_range[END], width)
+    if arr.ndim == 2:
+        norms = np.empty(arr.shape[0], dtype=arr.dtype)
+        for i in range(arr.shape[0]):
+            norms[i] = np.linalg.norm(arr[i, :])
+        return norms
 
-@njit(inline='always')
-def index_range_width(range_tuple: tuple[int, int]):
-    return range_tuple[END] - range_tuple[START]
+    raise ValueError("arr should be 1D or 2D")
 
-POSITION_RANGE    = index_range(0, NDIMENSIONS)
-ORIENTATION_RANGE = index_range_extend(POSITION_RANGE, NDIMENSIONS)
-LENGTH_RANGE      = index_range_extend(ORIENTATION_RANGE, 1)
-VOL_FLOW_RANGE    = index_range_extend(LENGTH_RANGE, 1)
-MASS_RANGE        = index_range_extend(VOL_FLOW_RANGE, 1)
+@njit
+def generate_system(N: int, bounds: NDArray = BOUNDS) -> NDArray:
+    system = np.empty((N,FISH_SLOTS), dtype=np.float64)
 
-# metadata
+    # positions
+    for i in range(N):
+        for j in range(NDIM):
+            system[i,j] = np.random.uniform(-bounds[j], bounds[j])
 
-DATA_SLOTS = index_range_width(LENGTH_RANGE) + \
-        index_range_width(VOL_FLOW_RANGE) + index_range_width(MASS_RANGE)
-FISH_SLOTS = index_range_width(POSITION_RANGE) + \
-        index_range_width(ORIENTATION_RANGE) + DATA_SLOTS
+    # orientations
+    system[:,ORIENTATION] = -system[:,POSITION] / \
+        norm(system[:,POSITION]).reshape(N,1)
 
-@njit(inline='always')
-def fish_range_from_index(fish_index: int):
-    return index_range(fish_index * FISH_SLOTS, FISH_SLOTS)
-
-@njit(inline='always')
-def subrange(fish_index: int, search_range: tuple[int, int]):
-    return index_range(
-        fish_index * FISH_SLOTS + search_range[START],
-        fish_index * FISH_SLOTS + search_range[END]
+    # length
+    system[:,LENGTH] = np.random.uniform(
+        LENGTH_RANGE[0],
+        LENGTH_RANGE[1],
+        size=(N,1)
     )
 
-@nijt(inline='always')
-def system_size(total_slots: int) -> int:
-    return total_slots // FISH_SLOTS
+    # volumetric flow rate
+    system[:,VOL_FLOW_RATE] = np.random.uniform(
+        VOLUMETRIC_FLOW_RANGE[0],
+        VOLUMETRIC_FLOW_RANGE[1],
+        size=(N,1)
+    )
 
-# feature positions
+    assert np.isfinite(system).all() and np.isreal(system).all()
 
-FRONT_RANGE = index_range(0, NDIMENSIONS)
-BACK_RANGE  = index_range_extend(FRONT_RANGE, NDIMENSIONS)
-DATA_RANGE  = index_range_extend(BACK_RANGE, DATA_SLOTS)
-
-assert index_range_width(FRONT_RANGE) + index_range_width(BACK_RANGE) + \
-        DATA_SLOTS == FISH_SLOTS
-
-@njit(inline='always')
-def system_get_positions(system: NDArray) -> NDArray:
-    return system[POSITION_RANGE[START]:POSITION_RANGE[END]]
-
-@njit(inline='always')
-def system_get_position_at(system: NDArray, index: int = None) -> NDArray:
-    index_range = fish_range_from_index(index)
-    return system[POSITION_RANGE[START]:POSITION_RANGE[END]]
-
-@njit(inline='always')
-def system_set_positions(system: NDArray, position_data: NDArray):
-    system[:, POSITION_RANGE[START]:POSITION_RANGE[END]] = data
-
-mocksystem = np.concatenate([
-    [1, 2, 3, 4, 5, 6, 7, 8],
-    [10, 20, 30, 40, 50, 60, 70, 80]
-])
-print(system_get_position_at(mocksystem, 1))
-exit()
-
-"""
-def system_set_positions()
-def system_get_orientations()
-def system_set_orientations()
-def system_get_lengths()
-def system_set_lengths()
-def system_get_volumetric_flow_rates()
-def system_set_volumetric_flow_rates()
-def system_get_masses()
-def system_set_masss()
-"""
-
-def generate_system(N):
-    system = np.empty((N,FISH_SLOTS), dtype=np.float32)
-    system[:,0:NDIMENSIONS] = np.random.uniform(-BOUNDS, BOUNDS, size=(n,NDIMENSIONS))
-    system[:,NDIMENSIONS:NDIMENSIONS*2] = -system.position / \
-        np.linalg.norm(system.position, axis=1, keepdims=True)
-    system.lengths[:] = np.random.uniform(0.5, 1.0, size=n)
-    system.vol_flow_rates[:] = np.random.uniform(5, 20, size=n)
-    system.masses[:] = np.random.uniform(0.1, 1.0, size=n)
     return system
 
 def plot_system(system):
     plt.figure()
 
-    endpoints = system.positions + ORIENTATION_LENGTH * system.orientations
-    for p, e in zip(system.positions, endpoints):
+    endpoints = system[:,POSITION] + ORIENTATION_LENGTH * system[:,ORIENTATION]
+    for p, e in zip(system[:,POSITION], endpoints):
         start = [p[0], e[0]]
         end = [p[1], e[1]]
         plt.plot(start, end, color='black')
 
-    plt.scatter(*system.positions.T, color='red')
+    plt.scatter(*system[:,POSITION].T, color='red')
 
     ax = plt.gca()
     ax.set_xlim([-BOUNDS[0],BOUNDS[0]])
@@ -141,76 +98,67 @@ def plot_system(system):
 @njit
 def calculate_interaction(position_a, position_b):
     displacement = position_a - position_b
-    return displacement / (np.linalg.norm(displacement) * NDIMENSIONS)
+    return displacement / (norm(displacement) ** NDIM)
 
-FEATURE_DTYPE = [
-    ('size',  int32),
-    ('front', float32[:, :]),
-    ('back',  float32[:, :])
-]
+# features matrix
+FRONT = slice(0,NDIM)
+BACK  = slice(NDIM,NDIM*2)
 
-@jitclass(FEATURE_DTYPE)
-class Features:
-    def __init__(self, n):
-        self.size  = n
-        self.front = np.empty((n, NDIMENSIONS), dtype=np.float32)
-        self.back  = np.empty((n, NDIMENSIONS), dtype=np.float32)
-    def show(self):
-        print(self.front)
-        print(self.back)
+FEATURE_SLOTS = 4
 
 @njit
 def calculate_velocity_contribution(
         feature_positions, system, index_a, index_b):
 
     def interaction_to_velocity(interaction):
-        return system[index_b, VOL_FLOW] / (4 * np.pi) * interaction
+        return system[index_b, VOL_FLOW_RATE] / (4 * np.pi) * interaction
 
-    external_velocities = Features(system.size)
+    external_velocities = np.empty((system.shape[0],FEATURE_SLOTS))
 
     front_front = calculate_interaction(
-        feature_positions.front[index_a],
-        feature_positions.front[index_b]
+        feature_positions[index_a, FRONT],
+        feature_positions[index_b, FRONT]
     )
 
     front_back = calculate_interaction(
-        feature_positions.front[index_a],
-        feature_positions.back[index_b]
+        feature_positions[index_a, FRONT],
+        feature_positions[index_b, BACK]
     )
 
-    external_velocities.front = \
+    external_velocities[:,FRONT] = \
         interaction_to_velocity(front_front - front_back)
 
     back_front = calculate_interaction(
-        feature_positions.back[index_a],
-        feature_positions.front[index_b]
+        feature_positions[index_a, BACK],
+        feature_positions[index_b, FRONT]
     )
 
     back_back = calculate_interaction(
-        feature_positions.back[index_a],
-        feature_positions.back[index_b]
+        feature_positions[index_a, BACK],
+        feature_positions[index_b, BACK]
     )
 
-    external_velocities.back = \
+    external_velocities[:,BACK] = \
         interaction_to_velocity(back_front - back_back)
 
     return external_velocities
 
 @njit
 def calculate_feature_positions(system):
-    delta = system.length * system.orientation / 2
-    feature_positions = Features(system.size)
+    delta = system[:,LENGTH] * system[:,ORIENTATION] / 2
+    feature_positions = np.empty((system.shape[0], FEATURE_SLOTS))
 
-    feature_positions.front = system.positions + delta
-    feature_positions.back  = system.positions - delta
+    feature_positions[:,FRONT] = system[:,POSITION] + delta
+    feature_positions[:,BACK]  = system[:,POSITION] - delta
 
     return feature_positions
 
 @njit(parallel=True)
 def compute_external_velocity_brute_force(system):
+    N = system.shape[0]
     feature_positions = calculate_feature_positions(system)
+    external_velocity_contribution = np.zeros((N,FEATURE_SLOTS))
 
-    external_velocity_contribution = np.zeros((system.size, NDIMENSIONS*2))
     for i in prange(N):
         for j in range(N):
             if i == j:
@@ -222,8 +170,120 @@ def compute_external_velocity_brute_force(system):
     return external_velocity_contribution
 
 @njit
-def compute_external_velocity_barnes_hut(system, theta):
+def extend_1d(array, newshape):
     pass
+
+@njit
+def extend_2d(array, newshape):
+    pass
+
+@jitclass([
+    ("center",           float64[:, :]),
+    ("side_length",      float64[:]),
+
+    ("morton",           uint64[:]),
+    ("is_leaf",          boolean[:]),
+    ("is_occupied",      boolean[:]),
+
+    ("cluster",          float64[:, :]),
+    ("cluster_size",     float64[:]),
+    ("data",             float64[:, :])
+    ("front_pos",        float64[:, :]),
+    ("back_pos",         float64[:, :]),
+
+    ("max_node_count", int64),
+    ("total_stored_nodes", int64)
+])
+class Octree:
+    def __init__(self, max_nodes):
+        self.center      = np.empty((max_nodes, NDIM), dtype=np.float64)
+        self.side_length = np.empty(max_nodes, dtype=np.float64)
+
+        self.morton      = np.empty(max_nodes, dtype=np.float64)
+        self.is_leaf     = np.empty(max_nodes, dtype=bool)
+        self.is_occupied = np.zeros(max_nodes, dtype=bool)
+
+        self.cluster      = np.empty((max_nodes, FISH_SLOTS), dtype=np.float64)
+        self.cluster_size = np.empty(max_nodes, dtype=np.float64)
+        self.data         = np.empty((max_nodes, FISH_SLOTS), dtype=np.float64)
+        self.front_pos    = np.empty((max_nodes, NDIM), dtype=np.float64)
+        self.back_pos     = np.empty((max_nodes, NDIM), dtype=np.float64)
+
+        self.max_node_count = max_nodes
+        self.total_stored_nodes = 0
+
+    def extend(self):
+        """double the amount of available node space"""
+        self.max_node_count *= 2
+
+        extend_2d(self.center,      shape=(self.max_node_count, NDIM))
+        extend_1d(self.side_length, shape=self.max_node_count)
+
+        extend_1d(self.morton,      shape=self.max_node_count)
+        extend_1d(self.is_leaf,     shape=self.max_node_count)
+        extend_1d(self.is_occupied, shape=self.max_node_count)
+
+        extend_2d(self.cluster,      shape=(self.max_node_count, NDIM))
+        extend_1d(self.cluster_size, shape=self.max_node_count)
+        extend_2d(self.data,         shape=(self.max_node_count, NDIM))
+        extend_2d(self.front_pos,    shape=(self.max_node_count, NDIM))
+        extend_2d(self.back_pos,     shape=(self.max_node_count, NDIM))
+
+    def sort(self):
+        # sort according to the morton number
+        pass
+
+    def calculate_child_octant_index(self, parent_index, child_position):
+        child_octant_index = 0
+        for dim_idx in range(NDIM):
+            if child_position[dim_idx] > self.center[parent_index, dim_idx]:
+                child_octant_index += 2 ** dim_idx
+        return child_octant_index
+
+    def calculate_child_center_morton(self, parent_index, child_octant_index):
+        offset_length = self.side_length[parent_index] / 4
+        child_center = self.center[parent_index].copy()
+
+        for dimension_index in range(NDIM):
+            if child_octant_index & (2 ** dimension_bit):
+                child_center[dimension_index] += offset_length
+            else:
+                center_center[dimension_index] -= offset_length
+
+        child_morton = (self.morton[parent_index] <<< NDIM) | child_octant_index
+
+    def insert(self, fish, node_index):
+        if not self.is_occupied[node_index]:
+            self.data[node_index] = fish
+            self.is_occupied[node_index] = True
+        elif self.is_leaf[node_index]
+
+    def insert_into_children()
+
+@njit
+def build_octree(system, feature_positions):
+    N = system.shape[0]
+    octree = Octree(2 * N)
+    for i in range(N):
+        octree.insert(system[i], feature_positions[i])
+    octree.sort()
+
+@njit
+def compute_external_velocity_singular_barnes_hut(octree, system, i):
+    pass
+
+@njit(parallel=True)
+def compute_external_velocity_barnes_hut(system, theta):
+    N = system.shape[0]
+    feature_positions = calculate_feature_positions(system)
+    external_velocity_contribution = np.zeros((N,FEATURE_SLOTS))
+    octree = build_octree(system)
+
+    for i in prange(N):
+        external_velocity_contribution[i] = \
+            compute_external_velocity_singular_barnes_hut(octree, system, i)
+
+    return external_velocity_contribution
 
 @njit
 def compute_external_velocity_fmm(system):
@@ -231,8 +291,8 @@ def compute_external_velocity_fmm(system):
 
 @njit
 def calculate_feature_velocity(system, method, theta):
-    internal_contribution = system.vol_flow_rates / \
-        (4 * np.pi * system.lengths ** 2) * system.orientations
+    internal_contribution = system[:,VOL_FLOW_RATE] / \
+        (4 * np.pi * system[:,LENGTH] ** 2) * system[:,ORIENTATION]
     internal_contribution = \
         np.hstack((internal_contribution, internal_contribution))
 
@@ -255,19 +315,24 @@ def calculate_feature_velocity(system, method, theta):
 @njit
 def calculate_derivative(system, method, theta):
     feature_velocity = calculate_feature_velocity(system, method, theta)
-    velocity_diff = feature_velocity.front - feature_velocity.back
+    velocity_diff = feature_velocity[:,FRONT] - feature_velocity[:,BACK]
 
     # translational velocity
     translational_velocity = \
-        (feature_velocity.front + feature_velocity.back) / 2
+        (feature_velocity[:,FRONT] + feature_velocity[:,BACK]) / 2
 
     # rotational velocity
-    lagrange_multiplier = \
-        -np.sum(velocity_diff * orientations, axis=1)[:, np.newaxis] / 2
+    lagrange_multiplier = -np.sum(
+        velocity_diff * system[:,ORIENTATION], axis=1
+    )[:, np.newaxis] / 2
     rotational_velocity = (velocity_diff + 2 * lagrange_multiplier *
-                           orientations) / system.lengths
+                           system[:,ORIENTATION]) / system[:,LENGTH]
 
-    return translational_velocity, rotational_velocity
+    return np.hstack((
+        translational_velocity,
+        rotational_velocity,
+        np.zeros((system.shape[0],DATA_SLOTS)) # filler
+    ))
 
 def calculate_time_progression(system, method, theta,
                                rtol, atol, integration_method,
@@ -282,15 +347,14 @@ def calculate_time_progression(system, method, theta,
     def differential_equation_functor(t, y):
         progress_bar.update(t - progress_bar.n)
 
-        translational, rotational = calculate_derivative(
-            y.reshape(system.shape), method, theta)
-
-        return np.concatenate((translational.ravel(), rotational.ravel()))
+        return calculate_derivative(
+            y.reshape(system.shape), method, theta
+        ).ravel()
 
     solved_state = solve_ivp(
         fun    = differential_equation_functor,
         t_span = (0, end_time),
-        y0     = system.toarray(),
+        y0     = system.ravel(),
         method = integration_method,
         rtol   = rtol,
         atol   = atol,
@@ -304,17 +368,31 @@ def calculate_time_progression(system, method, theta,
 
 def animate_system(trajectory, times):
     fig, ax = plt.subplots()
-
-    system0 = trajectory[0]
-    positions0 = system0[:, POSITION]
-    endpoints0 = positions0 + ORIENTATION_LENGTH * system0[:, ORIENTATION]
+    feature_positions0 = trajectory[0]
 
     lines = [
-        ax.plot([p[0], e[0]], [p[1], e[1]], color='black')[0]
-        for p, e in zip(positions0, endpoints0)
+        ax.plot(
+            [back[0], front[0]],
+            [back[1], front[1]],
+            color="black"
+        )[0]
+        for back, front in zip(
+            feature_positions0[:, BACK],
+            feature_positions0[:, FRONT]
+        )
     ]
 
-    scatter = ax.scatter(*positions0.T, color='red')
+    front_scatter = ax.scatter(
+        *feature_positions0[:, FRONT].T,
+        color="red",
+        label="front"
+    )
+
+    back_scatter = ax.scatter(
+        *feature_positions0[:, BACK].T,
+        color="blue",
+        label="back"
+    )
 
     ax.set_xlim([-BOUNDS[0], BOUNDS[0]])
     ax.set_ylim([-BOUNDS[1], BOUNDS[1]])
@@ -323,36 +401,48 @@ def animate_system(trajectory, times):
     ax.set_aspect("equal")
 
     def update(frame):
-        system = trajectory[frame]
-        positions = system[:, POSITION]
-        orientations = system[:, ORIENTATION]
-        endpoints = positions + ORIENTATION_LENGTH * orientations
+        feature_positions = trajectory[frame]
+
+        fronts = feature_positions[:, FRONT]
+        backs = feature_positions[:, BACK]
 
         ax.set_title(f"t={times[frame]:.2f}")
-        for line, p, e in zip(lines, positions, endpoints):
+
+        for line, back, front in zip(lines, backs, fronts):
             line.set_data(
-                [p[0], e[0]],
-                [p[1], e[1]]
+                [back[0], front[0]],
+                [back[1], front[1]]
             )
 
-        scatter.set_offsets(positions)
-        return [scatter, *lines]
+        front_scatter.set_offsets(fronts)
+        back_scatter.set_offsets(backs)
+
+        return [
+            front_scatter,
+            back_scatter,
+            *lines
+        ]
 
     animation = FuncAnimation(
-        fig, update, frames=times.size, interval=20, blit=True)
+        fig, update, frames=times.size, interval=20, blit=False)
 
     plt.show()
 
 result = calculate_time_progression(
-    system = generate_system(10),
+    system = generate_system(1000, bounds = np.array([50, 50])),
     method = 'brute',
     theta = 0,
-    rtol = 1e-3,
-    atol = 1e-6,
-    integration_method = 'RK45',
-    time_step = 1e-2,
-    end_time = 10,
+    rtol = 1e-2,
+    atol = 1e-3,
+    integration_method = 'RK23',
+    time_step = 0.5,
+    end_time = 100,
     show_progress = True
 )
 
-animate_system(*result)
+feature_trajectory = np.array([
+    calculate_feature_positions(system)
+    for system in result[0]
+])
+
+animate_system(feature_trajectory, result[1])

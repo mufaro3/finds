@@ -35,6 +35,7 @@ target_link_libraries(simulation
     OpenCL::OpenCL
     GSL::gsl
     GSL::gslcblas
+    m
 )
 
 enable_testing()
@@ -50,6 +51,7 @@ target_link_libraries(unit_tests
     GSL::gsl
     GSL::gslcblas
     ${CHECK_LIBRARIES}
+    m
 )
 
 target_compile_definitions(simulation PRIVATE

@@ -1,9 +1,25 @@
+/*
+ * \file util.h
+ *
+ * \brief Utility functions.
+ *
+ * This file contains routines misc. routines for various computations.
+ *
+ * \author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
 #ifndef UTILITY_HEADER
 #define UTILITY_HEADER
 
-#include <gsl/gsl_vector.h>
+#include <stdlib.h>
+#include <time.h>
 
-void gsl_vector_print(const gsl_vector *v);
-void gsl_vector_add_scalar(gsl_vector *v, double c);
+static inline double random_double(double min, double max)
+{
+    return min + (max - min) * ((double) rand() / RAND_MAX);
+}
+
+static inline void seed_rand() { srand(time(NULL)); }
 
 #endif /* UTILITY_HEADER */

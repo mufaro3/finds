@@ -1,10 +1,1 @@
-venv/
-.git/
-__pycache__/
-.pytest_cache/
-*.pyc
-docs/build/
-.cache/
-output/
-.coverage
-paper/output
+build

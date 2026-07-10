@@ -1,10 +1,1 @@
-venv/
-__pycache__/
-.pytest_cache/
-*.pyc
-.ipynb_checkpoints/
-docs/build/
-.cache/
-output/
-.coverage
-paper/output
+build

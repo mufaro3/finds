@@ -496,6 +496,47 @@ void fish_system_print(const fish_system_t *system)
     }
 }
 
+fish_system_t *fish_system_copy(const fish_system_t *system)
+{
+    fish_system_t *copy_system = fish_system_allocate(system->size);
+
+    /* copy over a */
+    memcpy(copy_system->swimmers,
+           system->swimmers,
+           system->size * sizeof(*a->swimmers));
+
+    return copy_system;
+}
+
+fish_system_t *fish_system_generate_random(const size_t N)
+{
+    distribution_options_t dist_opts = {
+        .type = DISTRIBUTION_RANDOM,
+        .size_random = N,
+        .abs_bound = MAX(N/100,100)
+    };
+
+    orientation_options_t ori_opts = {0};
+    ori_opts.type = ORIENTATION_RANDOM;
+
+    constant_options_t const_opts = {
+        /* length options */
+        .random_length_selection = true,
+        .min_length = 1,
+        .max_length = 10,
+
+        /* volumetric flow rate options */
+        .random_volumetric_flow_selection = true,
+        .min_sigma = 10,
+        .max_sigma = 50,
+    };
+
+    fish_system_t *system = fish_system_generate(
+        dist_opts, ori_opts, const_opts, true);
+
+    return system;
+}
+
 /*
  * \brief Allocates all of the arrays for a fish system to size N.
  *

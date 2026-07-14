@@ -13,10 +13,11 @@
 #ifndef DERIVATIVE_HEADER
 #define DERIVATIVE_HEADER
 
+#include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include "vector.h"
 #include "system.h"
+#include "differentiation.h"
 
 typedef struct {
     double_3d_t *translational, *rotational;
@@ -32,11 +33,12 @@ typedef enum {
 typedef struct {
     interaction_computation_methods_e method;
     double approximation_threshold;
-    uint8_t number_of_poles;
+    int number_of_poles;
 } derivative_computation_opts_t;
 
 system_derivative_t *compute_system_derivative(
-    const fish_system_t *system, const derivative_computation_opts_t dc_opts);
+    const fish_system_t *system,
+    const derivative_computation_opts_t dc_opts);
 
 void derivative_destroy(system_derivative_t **derivative);
 void derivative_print(const system_derivative_t *derivative);

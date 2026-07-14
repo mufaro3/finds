@@ -1,0 +1,3 @@
+[submodule "lib/gnuplot_i"]
+	path = lib/gnuplot_i
+	url = https://github.com/longradix/gnuplot_i.git

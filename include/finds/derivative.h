@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include "vector.h"
 #include "system.h"
-#include "differentiation.h"
+#include "util.h"
 
 typedef struct {
     double_3d_t *translational, *rotational;
@@ -27,8 +27,12 @@ typedef struct {
 typedef enum {
     BRUTE_FORCE,
     BARNES_HUT,
-    FAST_MULTIPOLE_METHOD
+    FAST_MULTIPOLE_METHOD,
+
+    INTER_COMP_METHODS_COUNT
 } interaction_computation_methods_e;
+
+extern const named_enum_t inter_comp_methods_table[INTER_COMP_METHODS_COUNT];
 
 typedef struct {
     interaction_computation_methods_e method;

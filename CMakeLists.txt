@@ -1,19 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
+project(FINDS VERSION 1.0 LANGUAGES C)
 
-project(
-    Simulation
-    VERSION 1.0
-    LANGUAGES C
-)
-
+# ------------------------------------------------------------------------------
 # Compiler settings
+# ------------------------------------------------------------------------------
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# ------------------------------------------------------------------------------
 # Dependencies
+# ------------------------------------------------------------------------------
 
 find_package(OpenCL REQUIRED)
 find_package(GSL REQUIRED)
@@ -21,107 +19,101 @@ find_package(GSL REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CHECK REQUIRED check)
 
+# ------------------------------------------------------------------------------
 # Third-party libraries
+# ------------------------------------------------------------------------------
+set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-# Header-only gnuplot_i library
-add_library(gnuplot_i INTERFACE)
+# gnuplot_i
+set(GNUPLOT_ROOT ${LIB_DIR}/gnuplot_i)
+add_library(gnuplot_i STATIC ${GNUPLOT_ROOT}/gnuplot_i.c)
+target_include_directories(gnuplot_i PUBLIC ${LIB_DIR})
+target_link_libraries(gnuplot_i PUBLIC m)
 
-target_include_directories(gnuplot_i
-    INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib
-)
+# progressbar
+set(PROGRESSBAR_ROOT ${LIB_DIR}/progressbar)
+add_subdirectory(${PROGRESSBAR_ROOT})
+target_include_directories(progressbar PRIVATE ${PROGRESSBAR_ROOT}/include)
 
+# tomlc17
+set(TOMLC17_ROOT ${LIB_DIR}/tomlc17)
+add_library(tomlc17 STATIC ${TOMLC17_ROOT}/src/tomlc17.c)
+target_include_directories(tomlc17 PUBLIC ${TOMLC17_ROOT}/src)
+
+# ------------------------------------------------------------------------------
 # Simulation library
+# ------------------------------------------------------------------------------
 
-file(GLOB_RECURSE LIB_SOURCES
-    src/*.c
-)
+file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS src/*.c)
 
-add_library(simulation STATIC
-    ${LIB_SOURCES}
-)
+add_library(finds STATIC ${LIB_SOURCES})
 
-target_include_directories(simulation
+target_include_directories(finds
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+
+    PRIVATE
+    ${OpenCL_INCLUDE_DIRS}
+    ${GSL_INCLUDE_DIRS}
+    ${CHECK_INCLUDE_DIRS}
+    ${PROGRESSBAR_ROOT}/include
 )
 
-target_link_libraries(simulation
-    PUBLIC
-        OpenCL::OpenCL
-        GSL::gsl
-        GSL::gslcblas
-        gnuplot_i
-        m
-)
+target_link_libraries(finds PUBLIC
+    OpenCL::OpenCL
+    GSL::gsl
+    GSL::gslcblas
+    gnuplot_i
+    progressbar
+    tomlc17
+    m)
 
-target_compile_definitions(simulation
-    PUBLIC
-        CL_TARGET_OPENCL_VERSION=300
-)
+target_compile_definitions(finds PUBLIC CL_TARGET_OPENCL_VERSION=300)
 
+get_target_property(INCLUDES progressbar INCLUDE_DIRECTORIES)
+message(STATUS "progressbar includes: ${INCLUDES}")
+
+get_target_property(FINDSINCLUDES finds INCLUDE_DIRECTORIES)
+message(STATUS "finds includes: ${FINDSINCLUDES}")
+
+# ------------------------------------------------------------------------------
 # Programs
+# ------------------------------------------------------------------------------
 
-file(GLOB PROGRAM_SOURCES
-    programs/*.c
-)
+file(GLOB PROGRAM_SOURCES CONFIGURE_DEPENDS programs/*.c)
 
 foreach(PROGRAM ${PROGRAM_SOURCES})
-
     get_filename_component(PROGRAM_NAME ${PROGRAM} NAME_WE)
-
-    add_executable(${PROGRAM_NAME}
-        ${PROGRAM}
-    )
-
-    target_link_libraries(${PROGRAM_NAME}
-        PRIVATE
-            simulation
-    )
-
+    add_executable(${PROGRAM_NAME} ${PROGRAM})
+    target_link_libraries(${PROGRAM_NAME} PRIVATE finds)
 endforeach()
 
+# ------------------------------------------------------------------------------
 # Tests
+# ------------------------------------------------------------------------------
 
 enable_testing()
 
-file(GLOB TEST_SOURCES
-    tests/*.c
-)
+file(GLOB TEST_SOURCES CONFIGURE_DEPENDS tests/*.c)
 
-add_executable(unit_tests
-    ${TEST_SOURCES}
-)
+add_executable(unit_tests ${TEST_SOURCES})
 
-target_include_directories(unit_tests
-    PRIVATE
-        ${CHECK_INCLUDE_DIRS}
-)
+target_include_directories(unit_tests PRIVATE ${CHECK_INCLUDE_DIRS})
+target_link_libraries(unit_tests PRIVATE simulation ${CHECK_LIBRARIES})
 
-target_link_libraries(unit_tests
-    PRIVATE
-        simulation
-        ${CHECK_LIBRARIES}
-)
+add_test(NAME unit_tests COMMAND unit_tests)
 
-add_test(
-    NAME unit_tests
-    COMMAND unit_tests
-)
-
+# ------------------------------------------------------------------------------
 # Documentation
+# ------------------------------------------------------------------------------
 
 find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
 
     set(DOXYGEN_GENERATE_HTML YES)
-    set(DOXYGEN_GENERATE_LATEX NO)
+    set(DOXYGEN_GENERATE_LATEX YES)
 
-    doxygen_add_docs(
-        docs
-        include
-        src
-    )
+    doxygen_add_docs(docs include src)
 
 endif()

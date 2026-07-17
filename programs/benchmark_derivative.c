@@ -4,9 +4,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "finds/system.h"
-#include "finds/derivative.h"
-#include "finds/util.h"
+#include <finds/system.h>
+#include <finds/derivative.h>
+#include <finds/util.h>
 
 #define DEFAULT_SIZE             100
 #define DEFAULT_METHOD           BRUTE_FORCE

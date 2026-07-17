@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     opencl-headers \
     libgsl-dev \
     gnuplot \
+    libjson-c-dev \
+    libncurses-dev \
     doxygen \
     graphviz \
     check \

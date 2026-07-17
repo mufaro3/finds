@@ -1,7 +1,7 @@
 #include <time.h>
-#include "system.h"
-#include "differentiation.h"
-#include "util.h"
+#include <finds/system.h>
+#include <finds/derivative.h>
+#include <finds/util.h>
 
 double time_derivative_computation(
     const fish_system_t *system,

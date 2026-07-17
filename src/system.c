@@ -13,8 +13,26 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "system.h"
-#include "util.h"
+
+#include <finds/system.h>
+#include <finds/util.h>
+
+const named_enum_t distribution_type_table[DISTRIBUTION_TYPE_COUNT] = {
+    { DISTRIBUTION_CUBE,    "cube" },
+    { DISTRIBUTION_SPHERE,  "sphere" },
+    { DISTRIBUTION_BALL,    "ball" },
+    { DISTRIBUTION_RANDOM,  "random" }
+};
+
+const named_enum_t orientation_type_table[ORIENTATION_TYPE_COUNT] = {
+    { ORIENTATION_RANDOM,         "random" },
+    { ORIENTATION_RADIAL_INWARD,  "radial-inward" },
+    { ORIENTATION_RADIAL_OUTWARD, "radial-outward"},
+    { ORIENTATION_SWIRL_INWARD,   "swirl-inward" },
+    { ORIENTATION_SWIRL_OUTWARD,  "swirl-outward" },
+    { ORIENTATION_SADDLE,         "saddle" },
+    { ORIENTATION_ALIGNED,        "aligned" },
+};
 
 /* SYSTEM GENERATION FUNCTIONS */
 
@@ -393,16 +411,22 @@ fish_system_t *fish_system_generate(
     free(sigmas);
 
     if (print_debug) {
-        printf("N=%zu, Distribution=%s, Orientation=%s\n", N,
-            distribution_type_to_string(dist_opts.type),
-            orientation_type_to_string(ori_opts.type));
+        printf("Generated System. N = %zu, Distribution = %s, Orientation = %s\n", N,
+            ne_lookup_name(
+                distribution_type_table,
+                DISTRIBUTION_TYPE_COUNT,
+                dist_opts.type),
+            ne_lookup_name(
+                orientation_type_table,
+                ORIENTATION_TYPE_COUNT,
+                ori_opts.type));
     }
 
     return new_system;
 }
 
 
-/*
+/**
  * \brief Copies two systems to a greater system containing both.
  *
  * \param[in] a  The first fish system.
@@ -429,7 +453,21 @@ fish_system_t *fish_system_combine(
     return combined_system;
 }
 
-/*
+/**
+ * \brief Comptues the norm of a fish system.
+ */
+double fish_system_norm(const fish_system_t *system) {
+    double total = 0;
+    for (size_t i = 0; i < system->size; ++i)
+    {
+        swimmer_t swimmer = system->swimmers[i];
+        total += pow(d3_norm(swimmer.position), 2);
+        total += pow(d3_norm(swimmer.orientation), 2);
+    }
+    return sqrt(total);
+}
+
+/**
  * \brief Combines two fish systems and then destroys the previous systems.
  *
  * \param[in] a  The first fish system.
@@ -503,7 +541,7 @@ fish_system_t *fish_system_copy(const fish_system_t *system)
     /* copy over a */
     memcpy(copy_system->swimmers,
            system->swimmers,
-           system->size * sizeof(*a->swimmers));
+           system->size * sizeof(*system->swimmers));
 
     return copy_system;
 }

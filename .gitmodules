@@ -1,3 +1,9 @@
 [submodule "lib/gnuplot_i"]
 	path = lib/gnuplot_i
 	url = https://github.com/longradix/gnuplot_i.git
+[submodule "lib/tomlc17"]
+	path = lib/tomlc17
+	url = https://github.com/cktan/tomlc17.git
+[submodule "lib/progressbar"]
+	path = lib/progressbar
+	url = https://github.com/doches/progressbar.git

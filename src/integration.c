@@ -1,5 +1,14 @@
-#include "derivative.h"
-#include "integration.h"
+#include <finds/derivative.h>
+#include <finds/integration.h>
+
+const named_enum_t integration_methods_table[INTEGRATION_METHODS_COUNT] = {
+    { EULER,          "euler" },
+    { RUNGE_KUTTA_23, "RK23"  },
+    { RUNGE_KUTTA_45, "RK45"  },
+    { RUNGE_KUTTA_54, "RK54"  },
+    { RUNGE_KUTTA_65, "RK65"  },
+    { RUNGE_KUTTA_78, "RK78"  },
+};
 
 /*
  * \brief Computes y + y' * dt.

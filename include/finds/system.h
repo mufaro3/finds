@@ -13,10 +13,12 @@
 #ifndef FISH_SYSTEM_HEADER
 #define FISH_SYSTEM_HEADER
 
+#include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 #include "vector.h"
+#include "util.h"
 
 /* SYSTEM GENERATION OPTIONS */
 
@@ -24,22 +26,12 @@ typedef enum {
     DISTRIBUTION_CUBE,
     DISTRIBUTION_SPHERE,
     DISTRIBUTION_BALL,
-    DISTRIBUTION_RANDOM
+    DISTRIBUTION_RANDOM,
+
+    DISTRIBUTION_TYPE_COUNT
 } distribution_type_e;
 
-static inline char *distribution_type_to_string(const distribution_type_e type)
-{
-    switch (type) {
-        case DISTRIBUTION_CUBE:
-            return "cube";
-        case DISTRIBUTION_SPHERE:
-            return "sphere";
-        case DISTRIBUTION_BALL:
-            return "ball";
-        case DISTRIBUTION_RANDOM:
-            return "random";
-    }
-}
+extern const named_enum_t distribution_type_table[DISTRIBUTION_TYPE_COUNT];
 
 typedef struct {
     distribution_type_e type;
@@ -54,28 +46,12 @@ typedef enum {
     ORIENTATION_SWIRL_INWARD,
     ORIENTATION_SWIRL_OUTWARD,
     ORIENTATION_SADDLE,
-    ORIENTATION_ALIGNED
+    ORIENTATION_ALIGNED,
+
+    ORIENTATION_TYPE_COUNT
 } orientation_type_e;
 
-static inline char *orientation_type_to_string(const orientation_type_e type)
-{
-    switch (type) {
-        case ORIENTATION_RANDOM:
-            return "random";
-        case ORIENTATION_RADIAL_INWARD:
-            return "radial inward";
-        case ORIENTATION_RADIAL_OUTWARD:
-            return "radial outward";
-        case ORIENTATION_SWIRL_INWARD:
-            return "swirl inward";
-        case ORIENTATION_SWIRL_OUTWARD:
-            return "swirl outward";
-        case ORIENTATION_SADDLE:
-            return "saddle";
-        case ORIENTATION_ALIGNED:
-            return "aligned";
-    }
-}
+extern const named_enum_t orientation_type_table[ORIENTATION_TYPE_COUNT];
 
 typedef struct {
     orientation_type_e type;
@@ -114,6 +90,8 @@ fish_system_t *fish_system_generate(
 
 fish_system_t *fish_system_combine(const fish_system_t *a, const fish_system_t *b);
 fish_system_t *fish_system_combine_destroy(fish_system_t *a, fish_system_t *b);
+
+double fish_system_norm(const fish_system_t *system);
 
 void fish_system_normalize_orientation(fish_system_t *system);
 

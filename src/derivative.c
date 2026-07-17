@@ -11,8 +11,14 @@
  * License: MIT
  */
 #include <stdlib.h>
-#include "differentiation.h"
-#include "vector.h"
+#include <finds/derivative.h>
+#include <finds/vector.h>
+
+const named_enum_t inter_comp_methods_table[INTER_COMP_METHODS_COUNT] = {
+    { BRUTE_FORCE, "brute-force" },
+    { BARNES_HUT,  "barnes-hut" },
+    { FAST_MULTIPOLE_METHOD, "FMM" }
+};
 
 /* The fields are exactly the same, so I'm just creating a local alias */
 typedef struct {

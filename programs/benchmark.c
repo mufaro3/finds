@@ -6,10 +6,10 @@
 #include <gsl/gsl_fit.h>
 #include <gnuplot_i/gnuplot_i.h>
 
-#include "finds/system.h"
-#include "finds/differentiation.h"
-#include "finds/util.h"
-#include "finds/evaluation.h"
+#include <finds/system.h>
+#include <finds/derivative.h>
+#include <finds/util.h>
+#include <finds/evaluation.h>
 
 #define FIGURE_WIDTH  600
 #define FIGURE_HEIGHT 400
@@ -66,13 +66,6 @@ static error_t parse_commandline_opts(
     return 0;
 }
 
-static inline void
-array_log10(double *out, const double *values, const int len)
-{
-    for (int i = 0; i < len; i++)
-        out[i] = exp10(values[i]);
-}
-
 static void analyze_time_series(
     double *exponent,
     double *scaling_coeff,
@@ -95,7 +88,13 @@ static void analyze_time_series(
         NULL,
         chisq);
 
-    *scaling_coeff = exp10(log_coeff);
+    *scaling_coeff = pow(10,log_coeff);
+}
+
+static void vector_log10(double *dest, const double *src, const size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+        dest[i] = log(src[i]) / log(10);
 }
 
 static void write_series_label(
@@ -131,7 +130,7 @@ static void write_series_label(
         "%s %s", method_buf, statistics_buf);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     seed_rand();
     int errno;
@@ -176,12 +175,12 @@ int main(void)
 
     for (int i = 0; i < N_SYS; ++i) {
         log_nvalues[i] = args.min_log_n + i;
-        nvalues[i] = (int) exp10(log_nvalues[i]);
+        nvalues[i] = (int) pow(10, log_nvalues[i]);
         systems[i] = fish_system_generate_random((size_t) nvalues[i]);
     }
 
     const int N_METHODS = 9;
-    derivative_computation_opts_t methods[N_METHODS] = {0};
+    derivative_computation_opts_t methods[N_METHODS];
 
     /* Brute-Force */
     methods[0].method = BRUTE_FORCE;
@@ -193,13 +192,13 @@ int main(void)
     }
 
     /* Fast Multipole Method */
-    for (int meth_i = 5; meth_i < N_METHODS; ++i) {
+    for (int meth_i = 5; meth_i < N_METHODS; ++meth_i) {
         methods[meth_i].method = FAST_MULTIPOLE_METHOD;
         methods[meth_i].number_of_poles = 4 * (meth_i - 4);
     }
 
     /* compute the times for each method with each N */
-    double *times[N_METHODS] = {0};
+    double *times[N_METHODS];
     for (size_t meth_i = 0; meth_i < N_METHODS; ++meth_i) {
         times[meth_i] = calloc(N_SYS, sizeof(double));
         if (times[meth_i] == NULL) {
@@ -222,14 +221,14 @@ int main(void)
 
     gnuplot_setterm(fig_handle, "wxt", FIGURE_WIDTH, FIGURE_HEIGHT);
     gnuplot_cmd(fig_handle, "set logscale xy");
-    gnuplot_set_axislabel(fig_handle, 'x', "System Size {/Symbol N}");
-    gnuplot_set_axislabel(fig_handle, 'y', "Runtime (s)");
+    gnuplot_set_axislabel(fig_handle, "x", "System Size {/Symbol N}");
+    gnuplot_set_axislabel(fig_handle, "y", "Runtime (s)");
     gnuplot_cmd(fig_handle, "set title 'Derivative computation scaling'");
     gnuplot_setstyle(fig_handle, "linespoints");
 
     for (int meth_i = 0; meth_i < N_METHODS; ++meth_i) {
         /* compute the logarithm of the runtimes */
-        double log_times[N_SYS] = {0};
+        double log_times[N_SYS];
         vector_log10(log_times, times[meth_i], N_SYS);
 
         /* perform linear regression of the logarithms

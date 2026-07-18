@@ -14,9 +14,11 @@
 #define FIGURE_WIDTH  600
 #define FIGURE_HEIGHT 400
 
-#define SERIES_LABEL_SIZE 128
+#define SERIES_LABEL_SIZE 200
 #define DEFAULT_MIN_LOG_N 1
 #define DEFAULT_MAX_LOG_N 3
+
+#define N_METHODS 9
 
 const const char *argp_program_version = "FINDS benchmarker v1.0";
 const const char *argp_program_bug_address = \
@@ -105,12 +107,12 @@ static void write_series_label(
     const double scaling_coeff,
     const double chisq)
 {
-    char statistics_buf[30] = {0};
+    char statistics_buf[100] = {0};
     snprintf(statistics_buf, sizeof(statistics_buf),
         "slope=%.1f, k=%.2e, {/Symbol c}^2=%.1e",
         exponent, scaling_coeff, chisq);
 
-    char method_buf[20] = {0};
+    char method_buf[100] = {0};
     switch (dc_opts.method) {
         case BRUTE_FORCE:
             snprintf(method_buf, sizeof(method_buf), "Brute Force");
@@ -179,7 +181,6 @@ int main(int argc, char *argv[])
         systems[i] = fish_system_generate_random((size_t) nvalues[i]);
     }
 
-    const int N_METHODS = 9;
     derivative_computation_opts_t methods[N_METHODS];
 
     /* Brute-Force */
@@ -204,12 +205,14 @@ int main(int argc, char *argv[])
         if (times[meth_i] == NULL) {
             perror("time array calloc failed");
             errno = EXIT_FAILURE;
-            goto jmp_times;
+            break;
         }
         for (size_t sys_i = 0; sys_i < N_SYS; ++sys_i)
             times[meth_i][sys_i] = time_derivative_computation(
                 systems[sys_i], methods[meth_i]);
     }
+    if (errno = EXIT_FAILURE)
+        goto jmp_systems;
 
     /* plot setup */
     gnuplot_ctrl *fig_handle = gnuplot_init();
@@ -264,7 +267,7 @@ jmp_times:
 
 jmp_systems:
     for (size_t i = 0; i < N_SYS; ++i)
-        fish_system_destroy(systems[i]);
+        fish_system_destroy(&systems[i]);
     free(systems);
 
 jmp_log_nvalues:

@@ -4,7 +4,6 @@
 #define ROOT_OUTPUT_PATH        "output"
 #define SIMULATIONS_OUTPUT_PATH "simulations"
 #define DATAFILE_NAME           "data.h5"
-#define DEFAULT_SIMULATION_FILE "default-simulation-config.json"
 
 #define SAFETY            0.9f
 #define TIME_STEP_MINIMUM 0.2f

@@ -25,7 +25,7 @@ shell:
 # Project
 
 run:
-	$(COMPOSE) run --rm $(SERVICE) ./build/simulation
+	$(COMPOSE) run --rm $(SERVICE) ./build/simulate
 
 test:
 	$(COMPOSE) run --rm $(SERVICE) \

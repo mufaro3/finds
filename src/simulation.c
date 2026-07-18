@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <progressbar/progressbar.h>
 
@@ -45,8 +46,9 @@ error_e perform_simulation(
     const fish_system_t *initial_state,
     const derivative_computation_opts_t dc_opts,
     const integration_opts_t int_opts,
-    char *output_folder_filename,
-    bool print_file_output)
+    char *output_filename,
+    const size_t output_filename_size,
+    const bool print_file_output)
 {
     /* set the integrator */
     const integration_step_fn step_fn = \
@@ -62,18 +64,21 @@ error_e perform_simulation(
 
     /* copy the initial state to a current state */
     fish_system_t *current_state = fish_system_copy(initial_state);
+
+    char output_folder_filename[1024];
     generate_simulation_output_filename(output_folder_filename);
 
     /* determine filename for the output file */
-    char output_filename[1024];
-    snprintf(output_filename,
-        sizeof(output_filename), "%s/%s",
+    snprintf(output_filename, output_filename_size, "%s/%s",
         output_folder_filename, DATAFILE_NAME);
+    mkdir_p(output_folder_filename, 0755);
 
     /* open a filestream to that file */
     datastream_t output_stream = {0};
-    code = datastream_open_file(&output_stream,
-        output_filename, DATA_MODE_WRITING);
+    code = datastream_create_file(
+        &output_stream,
+        output_filename,
+        initial_state->size);
     if (code != ERR_OK)
         goto jmp_current_state;
 
@@ -81,7 +86,10 @@ error_e perform_simulation(
         fprintf(stderr, "Saving file output to %s\n", output_folder_filename);
 
     size_t n_time_steps = (size_t) int_opts.end_time / int_opts.eval_time_step;
-    progressbar *progress = progressbar_new("Time Evolution", n_time_steps);
+    char time_status_text[50];
+    snprintf(time_status_text, 50,
+        "Time Evolution (0.00/%.2lf)", int_opts.end_time);
+    progressbar *progress = progressbar_new(time_status_text, n_time_steps);
     if (progress == NULL) {
         code = RAISE_ERROR(ERR_ALLOC, "could not create progress bar");
         goto jmp_output_stream;
@@ -96,9 +104,9 @@ error_e perform_simulation(
             fish_system_t *advanced_state = step_fn(
                 current_state, dt, dc_opts, &eval_error);
 
-            double state_norm = MAX(
-                fish_system_norm(current_state),
-                fish_system_norm(advanced_state));
+            double current_norm = fish_system_norm(current_state);
+            double advanced_norm = fish_system_norm(advanced_state);
+            double state_norm = MAX(current_norm, advanced_norm);
 
             double tolerance = int_opts.absolute_error_tolerance + \
                 int_opts.relative_error_tolerance * state_norm;
@@ -107,21 +115,28 @@ error_e perform_simulation(
                 fish_system_destroy(&current_state);
                 current_state = advanced_state;
                 current_time += current_time_step;
+
+                snprintf(time_status_text, 50,
+                    "Time Evolution (%.2lf/%.2lf)",
+                    current_time, int_opts.end_time);
+                progressbar_update_label(progress, time_status_text);
+
                 progressbar_inc(progress);
             }
             else
                 fish_system_destroy(&advanced_state);
 
             /* update the internal time step */
-            current_time_step = adapt_step_size(
-                dt, eval_error, tolerance,
-                integration_method_order(int_opts.method));
+            if (eval_error > 0)
+                current_time_step = adapt_step_size(
+                    dt, eval_error, tolerance,
+                    integration_method_order(int_opts.method));
         }
 
-        code = datastream_write_system(
-            output_stream, current_state, current_time);
+        code = datastream_write_system(&output_stream,
+            current_state, current_time);
         if (code != ERR_OK)
-            goto jmp_output_stream;
+            break;
         next_eval_time += int_opts.eval_time_step;
     }
 

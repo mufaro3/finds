@@ -97,7 +97,7 @@ static inline mat3_t rotation_matrix(
 
 static inline void d3_print(const double_3d_t v)
 {
-    printf("%6.2e %6.2e %6.2e", v.x, v.y, v.z);
+    printf("[ %6.2e %6.2e %6.2e ]", v.x, v.y, v.z);
 }
 
 static inline double_3d_t d3_add(const double_3d_t a, const double_3d_t b)
@@ -186,5 +186,11 @@ static inline void d3_list_print(const double_3d_t *lov, size_t N)
     printf(" ]\n");
 }
 
+static inline void d3_copy(double_3d_t *dest, const double_3d_t src)
+{
+    dest->x = src.x;
+    dest->y = src.y;
+    dest->z = src.z;
+}
 
 #endif

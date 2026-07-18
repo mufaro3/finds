@@ -1,0 +1,117 @@
+# This is the default configuration file for a FINDS simulation. The parameters
+# in this file specify a complete simulation and post-processing routine to be
+# performed using FINDS simulation and analysis routines.
+#
+# Edit this file as you need to adapt it to your simulation. Similarly, you can
+# create your own simulation files by copying this file and supplying the
+# filepath of a config file to the FINDS binary.
+#
+# Note: this configuration has many values that depend on other values. Not
+# all of the options need to be defined for the simulation to work.
+
+[system]
+
+# The distribution type essentially defines the shape/geometry of the fish
+# system. Valid options are "cube", "sphere", "ball", and "random".
+distribution_type = "random"
+
+# The radius of the sphere or ball comprised of swimmers. Set this only if
+# 'distribution_type' is set to 'sphere' or 'ball'.
+radius = 2.0
+
+# The side length of the cubic lattice comprised of swimmers. Set this only if
+# 'distribution_type' is set to 'cube'.
+side_length = 2.0
+
+# The spacing between each fish within the cubic lattice, sphere, or ball
+# comprised of swimmers. Set this only if 'distribution_type' is NOT set to
+# 'random'.
+spacing = 1.0
+
+# The number of swimmers to generate in the system. Set this only if
+# 'distribution_type' is set to 'random' (the number of swimmers for the
+# arranged distributions is calculated based on radius/side length and
+# spacing).
+num_swimmers = 100
+
+# The absolute bound for which swimmers can be generated. I.e., if this value
+# is set to X, then each swimmer will have a randomly-generated position with
+# an x-value within [-X,X], a y-value within [-X,X], and a z-value within
+# [-X,X]. Set this only if 'distribution_type' is set to 'random' (for ordered
+# distributions, this is determined based on side length or radius).
+abs_bound = 10.0
+
+# The orientation type defines the alignment of each of the fish in the system.
+# Valid options are "random", "radial-inward", "radial-outward", "swirl-inward",
+# "swirl-outward", "saddle", and "aligned".
+orientation_type = "random"
+
+# This is the maximum random angular perturbation to apply to each of the fish
+# along the polar and azimuthal angles (not including the roll-axis as each
+# swimmer is symmetric along that axis). Set this to 0 to disable random
+# angular perturbation.
+angular_perturbation = 0.0
+
+# This sets the length of the fish. To set a uniform length (so all fish
+# having the same length), then set this to some singular value, i.e.,
+#   length = 10
+# and to set this to a uniform-distribution range of length values to select
+# from, then set it to an array of two values storing the minimum and maximum,
+# such as
+#   length = [1, 10]
+# in both cases, zero is not a valid length.
+length = [1.0, 10.0]
+
+# This sets the volumetric flow rate of the fish. In the same fashion as with
+# the length of the fish, you can set a uniform volumetric flow by defining it
+# as a single value and as a uniform distribution by defining it as a range.
+volumetric_flow_rate = 8.0
+
+[differentiation]
+
+# This is the method for computing the pairwise interactions between the
+# swimmers in the system during the computation of each derivative. Valid
+# options are "brute-force", "barnes-hut", and "FMM".
+#
+# Brute force refers to the basic O(N^2) pairwise interaction computation
+# method. Barnes-Hut refers to the O(N log N) interaction computation method
+# based on clustering far-away groups. FMM is the Fast Multipole Method, which
+# clusters close and far groups in O(N) or O(N log N) time.
+interaction_method = "brute-force"
+
+# This is the Barnes-Hut approximation threshold (theta), used as the maximum
+# ratio between the side-length of an octant and the distance to that octant
+# from a swimmer for which to cluster the octant. Requires that
+# "interaction_method" is set to "barnes-hut".
+approximation_threshold = 0.5
+
+# This is the expansion order for the Fast Multipole Method. Requires that
+# "interaction_method" is set to "FMM".
+number_of_poles = 1
+
+[integration]
+
+# This is the numerical integration scheme to be used in the simulation. Some
+# of the options are naive, meaning that there will be no internal error
+# estimation or adaptive time-stepping. Valid options are "euler", "RK23",
+# "RK45", "RK54", "RK65", and "RK78".
+#
+# Eulerian integration is first-order and naive. Each embedded Runge-Kutta
+# method in form RKAB uses A-order derivative computation and B-order error
+# computation for adaptive time-stepping.
+integration_method = "euler"
+
+# This is the evaluation time-step for the simulation, i.e., the system
+# snapshots that are saved during integration will only be times that are
+# multiples of this time-step regardless of the internal, adapted time-step.
+time_step = 0.01
+
+# The ending time for the simulation, provided that the initial state begins
+# at 0 simulation-seconds.
+end_time = 1.0
+
+# These are the error tolerances used for determining the overall tolerance
+# threshold for adaptive time-stepping. These can only be set if the numerical
+# integration method is a non-naive (error estimating) method.
+relative_error_tolerance = 1E-2
+absolute_error_tolerance = 1E-4

@@ -3,6 +3,6 @@
 
 int main(void)
 {
-    printf("VALIDATION TO BE IMPLEMENTED.")
+    printf("VALIDATION TO BE IMPLEMENTED.");
     return 0;
 }

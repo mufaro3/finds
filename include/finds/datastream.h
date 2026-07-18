@@ -1,27 +1,37 @@
 #ifndef IO_HEADER
 #define IO_HEADER
 
+#include <hdf5.h>
+#include <stdbool.h>
 #include "system.h"
 #include "error.h"
 
-typedef enum {
-    DATA_MODE_WRITING,
-    DATA_MODE_READING
-} ds_data_mode_e;
-
 typedef struct {
-    FILE *file;
+    bool open;
+    hid_t file;
+
+    hid_t time_dataset;
+    hid_t position_dataset;
+    hid_t orientation_dataset;
+    hid_t length_dataset;
+    hid_t sigma_dataset;
+
+    size_t n_particles;
+    size_t n_frames;
 } datastream_t;
 
-error_e datastream_open_file(
+
+int mkdir_p(const char *path, const mode_t mode);
+
+error_e datastream_create_file(
     datastream_t *stream,
     const char *filename,
-    const ds_data_mode_e mode);
+    const size_t N);
 
 error_e datastream_close(datastream_t *stream);
 
 error_e datastream_write_system(
-    const datastream_t stream,
+    datastream_t *stream,
     const fish_system_t *system,
     const double time);
 

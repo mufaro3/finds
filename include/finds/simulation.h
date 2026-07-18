@@ -2,6 +2,7 @@
 #define SIMULATION_HEADER
 
 #include <stdbool.h>
+#include "integration.h"
 #include "error.h"
 
 error_e perform_simulation(
@@ -9,6 +10,7 @@ error_e perform_simulation(
     const derivative_computation_opts_t dc_opts,
     const integration_opts_t int_opts,
     char *output_folder_filename,
-    bool print_file_output);
+    const size_t output_filename_size,
+    const bool print_file_output);
 
 #endif

@@ -18,6 +18,9 @@ find_package(GSL REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CHECK REQUIRED check)
+find_package(Curses REQUIRED)
+
+find_package(HDF5 REQUIRED COMPONENTS C)
 
 # ------------------------------------------------------------------------------
 # Third-party libraries
@@ -33,7 +36,15 @@ target_link_libraries(gnuplot_i PUBLIC m)
 # progressbar
 set(PROGRESSBAR_ROOT ${LIB_DIR}/progressbar)
 add_subdirectory(${PROGRESSBAR_ROOT})
-target_include_directories(progressbar PRIVATE ${PROGRESSBAR_ROOT}/include)
+target_include_directories(progressbar
+    PRIVATE
+    ${PROGRESSBAR_ROOT}/include
+
+    PUBLIC
+    ${CURSES_INCLUDE_DIRS}
+)
+
+target_link_libraries(progressbar PUBLIC ${CURSES_LIBRARIES})
 
 # tomlc17
 set(TOMLC17_ROOT ${LIB_DIR}/tomlc17)
@@ -56,6 +67,7 @@ target_include_directories(finds
     ${OpenCL_INCLUDE_DIRS}
     ${GSL_INCLUDE_DIRS}
     ${CHECK_INCLUDE_DIRS}
+    ${HDF5_INCLUDE_DIRS}
     ${PROGRESSBAR_ROOT}/include
 )
 
@@ -66,15 +78,11 @@ target_link_libraries(finds PUBLIC
     gnuplot_i
     progressbar
     tomlc17
-    m)
+    HDF5::HDF5
+    m
+)
 
 target_compile_definitions(finds PUBLIC CL_TARGET_OPENCL_VERSION=300)
-
-get_target_property(INCLUDES progressbar INCLUDE_DIRECTORIES)
-message(STATUS "progressbar includes: ${INCLUDES}")
-
-get_target_property(FINDSINCLUDES finds INCLUDE_DIRECTORIES)
-message(STATUS "finds includes: ${FINDSINCLUDES}")
 
 # ------------------------------------------------------------------------------
 # Programs
@@ -85,6 +93,10 @@ file(GLOB PROGRAM_SOURCES CONFIGURE_DEPENDS programs/*.c)
 foreach(PROGRAM ${PROGRAM_SOURCES})
     get_filename_component(PROGRAM_NAME ${PROGRAM} NAME_WE)
     add_executable(${PROGRAM_NAME} ${PROGRAM})
+    target_include_directories(${PROGRAM_NAME} PRIVATE
+        ${PROGRESSBAR_ROOT}/include
+        ${TOMLC17_ROOT}/src
+    )
     target_link_libraries(${PROGRAM_NAME} PRIVATE finds)
 endforeach()
 
@@ -99,7 +111,7 @@ file(GLOB TEST_SOURCES CONFIGURE_DEPENDS tests/*.c)
 add_executable(unit_tests ${TEST_SOURCES})
 
 target_include_directories(unit_tests PRIVATE ${CHECK_INCLUDE_DIRS})
-target_link_libraries(unit_tests PRIVATE simulation ${CHECK_LIBRARIES})
+target_link_libraries(unit_tests PRIVATE finds ${CHECK_LIBRARIES})
 
 add_test(NAME unit_tests COMMAND unit_tests)
 

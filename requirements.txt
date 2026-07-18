@@ -1,0 +1,9 @@
+# progress bars
+tqdm
+
+# math/plotting
+numpy
+matplotlib
+
+# data storage
+h5py

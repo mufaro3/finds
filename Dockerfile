@@ -19,14 +19,20 @@ RUN apt-get update && apt-get install -y \
     libgsl-dev \
     gnuplot \
     libjson-c-dev \
+    libhdf5-dev \
     libncurses-dev \
     doxygen \
     graphviz \
     check \
     python3 \
+    python3.12-venv \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
+
+COPY requirements.txt .
+
+RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
 CMD ["/bin/bash"]

@@ -81,7 +81,7 @@ static error_t parse_commandline_opts(
                 opts->dc_opts.method = BARNES_HUT;
 
             else if (strcmp(arg, "fmm") == 0)
-                opts->dc_opts.method = FMM;
+                opts->dc_opts.method = FAST_MULTIPOLE_METHOD;
 
             else argp_error(state, "Unknown method: %s", arg);
 
@@ -96,12 +96,12 @@ static error_t parse_commandline_opts(
             break;
 
         case ARGP_KEY_END:
-            if (arguments.dc_opts.method == BARNES_HUT && \
-                arguments.dc_opts.approximation_threshold <= 0)
+            if (opts->dc_opts.method == BARNES_HUT && \
+                opts->dc_opts.approximation_threshold <= 0)
                 argp_error(state, "Barnes-Hut requires --theta");
 
-            if (arguments.dc_opts.method == FMM && \
-                arguments.dc_opts.poles == 0)
+            if (opts->dc_opts.method == FAST_MULTIPOLE_METHOD && \
+                opts->dc_opts.number_of_poles == 0)
                 argp_error(state, "FMM requires --poles");
             break;
 
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
     /* build the system */
 
-    fish_system_generate_random(arguments.size);
+    fish_system_t *system = fish_system_generate_random(arguments.size);
 
     /* compute derivative */
 

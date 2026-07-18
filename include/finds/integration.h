@@ -1,4 +1,4 @@
-/*
+/**
  * \file integration.h
  *
  * \brief Implementation of various embedded Runge-Kutta integrators and

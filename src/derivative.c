@@ -1,35 +1,37 @@
-/*
- * \file differentiation.c
+/**
+ * @file differentiation.c
  *
- * \brief Derivative calculation.
+ * @brief Derivative calculation.
  *
  * This file contains the core routine for computing the derivative of the
  * fish system.
  *
- * \author Mufaro Machaya <mufaro2@student.ubc.ca>
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
  *
  * License: MIT
  */
 #include <stdlib.h>
 #include <finds/derivative.h>
 #include <finds/vector.h>
+#include <finds/util.h>
+#include <finds/error.h>
 
-const named_enum_t inter_comp_methods_table[INTER_COMP_METHODS_COUNT] = {
+/** Lookup table for the interaction computation methods */
+const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
     { BRUTE_FORCE, "brute-force" },
     { BARNES_HUT,  "barnes-hut" },
     { FAST_MULTIPOLE_METHOD, "FMM" }
 };
 
-/* The fields are exactly the same, so I'm just creating a local alias */
-typedef struct {
-    double_3d_t *source, *sink;
-    size_t size;
-} feature_velocity_t;
+/** Local alias for the derivative of feature_positions_t for clarity */
+typedef feature_positions_t feature_velocity_t;
 
-/*
- * \brief Allocates a new derivative object.
+/**
+ * @brief Allocates a new derivative object.
  *
- * \param[in] N  The number of swimmers to account for.
+ * @param[in] N  The number of swimmers to account for.
+ *
+ * @return The allocated feature velocity object.
  */
 static feature_velocity_t *feature_velocity_allocate(const size_t N)
 {
@@ -40,10 +42,10 @@ static feature_velocity_t *feature_velocity_allocate(const size_t N)
     return feat_vel;
 }
 
-/*
- * \brief Destroys a feature velocity object.
+/**
+ * @brief Destroys a feature velocity object.
  *
- * \param[out] feat_vel_ptr  The pointer to the feature velocity object.
+ * @param[out] feat_vel_ptr  The pointer to the feature velocity object.
  */
 static void feature_velocity_destroy(feature_velocity_t **feat_vel_ptr)
 {
@@ -59,17 +61,16 @@ static void feature_velocity_destroy(feature_velocity_t **feat_vel_ptr)
     *feat_vel_ptr = NULL;
 }
 
-/*
- * \brief Comptues the individual interaction between two features.
+/**
+ * @brief Comptues the individual interaction between two features.
  *
- * Indiviudal interaction is computed as
+ * Indiviudal interaction is computed as the displacement vector divided by
+ * the distance cubed.
  *
- *   interaction = displacement / (distance ^ 3).
+ * @param[in] feat_a_pos  Position of feature A.
+ * @param[in] feat_b_pos  Position of feature B.
  *
- * \param[in] feat_a_pos  Position of feature A.
- * \param[in] feat_b_pos  Position of feature B.
- *
- * \return The interaction vector between A and B.
+ * @return The interaction vector between A and B.
  */
 static inline double_3d_t calculate_feature_interaction(
     const double_3d_t feat_a_pos,
@@ -80,14 +81,14 @@ static inline double_3d_t calculate_feature_interaction(
     return d3_div(displacement, distance * distance * distance);
 }
 
-/*
- * \brief Computes the front and back interaction between the fishes i and j.
+/**
+ * @brief Computes the front and back interaction between the fishes i and j.
  *
- * \param[in]  fish_i  This fish (fish \(i\)).
- * \param[in]  fish_j  The other fish (fish \(j\)).
+ * @param[in]  fish_i  This fish (fish \(i\)).
+ * @param[in]  fish_j  The other fish (fish \(j\)).
  *
- * \param[out] front_interaction  The output vector list for front interaction.
- * \param[out] back_interaction   The output vector list for back interaction.
+ * @param[out] front_interaction  The output vector list for front interaction.
+ * @param[out] back_interaction   The output vector list for back interaction.
  */
 static void calculate_fish_interaction(
     const swimmer_features_t fish_i,
@@ -108,16 +109,16 @@ static void calculate_fish_interaction(
     *back_interaction = d3_sub(back_front, back_back);
 }
 
-/*
- * \brief Computes the external velocity contribution using the naive
+/**
+ * @brief Computes the external velocity contribution using the naive
  *        brute-force method.
  *
- * \param[out] external_source  The output vector for external source
+ * @param[out] external_source  The output vector for external source
  *                              velocity contribution.
- * \param[out] external_sink    The output vector for external sink velocity
+ * @param[out] external_sink    The output vector for external sink velocity
  *                              contribution.
- * \param[in]  system           The system to compute on.
- * \param[in]  feat_pos         The feature positions.
+ * @param[in]  system           The system to compute on.
+ * @param[in]  feat_pos         The feature positions.
  */
 static void calc_ext_contrib_brute_force(
     double_3d_t *external_source,
@@ -153,56 +154,60 @@ static void calc_ext_contrib_brute_force(
     }
 }
 
-/*
- * \brief Computes the external velocity contribution using the Barnes-Hut
+/**
+ * @brief Computes the external velocity contribution using the Barnes-Hut
  *        clustering method.
  *
- * \param[out] external_source  The output vector for external source
+ * @param[out] external_source  The output vector for external source
  *                              velocity contribution.
- * \param[out] external_sink    The output vector for external sink velocity
+ * @param[out] external_sink    The output vector for external sink velocity
  *                              contribution.
- * \param[in]  system           The system to compute on.
- * \param[in]  feat_pos         The feature positions.
- * \param[in]  theta            The maximum approximation ratio for Barnes-Hut.
+ * @param[in]  system           The system to compute on.
+ * @param[in]  feat_pos         The feature positions.
+ * @param[in]  theta            The maximum approximation ratio for Barnes-Hut.
  */
 static void calc_ext_contrib_barnes_hut(
-    double_3d_t *external_source,
-    double_3d_t *external_sink,
-    const fish_system_t *system,
-    const feature_positions_t *feat_pos,
-    const double theta)
-{}
+    UNUSED double_3d_t *external_source,
+    UNUSED double_3d_t *external_sink,
+    UNUSED const fish_system_t *system,
+    UNUSED const feature_positions_t *feat_pos,
+    UNUSED const double theta)
+{
+    NOT_IMPLEMENTED();
+}
 
-/*
- * \brief Computes the external velocity contribution using the Barnes-Hut
+/**
+ * @brief Computes the external velocity contribution using the Barnes-Hut
  *        clustering method.
  *
- * \param[out] external_source  The output vector for external source
+ * @param[out] external_source  The output vector for external source
  *                              velocity contribution.
- * \param[out] external_sink    The output vector for external sink velocity
+ * @param[out] external_sink    The output vector for external sink velocity
  *                              contribution.
- * \param[in]  system           The system to compute on.
- * \param[in]  feat_pos         The feature positions.
- * \param[in]  theta            The maximum approximation ratio for FMM.
- * \param[in]  order            The number of terms to include in the
+ * @param[in]  system           The system to compute on.
+ * @param[in]  feat_pos         The feature positions.
+ * @param[in]  theta            The maximum approximation ratio for FMM.
+ * @param[in]  order            The number of terms to include in the
  *                              multipole expansion.
  */
 static void calc_ext_contrib_fmm(
-    double_3d_t *external_source,
-    double_3d_t *external_sink,
-    const fish_system_t *system,
-    const feature_positions_t *feat_pos,
-    const double theta,
-    const uint8_t order)
-{}
+    UNUSED double_3d_t *external_source,
+    UNUSED double_3d_t *external_sink,
+    UNUSED const fish_system_t *system,
+    UNUSED const feature_positions_t *feat_pos,
+    UNUSED const double theta,
+    UNUSED const uint8_t order)
+{
+    NOT_IMPLEMENTED();
+}
 
-/*
- * \brief Computes the velocities of the heads and tails for a school of fish.
+/**
+ * @brief Computes the velocities of the heads and tails for a school of fish.
  *
- * \param[in] system   The system to compute on.
- * \param[in] dc_opts  The derivative computation options.
+ * @param[in] system   The system to compute on.
+ * @param[in] dc_opts  The derivative computation options.
  *
- * \return The velocities of the sources and sinks for this system.
+ * @return The velocities of the sources and sinks for this system.
  */
 static feature_velocity_t *calculate_feature_velocities(
     const fish_system_t *system,
@@ -249,10 +254,10 @@ static feature_velocity_t *calculate_feature_velocities(
     return feat_vel;
 }
 
-/*
- * \brief Allocates a new derivative object.
+/**
+ * @brief Allocates a new derivative object.
  *
- * \param[in] N  The number of swimmers in the derivative.
+ * @param[in] N  The number of swimmers in the derivative.
  */
 static system_derivative_t *derivative_allocate(const size_t N)
 {
@@ -263,10 +268,10 @@ static system_derivative_t *derivative_allocate(const size_t N)
     return derivative;
 }
 
-/*
- * \brief De-allocates a derivative object.
+/**
+ * @brief De-allocates a derivative object.
  *
- * \param[out] derivative_ptr  The pointer to the derivative object.
+ * @param[out] derivative_ptr  The pointer to the derivative object.
  */
 void derivative_destroy(system_derivative_t **derivative_ptr)
 {
@@ -285,10 +290,10 @@ void derivative_destroy(system_derivative_t **derivative_ptr)
     *derivative_ptr = NULL;
 }
 
-/*
- * \brief Prints a derivative (for debugging).
+/**
+ * @brief Prints a derivative (for debugging).
  *
- * \param[in] derivative  The system derivative.
+ * @param[in] derivative  The system derivative.
  */
 void derivative_print(const system_derivative_t *derivative)
 {
@@ -309,11 +314,11 @@ void derivative_print(const system_derivative_t *derivative)
 
 }
 
-/*
- * \brief Computes the derivative for a fish system.
+/**
+ * @brief Computes the derivative for a fish system.
  *
- * \param[in] system   The system to compute the derivative of.
- * \param[in] dc_opts  The derivative computation options.
+ * @param[in] system   The system to compute the derivative of.
+ * @param[in] dc_opts  The derivative computation options.
  */
 system_derivative_t *compute_system_derivative(
     const fish_system_t *system,

@@ -8,5 +8,9 @@ services:
 
     working_dir: /workspace
 
+    mem_limit: 4g
+    environment:
+      - PYTHONUNBUFFERED=1
+
     stdin_open: true
     tty: true

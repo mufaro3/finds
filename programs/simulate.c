@@ -1,3 +1,16 @@
+/**
+ * @file simulate.c
+ *
+ * @brief The core entrypoint for performing a simulation.
+ *
+ * Performs a simulation based on a user-supplied configuration file, then
+ * produces an output trajectory dataset in HDF5 format alongside a copy of
+ * the user-supplied configuration TOML.
+ *
+ * @author Mufaro Machaya
+ *
+ * License: MIT
+ */
 #include <argp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +27,7 @@
 #include <finds/constants.h>
 
 #define DEFAULT_SIMULATION_FILE "default-sim-config.toml"
-
-#define OUTPUT_FILENAME_BUFFER_SIZE 2048
+#define BUFFER_SIZE 2048
 
 const const char *argp_program_version = "FINDS simulation v1.0";
 const const char *argp_program_bug_address = \
@@ -58,6 +70,7 @@ static error_t parse_commandline_opts(
     return 0;
 }
 
+/** Simulation options for use in loading the TOML file. */
 typedef struct {
     distribution_options_t dist_opts;
     orientation_options_t ori_opts;
@@ -67,6 +80,12 @@ typedef struct {
 } finds_opts_t;
 
 
+/**
+ * @brief Simple error function for loading the configuration file.
+ *
+ * @param[in] conf_filepath  The filepath for the config file.
+ * @param[in] errmsg         The error message for the config file.
+ */
 static inline void conf_load_err(const char *conf_filepath, const char *errmsg)
 {
     fprintf(stderr,
@@ -75,6 +94,20 @@ static inline void conf_load_err(const char *conf_filepath, const char *errmsg)
     exit(1);
 }
 
+/**
+ * @brief Reads a value from the configuration file.
+ *
+ * Reads a value from the configuration file and checks that the actual type
+ * matches the expected type. If the types don't match, then we raise an
+ * error.
+ *
+ * @param[in] toml_result   The TOML result representing the parsed config file.
+ * @param[in] conf_filepath The filepath for the configuration TOML file.
+ * @param[in] identifier    The identifier of the variable.
+ * @param[in] type          The expected TOML type for this variable.
+ *
+ * @return The TOML datum for this variable.
+ */
 static inline toml_datum_t conf_read_value(
     const toml_result_t *toml_result,
     const char *conf_filepath,
@@ -83,13 +116,21 @@ static inline toml_datum_t conf_read_value(
 {
     toml_datum_t datum = toml_seek(toml_result->toptab, identifier);
     if (datum.type != type) {
-        char errbuf[50];
-        snprintf(errbuf, 50, "missing or invalid variable %s", identifier);
+        char errbuf[1024];
+        snprintf(errbuf, 1024,
+            "missing or invalid variable %s (hint: ensure that "
+            "the variable type is correct!)", identifier);
         conf_load_err(conf_filepath, errbuf);
     }
     return datum;
 }
 
+/**
+ * @brief Loads the configuration file in full.
+ *
+ * @param[out] opts          The finds configuration specification to write to.
+ * @param[in]  conf_filepath The filepath of the configuration file.
+ */
 static void load_sim_config_file(
     finds_opts_t *opts,
     const char *conf_filepath)
@@ -103,7 +144,7 @@ static void load_sim_config_file(
     /* loading the distribution type */
     toml_datum_t datum_dist_type = conf_read_value(&result, conf_filepath,
         "system.distribution_type", TOML_STRING);
-    opts->dist_opts.type = ne_lookup_enum(distribution_type_table,
+    opts->dist_opts.type = ne_lookup_enum(DISTRIBUTION_TYPE_TABLE,
         DISTRIBUTION_TYPE_COUNT, datum_dist_type.u.s);
     if (opts->dist_opts.type == -1)
         conf_load_err(conf_filepath,
@@ -148,7 +189,7 @@ static void load_sim_config_file(
     /* orientation type */
     toml_datum_t datum_ori_type = conf_read_value(&result, conf_filepath,
         "system.orientation_type", TOML_STRING);
-    opts->ori_opts.type = ne_lookup_enum(orientation_type_table,
+    opts->ori_opts.type = ne_lookup_enum(ORIENTATION_TYPE_TABLE,
         ORIENTATION_TYPE_COUNT, datum_ori_type.u.s);
 
     toml_datum_t datum_angular_perturbation = conf_read_value(&result,
@@ -217,7 +258,7 @@ static void load_sim_config_file(
     /* differentiation */
     toml_datum_t datum_interaction_method = conf_read_value(&result,
         conf_filepath, "differentiation.interaction_method", TOML_STRING);
-    opts->dc_opts.method = ne_lookup_enum(inter_comp_methods_table,
+    opts->dc_opts.method = ne_lookup_enum(INTER_COMP_METHODS_TABLE,
         INTER_COMP_METHODS_COUNT, datum_interaction_method.u.s);
 
     switch (opts->dc_opts.method)
@@ -245,7 +286,7 @@ static void load_sim_config_file(
     /* integration method */
     toml_datum_t datum_integration_method = conf_read_value(&result,
         conf_filepath, "integration.integration_method", TOML_STRING);
-    opts->int_opts.method = ne_lookup_enum(integration_methods_table,
+    opts->int_opts.method = ne_lookup_enum(INTEGRATION_METHODS_TABLE,
         INTEGRATION_METHODS_COUNT, datum_integration_method.u.s);
 
     /* time step */
@@ -295,25 +336,27 @@ int main(int argc, char *argv[])
         goto jmp_initial_system;
     }
 
-    char output_filename[OUTPUT_FILENAME_BUFFER_SIZE];
+    char output_folder_name[BUFFER_SIZE];
+    char output_filename[2*BUFFER_SIZE];
     error_e code = perform_simulation(initial_system, conf.dc_opts,
-        conf.int_opts, output_filename,
-        OUTPUT_FILENAME_BUFFER_SIZE, true);
+        conf.int_opts, output_filename, output_folder_name,
+        2*BUFFER_SIZE, BUFFER_SIZE, true);
 
-    if (code != ERR_OK)
-        goto jmp_initial_system;
+    /* copy over the config file as well */
+    char conf_copy_cmd[2*BUFFER_SIZE];
+    snprintf(conf_copy_cmd, 2*BUFFER_SIZE, "cp %s %s/conf.toml",
+        args.config_filepath, output_folder_name);
+    system(conf_copy_cmd);
 
-    /* run analysis on this file */
-    printf("running python on %s\n", output_filename);
-    system("lsof yourfile.h5");
-
-    char cmd[4096];
-    snprintf(cmd, sizeof(cmd),
-        "venv/bin/python3 scripts/process_data.py \"%s\"",
-        output_filename);
-    int status = system(cmd);
-    if (status != 0)
-        fprintf(stderr, "Analysis failed (exit code %d)\n", status);
+    if (code == ERR_OK)
+        printf(
+            "Dataset written to \'%s\'\n"
+            "Run\n\n"
+            "  make analyze file=\'%s\'\n\n"
+            "to perform post-processing and data analysis on this dataset.\n",
+            output_filename, output_filename);
+    else
+        puts("Error occurred! Dataset is likely corrupted.");
 
 jmp_initial_system:
     fish_system_destroy(&initial_system);

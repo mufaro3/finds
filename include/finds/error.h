@@ -10,6 +10,7 @@ typedef enum {
     ERR_STATE_CHANGE,
     ERR_INVALID_STATE,
     ERR_DATASTREAM_WRITE,
+    ERR_FAILURE,
     ERR_OK,
 
     ERR_TYPE_COUNT

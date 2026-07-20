@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Optional
-from typing_extensions import override
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -149,8 +148,8 @@ class AnimationGenerator(ProcessingModule):
         r"""
         Draws the current state to the animation.
         """
-        positions = system["position"]
-        orientations = system["orientation"]
+        positions = system.positions
+        orientations = system.orientations
 
         # scatterplot the positions in 3D
         self.scatter_plot._offsets3d = (

@@ -31,7 +31,7 @@ typedef enum {
     DISTRIBUTION_TYPE_COUNT
 } distribution_type_e;
 
-extern const named_enum_t distribution_type_table[DISTRIBUTION_TYPE_COUNT];
+extern const named_enum_t DISTRIBUTION_TYPE_TABLE[DISTRIBUTION_TYPE_COUNT];
 
 typedef struct {
     distribution_type_e type;
@@ -51,7 +51,7 @@ typedef enum {
     ORIENTATION_TYPE_COUNT
 } orientation_type_e;
 
-extern const named_enum_t orientation_type_table[ORIENTATION_TYPE_COUNT];
+extern const named_enum_t ORIENTATION_TYPE_TABLE[ORIENTATION_TYPE_COUNT];
 
 typedef struct {
     orientation_type_e type;

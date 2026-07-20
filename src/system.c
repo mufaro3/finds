@@ -1,16 +1,15 @@
-/*
- * \file system.c
+/**
+ * @file system.c
  *
- * \brief Core particle system data structures and operations.
+ * @brief Core particle system data structures and operations.
  *
  * This file contains routines for creating, initializing, updating,
  * and destroying static systems of fish-particles.
  *
- * \author Mufaro Machaya <mufaro2@student.ubc.ca>
+ * @author Mufaro J. Machaya
  *
  * License: MIT
  */
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,14 +17,16 @@
 #include <finds/system.h>
 #include <finds/util.h>
 
-const named_enum_t distribution_type_table[DISTRIBUTION_TYPE_COUNT] = {
+/** Enum naming table for distribution generation types. */
+const named_enum_t DISTRIBUTION_TYPE_TABLE[DISTRIBUTION_TYPE_COUNT] = {
     { DISTRIBUTION_CUBE,    "cube" },
     { DISTRIBUTION_SPHERE,  "sphere" },
     { DISTRIBUTION_BALL,    "ball" },
     { DISTRIBUTION_RANDOM,  "random" }
 };
 
-const named_enum_t orientation_type_table[ORIENTATION_TYPE_COUNT] = {
+/** Enum naming table for orientation generation types. */
+const named_enum_t ORIENTATION_TYPE_TABLE[ORIENTATION_TYPE_COUNT] = {
     { ORIENTATION_RANDOM,         "random" },
     { ORIENTATION_RADIAL_INWARD,  "radial-inward" },
     { ORIENTATION_RADIAL_OUTWARD, "radial-outward"},
@@ -37,15 +38,15 @@ const named_enum_t orientation_type_table[ORIENTATION_TYPE_COUNT] = {
 
 /* SYSTEM GENERATION FUNCTIONS */
 
-/*
- * \brief Generates the positions of fish arranged as a cubic lattice
+/**
+ * @brief Generates the positions of fish arranged as a cubic lattice
  *        centered at the origin.
  *
- * \param[out] positions    The destination vector.
- * \param[in]  side_length  The length of the cube.
- * \param[in]  spacing      The spacing between each particle in the lattice.
+ * @param[out] positions    The destination vector.
+ * @param[in]  side_length  The length of the cube.
+ * @param[in]  spacing      The spacing between each particle in the lattice.
  *
- * \return The number of positions generated.
+ * @return The number of positions generated.
  */
 static size_t generate_positions_cube(
     double_3d_t **positions_ptr,
@@ -85,15 +86,15 @@ static size_t generate_positions_cube(
     return N;
 }
 
-/*
- * \brief Generates the positions of fish arranged as a spherical lattice
+/**
+ * @brief Generates the positions of fish arranged as a spherical lattice
  *        centered at the origin (an unfilled ball).
  *
- * \param[out] positions  The destination vector.
- * \param[in]  radius     The radius of the sphere.
- * \param[in]  spacing    The spacing between each particle in the lattice.
+ * @param[out] positions  The destination vector.
+ * @param[in]  radius     The radius of the sphere.
+ * @param[in]  spacing    The spacing between each particle in the lattice.
  *
- * \return The number of positions generated.
+ * @return The number of positions generated.
  */
 static size_t generate_positions_sphere(
     double_3d_t **positions_ptr,
@@ -101,15 +102,15 @@ static size_t generate_positions_sphere(
     const double spacing)
 {}
 
-/*
- * \brief Generates the positions of fish arranged as a ball-shaped lattice
+/**
+ * @brief Generates the positions of fish arranged as a ball-shaped lattice
  *        centered at the origin (a filled sphere).
  *
- * \param[out] positions  The destination vector.
- * \param[in]  radius     The radius of the ball.
- * \param[in]  spacing    The spacing between each particle in the ball.
+ * @param[out] positions  The destination vector.
+ * @param[in]  radius     The radius of the ball.
+ * @param[in]  spacing    The spacing between each particle in the ball.
  *
- * \return The number of positions generated.
+ * @return The number of positions generated.
  */
 static size_t generate_positions_ball(
     double_3d_t **positions_ptr,
@@ -117,15 +118,15 @@ static size_t generate_positions_ball(
     const double spacing)
 {}
 
-/*
- * \brief Generates the positions of fish at random within a bound.
+/**
+ * @brief Generates the positions of fish at random within a bound.
  *
- * \param[out] positions  The destination vector.
- * \param[in]  size       The number of fish to generate.
- * \param[in]  abs_bound  The absolute bounds alongside each axis within to
+ * @param[out] positions  The destination vector.
+ * @param[in]  size       The number of fish to generate.
+ * @param[in]  abs_bound  The absolute bounds alongside each axis within to
  *                        generate positions
  *
- * \return The number of positions generated (just the size parameter).
+ * @return The number of positions generated (just the size parameter).
  */
 static size_t generate_positions_random(
     double_3d_t **positions_ptr,
@@ -145,13 +146,13 @@ static size_t generate_positions_random(
     return N;
 }
 
-/*
- * \brief Generates the positions for the fish system.
+/**
+ * @brief Generates the positions for the fish system.
  *
- * \param[out] positions  The positions array to output to.
- * \param[in]  dist_opts  The distribution options.
+ * @param[out] positions  The positions array to output to.
+ * @param[in]  dist_opts  The distribution options.
  *
-  * \return The number of positions generated.
+ * @return The number of positions generated.
  */
 static size_t generate_positions(
     double_3d_t **positions_ptr,
@@ -184,11 +185,11 @@ static size_t generate_positions(
     }
 }
 
-/*
- * \brief Generates the orientations in random directions.
+/**
+ * @brief Generates the orientations in random directions.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientation_random(
     double_3d_t *orientations,
@@ -199,12 +200,12 @@ static void generate_orientation_random(
             orientations[i].data[dim] = random_double(0, 1);
 }
 
-/*
- * \brief Generates the orientations radially inward.
+/**
+ * @brief Generates the orientations radially inward.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  positions     The positions to reference.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  positions     The positions to reference.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientation_radial_inward(
     double_3d_t *orientations,
@@ -212,12 +213,12 @@ static void generate_orientation_radial_inward(
     const size_t N)
 {}
 
-/*
- * \brief Generates the orientations radially outward.
+/**
+ * @brief Generates the orientations radially outward.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  positions     The positions to reference.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  positions     The positions to reference.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientation_radial_outward(
     double_3d_t *orientations,
@@ -225,12 +226,12 @@ static void generate_orientation_radial_outward(
     const size_t N)
 {}
 
-/*
- * \brief Generates the orientations as an inward-falling swirl.
+/**
+ * @brief Generates the orientations as an inward-falling swirl.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  positions     The positions to reference.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  positions     The positions to reference.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientation_swirl_inward(
     double_3d_t *orientations,
@@ -238,12 +239,12 @@ static void generate_orientation_swirl_inward(
     const size_t N)
 {}
 
-/*
- * \brief Generates the orientations as an outward swirl.
+/**
+ * @brief Generates the orientations as an outward swirl.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  positions     The positions to reference.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  positions     The positions to reference.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientation_swirl_outward(
     double_3d_t *orientations,
@@ -251,12 +252,12 @@ static void generate_orientation_swirl_outward(
     const size_t N)
 {}
 
-/*
- * \brief Generates the orientations as a divergent "saddle"-shape.
+/**
+ * @brief Generates the orientations as a divergent "saddle"-shape.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  positions     The positions to reference.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  positions     The positions to reference.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientations_saddle(
     double_3d_t *orientations,
@@ -264,11 +265,11 @@ static void generate_orientations_saddle(
     const size_t N)
 {}
 
-/*
- * \brief Generates the orientations all in one aligned in the +x direction.
+/**
+ * @brief Generates the orientations all in one aligned in the +x direction.
  *
- * \param[out] orientations  The orientations to generate.
- * \param[in]  N             The number to generate.
+ * @param[out] orientations  The orientations to generate.
+ * @param[in]  N             The number to generate.
  */
 static void generate_orientations_aligned(
     double_3d_t *orientations,
@@ -278,22 +279,22 @@ static void generate_orientations_aligned(
         orientations[i] = D3(1, 0, 0);
 }
 
-/*
- * \brief Perturbs the orientations by some radial angle \(\theta\).
+/**
+ * @brief Perturbs the orientations by some radial angle \(\theta\).
  *
- * \param[out] orientations  The array of orientation vectors.
- * \param[in]  theta         The maximum perturbation angle.
+ * @param[out] orientations  The array of orientation vectors.
+ * @param[in]  theta         The maximum perturbation angle.
  */
 static void perturb_orientations(double_3d_t *orientations, const float theta)
 {}
 
-/*
- * \brief Generates the orientations for a fish system.
+/**
+ * @brief Generates the orientations for a fish system.
  *
- * \param[out] orientations  The output array for the orientations.
- * \param[in]  positions     The positions array (for reference).
- * \param[in]  ori_opts      The orientation options.
- * \param[in]  N             The number of orientations to generate.
+ * @param[out] orientations  The output array for the orientations.
+ * @param[in]  positions     The positions array (for reference).
+ * @param[in]  ori_opts      The orientation options.
+ * @param[in]  N             The number of orientations to generate.
  */
 static void generate_orientations(
     double_3d_t **orientations_ptr,
@@ -328,13 +329,13 @@ static void generate_orientations(
     perturb_orientations(orientations, ori_opts.angular_perturbation);
 }
 
-/*
- * \brief Generates the constants for a fish system.
+/**
+ * @brief Generates the constants for a fish system.
  *
- * \param[out] lengths_ptr  The array of lengths to write to.
- * \param[out] sigmas_ptr   The array of volumetric flow rates to write to.
- * \param[in]  const_opts   The constant generation options.
- * \param[in]  N            The number of fish in the system.
+ * @param[out] lengths_ptr  The array of lengths to write to.
+ * @param[out] sigmas_ptr   The array of volumetric flow rates to write to.
+ * @param[in]  const_opts   The constant generation options.
+ * @param[in]  N            The number of fish in the system.
  */
 static void generate_constants(
     double **lengths_ptr,
@@ -371,15 +372,15 @@ static void generate_constants(
             sigmas[i] = const_opts.uniform_sigma;
 }
 
-/*
- * \brief Generates a system of fish (positions and orientations).
+/**
+ * @brief Generates a system of fish (positions and orientations).
  *
- * \param[in] dist_opts    Distribution options.
- * \param[in] ori_opts     Orientation options.
- * \param[in] const_opts   Constant generation options.
- * \param[in] print_debug  Whether to print out that this system was generated.
+ * @param[in] dist_opts    Distribution options.
+ * @param[in] ori_opts     Orientation options.
+ * @param[in] const_opts   Constant generation options.
+ * @param[in] print_debug  Whether to print out that this system was generated.
  *
- * \return The system.
+ * @return The system.
  */
 fish_system_t *fish_system_generate(
     const distribution_options_t dist_opts,
@@ -414,11 +415,11 @@ fish_system_t *fish_system_generate(
     if (print_debug) {
         printf("Generated System. N = %zu, Distribution = %s, Orientation = %s\n", N,
             ne_lookup_name(
-                distribution_type_table,
+                DISTRIBUTION_TYPE_TABLE,
                 DISTRIBUTION_TYPE_COUNT,
                 dist_opts.type),
             ne_lookup_name(
-                orientation_type_table,
+                ORIENTATION_TYPE_TABLE,
                 ORIENTATION_TYPE_COUNT,
                 ori_opts.type));
     }
@@ -428,12 +429,12 @@ fish_system_t *fish_system_generate(
 
 
 /**
- * \brief Copies two systems to a greater system containing both.
+ * @brief Copies two systems to a greater system containing both.
  *
- * \param[in] a  The first fish system.
- * \param[in] b  The second fish system.
+ * @param[in] a  The first fish system.
+ * @param[in] b  The second fish system.
  *
- * \return The combined system.
+ * @return The combined system.
  */
 fish_system_t *fish_system_combine(
     const fish_system_t *a,
@@ -455,7 +456,16 @@ fish_system_t *fish_system_combine(
 }
 
 /**
- * \brief Comptues the norm of a fish system.
+ * @brief Computes the norm of a fish system.
+ *
+ * The norm of a fish system is defined as the square root of the sums of the
+ * squared-norms of the positions and orientations for all of the fish in the
+ * system,
+ *
+ * \f[
+ *     | \mathbf{X} |^2 = \sum_{i=1}^N \left( | \mathbf{x}_{c,i} |^2 +
+ *     | \mathbf{n}_{i} |^2 \right).
+ * \f]
  */
 double fish_system_norm(const fish_system_t *system) {
     double total = 0;
@@ -469,12 +479,12 @@ double fish_system_norm(const fish_system_t *system) {
 }
 
 /**
- * \brief Combines two fish systems and then destroys the previous systems.
+ * @brief Combines two fish systems and then destroys the previous systems.
  *
- * \param[in] a  The first fish system.
- * \param[in] b  The second fish system.
+ * @param[in] a  The first fish system.
+ * @param[in] b  The second fish system.
  *
- * \return The combined system.
+ * @return The combined system.
  */
 fish_system_t *fish_system_combine_destroy(
     fish_system_t *a,
@@ -490,10 +500,10 @@ fish_system_t *fish_system_combine_destroy(
     return combined_system;
 }
 
-/*
- * \brief Normalizes the orientations for the fish system.
+/**
+ * @brief Normalizes the orientations for the fish system.
  *
- * \param[out] system  The fish system to normalize.
+ * @param[out] system  The fish system to normalize.
  */
 void fish_system_normalize_orientation(fish_system_t *system)
 {
@@ -506,10 +516,10 @@ void fish_system_normalize_orientation(fish_system_t *system)
 
 /* FISH SYSTEM JANITORIAL FUNCTIONS */
 
-/*
- * \brief Prints the system to stdout (for debugging).
+/**
+ * @brief Prints the system to stdout (for debugging).
  *
- * \param[in] system  The fish system to print.
+ * @param[in] system  The fish system to print.
  */
 void fish_system_print(const fish_system_t *system)
 {
@@ -535,6 +545,13 @@ void fish_system_print(const fish_system_t *system)
     }
 }
 
+/**
+ * @brief Produces a fresh copy of a fish system.
+ *
+ * @param[in] system  The fish system to copy.
+ *
+ * @return The copied system.
+ */
 fish_system_t *fish_system_copy(const fish_system_t *system)
 {
     fish_system_t *copy_system = fish_system_allocate(system->size);
@@ -547,6 +564,13 @@ fish_system_t *fish_system_copy(const fish_system_t *system)
     return copy_system;
 }
 
+/**
+ * @brief Generates a random system with predefined distribution and
+ *        orientation options (both random) as a function of N, the number
+ *        of swimmers in the system.
+ *
+ * @param[in] N  The number of swimmers to generate.
+ */
 fish_system_t *fish_system_generate_random(const size_t N)
 {
     distribution_options_t dist_opts = {
@@ -576,12 +600,12 @@ fish_system_t *fish_system_generate_random(const size_t N)
     return system;
 }
 
-/*
- * \brief Allocates all of the arrays for a fish system to size N.
+/**
+ * @brief Allocates all of the arrays for a fish system to size N.
  *
- * \param[in] N  The size of the fish system.
+ * @param[in] N  The size of the fish system.
  *
- * \return The new allocated system.
+ * @return The new allocated system.
  */
 fish_system_t *fish_system_allocate(const size_t N)
 {
@@ -602,11 +626,11 @@ fish_system_t *fish_system_allocate(const size_t N)
     return system;
 }
 
-/*
- * \brief Destroys the fish system (deallocates all pointers then redirects
+/**
+ * @brief Destroys the fish system (deallocates all pointers then redirects
  *        to NULL).
  *
- * \param[out] system_ptr  The system pointer to destroy.
+ * @param[out] system_ptr  The system pointer to destroy.
  */
 void fish_system_destroy(fish_system_t **system_ptr)
 {
@@ -624,13 +648,13 @@ void fish_system_destroy(fish_system_t **system_ptr)
 
 /* SYSTEM MANIPULATION FUNCTIONS */
 
-/*
- * \brief Translates all of the positions in a fish system.
+/**
+ * @brief Translates all of the positions in a fish system.
  *
- * \param[out] system   The system to translate.
- * \param[in]  delta_x  The x-displacement.
- * \param[in]  delta_y  The y-displacement.
- * \param[in]  delta_z  The z-displacement.
+ * @param[out] system   The system to translate.
+ * @param[in]  delta_x  The x-displacement.
+ * @param[in]  delta_y  The y-displacement.
+ * @param[in]  delta_z  The z-displacement.
  */
 void fish_system_translate(
     fish_system_t *system,
@@ -645,13 +669,13 @@ void fish_system_translate(
     }
 }
 
-/*
- * \brief Rotates all of the positions in a fish system.
+/**
+ * @brief Rotates all of the positions in a fish system.
  *
- * \param[out] system  The system to rotate.
- * \param[in]  roll    The x-axis rotation angle.
- * \param[in]  pitch   The y-axis rotation angle.
- * \param[in]  yaw     The z-axis rotation angle.
+ * @param[out] system  The system to rotate.
+ * @param[in]  roll    The x-axis rotation angle.
+ * @param[in]  pitch   The y-axis rotation angle.
+ * @param[in]  yaw     The z-axis rotation angle.
  */
 void fish_system_rotate(
     fish_system_t *system,
@@ -669,17 +693,17 @@ void fish_system_rotate(
 
 /* FEATURE POSITIONS */
 
-/*
- * \brief Calculates the feature positions for a fish system.
+/**
+ * @brief Calculates the feature positions for a fish system.
  *
  * Feature positions are calculated from the position and orientation as
  *
  *   source position = position + length / 2 * orientation
  *   sink   position = position - length / 2 * orientation
  *
- * \param[in] system  The system to compute on.
+ * @param[in] system  The system to compute on.
  *
- * \return The positions of the sources and sinks.
+ * @return The positions of the sources and sinks.
  */
 feature_positions_t *calculate_feature_positions(const fish_system_t *system)
 {
@@ -694,10 +718,10 @@ feature_positions_t *calculate_feature_positions(const fish_system_t *system)
     return feat_pos;
 }
 
-/*
- * \brief Prints the feature positions to stdout.
+/**
+ * @brief Prints the feature positions to stdout.
  *
- * \param[in] feat_pos  The feature positions.
+ * @param[in] feat_pos  The feature positions.
  */
 void feature_positions_print(const feature_positions_t *feat_pos)
 {
@@ -718,10 +742,10 @@ void feature_positions_print(const feature_positions_t *feat_pos)
     }
 }
 
-/*
- * \brief Allocates the feature positions array.
+/**
+ * @brief Allocates the feature positions array.
  *
- * \param[in] The size of the system.
+ * @param[in] The size of the system.
  */
 feature_positions_t *feature_positions_allocate(const size_t N)
 {
@@ -742,10 +766,10 @@ feature_positions_t *feature_positions_allocate(const size_t N)
     return feat_pos;
 }
 
-/*
- * \brief De-allocates the feature positions structure.
+/**
+ * @brief De-allocates the feature positions structure.
  *
- * \param[out] feat_pos_ptr  The feature positions pointer.
+ * @param[out] feat_pos_ptr  The feature positions pointer.
  */
 void feature_positions_destroy(feature_positions_t **feat_pos_ptr)
 {

@@ -1,3 +1,15 @@
+/**
+ * @file datastream.c
+ *
+ * @brief I/O routines.
+ *
+ * This contains the implementation of the datastream object, which is used for
+ * creating and writing to simulation data files.
+ *
+ * @author Mufaro Machaya
+ *
+ * License: MIT
+ */
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
@@ -10,21 +22,39 @@
 #include <finds/error.h>
 #include <finds/datastream.h>
 
-int mkdir_p(const char *path, mode_t mode)
+/**
+ * @brief C implementation of "mkdir -p" command.
+ *
+ * Note: I'll be honest, I just stole this from generative AI.
+ * It works quite okay, though. Another possible implementation
+ * could just directly use mkdir -p via a system call (as this
+ * code doesn't need to be portable due to running in a virtual
+ * machine).
+ *
+ * @param[in] path  The folder path to create.
+ * @param[in] mode  The mkdir creation mode.
+ *
+ * @return The error code for this process.
+ */
+error_e mkdir_p(const char *path, const mode_t mode)
 {
+    error_e errcode = ERR_OK;
+
     char tmp[PATH_MAX];
     char *p;
     size_t len;
 
     if (path == NULL || *path == '\0') {
         errno = EINVAL;
-        return -1;
+        errcode = ERR_FAILURE;
+        goto jmp_err;
     }
 
     len = strlen(path);
     if (len >= sizeof(tmp)) {
         errno = ENAMETOOLONG;
-        return -1;
+        errcode = ERR_FAILURE;
+        goto jmp_err;
     }
 
     strcpy(tmp, path);
@@ -41,20 +71,49 @@ int mkdir_p(const char *path, mode_t mode)
             *p = '\0';
 
             if (mkdir(tmp, mode) == -1 && errno != EEXIST)
-                return -1;
+            {
+                errcode = ERR_FAILURE;
+                break;
+            }
 
             *p = '/';
         }
     }
 
-    if (mkdir(tmp, mode) == -1 && errno != EEXIST)
-        return -1;
+    if (errcode == ERR_FAILURE)
+        goto jmp_err;
 
-    return 0;
+    if (mkdir(tmp, mode) == -1 && errno != EEXIST)
+    {
+        errcode = ERR_FAILURE;
+        goto jmp_err;
+    }
+
+jmp_err:
+    if (errcode != ERR_OK)
+        RAISE_ERROR_ERRNO(errcode, "could not mkdir");
+
+    return errcode;
 }
 
+/**
+ * @brief Creates a dataset "tensor".
+
+ * Given the file index, data space, and the dataset creation property list
+ * (DCPL) that all describe the tensor, it produces the dataset object.
+ *
+ * @param[in] file  The datafile to write to.
+ * @param[in] path  The internal dataset path of this record.
+ * @param[in] space The dataspace describing the data shape/tensor.
+ * @param[in] dcpl  The dataset creation property list describing this record.
+ *
+ * @return The new dataset record index.
+ */
 static hid_t create_dataset_tensor(
-    hid_t file, const char *path, hid_t space, hid_t dcpl)
+    const hid_t file,
+    const char *path,
+    const hid_t space,
+    const hid_t dcpl)
 {
     return H5Dcreate(
         file,
@@ -66,6 +125,30 @@ static hid_t create_dataset_tensor(
         H5P_DEFAULT);
 }
 
+/**
+ * @brief Creates all of the necessary datasets for a new datastream.
+ *
+ * This produces datasets for the time, positions, orientations, lengths,
+ * and volumetric flow rates (sigmas) for each time-step of the simulation.
+ *
+ * Each dataset has a different shape, represented as variable-rank tensors.
+ * Where N is the number of fish in the system and T is the number of time-
+ * steps in the simulation, then the shapes for each are:
+ *
+ * Rank 1:
+ * - time -> (T)
+ *
+ * Rank 2:
+ * - lengths -> (T, N)
+ * - sigmas  -> (T, N)
+ *
+ * Rank 3:
+ * - positions    -> (T, N, 3)
+ * - orientations -> (T, N, 3)
+ *
+ * @param[out] stream  The datastream to generate to.
+ * @return The error code for this process.
+ */
 static error_e create_datasets(datastream_t *stream)
 {
     error_e errcode = ERR_OK;
@@ -121,6 +204,15 @@ static error_e create_datasets(datastream_t *stream)
     return errcode;
 }
 
+/**
+ * @brief Creates the root file for the datastream and marks it as open.
+ *
+ * @param[out] stream   The datastream to open.
+ * @param[in]  filename The output filename for the dataset.
+ * @param[in]  N        The number of swimmers to track in this dataset.
+ *
+ * @return The error code for this process.
+ */
 error_e datastream_create_file(
     datastream_t *stream,
     const char *filename,
@@ -157,6 +249,13 @@ error_e datastream_create_file(
     return create_datasets(stream);
 }
 
+/**
+ * @brief Closes this datastream.
+ *
+ * @param[out] stream  The stream to close.
+ *
+ * @return The error code for this process.
+ */
 error_e datastream_close(datastream_t *stream)
 {
     if (!stream->open)
@@ -185,20 +284,37 @@ error_e datastream_close(datastream_t *stream)
     return ERR_OK;
 }
 
+/** Wrapping function for HDF5 errors */
 #define WRAP_HDF5_CHECK(errcode, jmpto, result) \
     ({ if (result < 0) {                        \
             errcode = ERR_DATASTREAM_WRITE;     \
             goto jmpto;                         \
         } (result); })
 
+/** Wrapping function for native errors */
 #define WRAP_CHECK(errcode, jmpto, prev_errcode)    \
     ({ if (prev_errcode != ERR_OK) {                \
             errcode = prev_errcode;                 \
             goto jmpto;                             \
         } (prev_errcode); })
 
-static error_e write_hdf5_frame(hid_t dataset, const void *data,
-    const int rank, const hsize_t *start, const hsize_t *count)
+/**
+ * @brief Writes a single frame for a data record to its associated dataset.
+ *
+ * @param[in] dataset  The data record to write to.
+ * @param[in] data     The data to write.
+ * @param[in] rank     The rank of the associated dataset tensor.
+ * @param[in] start    The index of the data record to begin writing.
+ * @param[in] count    The size of the data to write.
+ *
+ * @return The error code for this operation.
+ */
+static error_e write_hdf5_frame(
+    const hid_t dataset,
+    const void *data,
+    const int rank,
+    const hsize_t *start,
+    const hsize_t *count)
 {
     error_e errcode = ERR_OK;
     hid_t file_space = H5I_INVALID_HID;
@@ -228,6 +344,15 @@ jmp_err:
     return errcode;
 }
 
+/**
+ * @brief Writes the state of a single system out to the datastream.
+ *
+ * @param[out] stream The datastream to write to.
+ * @param[in]  system The system state to write.
+ * @param[in]  time   The time marker to write.
+ *
+ * @return The error code for this operation.
+ */
 error_e datastream_write_system(
     datastream_t *stream,
     const fish_system_t *system,

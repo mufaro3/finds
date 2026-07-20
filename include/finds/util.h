@@ -16,9 +16,17 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX(a,b) a > b ? a : b
-#define MIN(a,b) a > b ? b : a
-#define CLAMP(val,min,max) MAX(min,MIN(val,max))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define CLAMP(val, min, max) (MAX((min), MIN((val), (max))))
+
+#define NOT_IMPLEMENTED() \
+    do { \
+        fprintf(stderr, "Function not implemented: %s\n", __func__); \
+        abort(); \
+    } while (0)
+
+#define UNUSED __attribute__((unused))
 
 static inline double random_double(double min, double max)
 {
@@ -43,7 +51,7 @@ static inline char *ne_lookup_name(
     return NULL;
 }
 
-static inline const int ne_lookup_enum(
+static inline int ne_lookup_enum(
     const named_enum_t *enum_table,
     const size_t table_size,
     const char *name)

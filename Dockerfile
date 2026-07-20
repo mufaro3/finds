@@ -24,10 +24,18 @@ RUN apt-get update && apt-get install -y \
     doxygen \
     graphviz \
     check \
+    ffmpeg \
+    texlive-latex-base \
+    texlive-latex-extra \
+    texlive-latex-recommended \
+    texlive-fonts-extra \
+    latexmk \
     python3 \
     python3.12-venv \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+USER 1000
 
 WORKDIR /workspace
 

@@ -1,12 +1,14 @@
 COMPOSE=docker compose
 SERVICE=dev
 
-.PHONY: build configure compile clean run shell docs test profile clinfo
+.PHONY: update-docker build configure compile clean run shell docs test profile clinfo
 
 # Docker
 
-build:
+update-docker:
 	$(COMPOSE) build
+
+build: update-docker
 	$(COMPOSE) run --rm $(SERVICE) cmake -B build
 	$(COMPOSE) run --rm $(SERVICE) cmake --build build
 
@@ -26,6 +28,10 @@ shell:
 
 run:
 	$(COMPOSE) run --rm $(SERVICE) ./build/simulate
+
+file ?= NONE_PROVIDED
+analyze:
+	$(COMPOSE) run --rm $(SERVICE) python3 scripts/process_data.py $(file)
 
 test:
 	$(COMPOSE) run --rm $(SERVICE) \

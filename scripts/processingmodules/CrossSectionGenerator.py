@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Optional
-from typing_extensions import override
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -87,11 +86,11 @@ class CrossSectionGenerator(ProcessingModule):
         if self.generated or frame != 1:
             return
 
-        positions_raw, _ = split(system)
-
         # keep particles near z = 0 within z_thickness
-        z_mask = np.abs(positions_raw[:, 2]) <= self.z_thickness
-        positions, orientations = split(system[z_mask])
+        z_mask = np.abs(system.positions[:, 2]) <= self.z_thickness
+
+        positions = system.positions[z_mask]
+        orientations = system.orientations[z_mask]
 
         if positions.shape[0] == 0:
             tqdm.write('No positions found on xy,z=0 plane. '+\

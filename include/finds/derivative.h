@@ -32,7 +32,7 @@ typedef enum {
     INTER_COMP_METHODS_COUNT
 } interaction_computation_methods_e;
 
-extern const named_enum_t inter_comp_methods_table[INTER_COMP_METHODS_COUNT];
+extern const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT];
 
 typedef struct {
     interaction_computation_methods_e method;

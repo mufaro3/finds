@@ -83,6 +83,7 @@ target_link_libraries(finds PUBLIC
 )
 
 target_compile_definitions(finds PUBLIC CL_TARGET_OPENCL_VERSION=300)
+target_compile_options(finds PRIVATE -Wall -Wextra -Wno-missing-braces)
 
 # ------------------------------------------------------------------------------
 # Programs
@@ -98,6 +99,8 @@ foreach(PROGRAM ${PROGRAM_SOURCES})
         ${TOMLC17_ROOT}/src
     )
     target_link_libraries(${PROGRAM_NAME} PRIVATE finds)
+    target_compile_options(${PROGRAM_NAME} PRIVATE -Wall -Wextra
+        -Wno-missing-braces -O2 -lm)
 endforeach()
 
 # ------------------------------------------------------------------------------
@@ -120,6 +123,7 @@ add_test(NAME unit_tests COMMAND unit_tests)
 # ------------------------------------------------------------------------------
 
 find_package(Doxygen)
+find_package(LATEX)
 
 if(DOXYGEN_FOUND)
 
@@ -127,5 +131,14 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_GENERATE_LATEX YES)
 
     doxygen_add_docs(docs include src)
+
+    if(LATEX_FOUND)
+        add_custom_command(
+            TARGET docs POST_BUILD
+            COMMAND ${CMAKE_MAKE_PROGRAM}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/latex
+            COMMENT "Building Doxygen PDF documentation"
+        )
+    endif()
 
 endif()

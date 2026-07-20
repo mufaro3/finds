@@ -4,6 +4,7 @@ import sys
 import h5py
 from matplotlib import rc
 from tqdm import trange
+import numpy as np
 
 from processingmodules.TrajectoryPlot import TrajectoryPlot
 from processingmodules.AnimationGenerator import AnimationGenerator
@@ -21,6 +22,12 @@ DEFAULT_MODULES_LIST=[
     TrajectoryPlot()
 ]
 
+SYSTEM_DTYPE = np.dtype([
+    ("positions", np.float64, (3,)),
+    ("orientations", np.float64, (3,)),
+    ("lengths", np.float64),
+    ("sigmas", np.float64),
+])
 
 def process_data(
         output_dir: Path,
@@ -68,12 +75,13 @@ def process_data(
         for frame_index in trange(num_frames, desc="Postprocessing"):
             time = time_dataset[frame_index]
 
-            system = {
-                "position": position_dataset[frame_index],
-                "orientation": orientation_dataset[frame_index],
-                "length": length_dataset[frame_index],
-                "sigma": sigma_dataset[frame_index],
-            }
+            N = len(length_dataset[frame_index])
+            system = np.empty(N, dtype=SYSTEM_DTYPE).view(np.recarray)
+
+            system["positions"] = position_dataset[frame_index]
+            system["orientations"] = orientation_dataset[frame_index]
+            system["lengths"] = length_dataset[frame_index]
+            system["sigmas"] = sigma_dataset[frame_index]
 
             for module in modules:
                 module.append_state(
@@ -88,7 +96,7 @@ def process_data(
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
         print(f"Usage: {sys.argv[0]} <data-file>")
         sys.exit(1)
 
@@ -101,4 +109,4 @@ if __name__ == '__main__':
     # Process into the same directory as the input file
     output_dir = data_file.parent
 
-    process_data(output_dir, data_file, [AnimationGenerator()])
+    process_data(output_dir, data_file)

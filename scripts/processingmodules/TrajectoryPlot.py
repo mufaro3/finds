@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Optional
-from typing_extensions import override
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -62,8 +61,7 @@ class TrajectoryPlot(ProcessingModule):
     @override
     def append_state(self, system: NDArray, time: float,
                      frame: int, num_frames: int) -> None:
-        positions, _ = split(system)
-        self.position_frames.append(positions)
+        self.position_frames.append(system.positions)
 
     @override
     def end(self) -> None:

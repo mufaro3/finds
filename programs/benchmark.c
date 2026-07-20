@@ -1,3 +1,16 @@
+/**
+ * @file benchmark.c
+ *
+ * @brief Produces a benchmarking-plot for the entirety of FINDS.
+ *
+ * Times the computation of a derivative for variable-N systems for each type
+ * of interaction computation method (brute force, Barnes-Hut at increasing
+ * theta, and the Fast-Multipole-Method at increasing order).
+ *
+ * @author Mufaro Machaya
+ *
+ * License: MIT
+ */
 #include <argp.h>
 #include <math.h>
 #include <stdio.h>

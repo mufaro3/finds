@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Optional
-from typing_extensions import override
+from typing import Optional, override
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -85,13 +84,11 @@ class DensityAnimationGenerator(ProcessingModule):
     @override
     def append_state(self, system: NDArray, time: float,
                      frame: int, num_frames: int) -> None:
-        positions, _ = split(system)
-
         # compute the center of mass
-        com = np.mean(positions, axis=0)
+        com = np.mean(system.positions, axis=0)
 
         # calculate the radii from each point to the center of mass
-        radii = np.linalg.norm(positions - com, axis=1)
+        radii = np.linalg.norm(system.positions - com, axis=1)
 
         # build the histogram based on the previously defined bins
         counts, _ = np.histogram(radii, bins=self.bins)

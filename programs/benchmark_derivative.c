@@ -1,3 +1,12 @@
+/**
+ * @file benchmark_derivative.c
+ *
+ * @brief Times the computation of a single derivative.
+ *
+ * @author Mufaro Machaya
+ *
+ * License: MIT
+ */
 #include <argp.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -218,8 +218,6 @@ error_e datastream_create_file(
     const char *filename,
     const size_t N)
 {
-    error_e errcode = ERR_OK;
-
     stream->file = -1;
     stream->time_dataset = -1;
     stream->position_dataset = -1;
@@ -359,7 +357,6 @@ error_e datastream_write_system(
     const double time)
 {
     error_e errcode = ERR_OK;
-    herr_t status;
 
     const size_t N = system->size;
     if (N != stream->n_particles) {
@@ -458,8 +455,6 @@ error_e datastream_write_system(
     WRAP_CHECK(errcode, jmp_err,
         write_hdf5_frame(stream->sigma_dataset,
             sigmas_buf, 2, start2, count2));
-
-jmp_skip:
 
     ++stream->n_frames;
 

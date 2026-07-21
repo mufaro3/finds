@@ -100,7 +100,7 @@ foreach(PROGRAM ${PROGRAM_SOURCES})
     )
     target_link_libraries(${PROGRAM_NAME} PRIVATE finds)
     target_compile_options(${PROGRAM_NAME} PRIVATE -Wall -Wextra
-        -Wno-missing-braces -O2 -lm)
+        -Wno-missing-braces -lm)
 endforeach()
 
 # ------------------------------------------------------------------------------

@@ -1,0 +1,128 @@
+% Edited from https://latextemplates.com/template/journal-article
+% by Vel (vel@latextemplates.com)
+%
+% CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+\documentclass[letterpaper, 10pt, twoside]{LTJournalArticle}
+\addbibresource{references.bib}
+\runninghead{FINDS: The Fish INteraction and Dynamics Simulator}
+
+\usepackage{times}
+
+\usepackage{lipsum}
+\setcounter{secnumdepth}{0}
+\setcounter{page}{1}
+
+\title{FINDS: An N-Body Simulator for Computing the Evolution of Large Schools}
+
+\author{
+  Mufaro Machaya\textsuperscript{1},
+  Mohamed Niged Mabrouk\textsuperscript{2}, and
+  Daniel Floryan\textsuperscript{2}
+  \thanks{Corresponding author:
+    \href{mailto:dfloryan@uh.edu}{dfloryan@uh.edu}} \\
+}
+
+\date{
+  August 2026 \vspace{1em} \\
+  \footnotesize\textsuperscript{1}Department
+  of Physics and Astronomy, University of British Columbia \\
+  \footnotesize\textsuperscript{2}Department
+  of Mechanical and Aerospace Engineering, University of Houston
+}
+
+\renewcommand{\maketitlehookd}{
+  \begin{abstract}
+    \noindent
+    It is well known that animals travelling in cohesive groups yields many
+    collective and individual benefits, such as security against predators and
+    energy efficiency. As such, the replication of such benefits for analogous,
+    biology-inspired technologies like autonomous drone systems requires keen
+    understanding of the cohesion and evolution of systems of these groups,
+    but these investigations are fundamentally limited to small sizes due to
+    the high computational complexity in computing pairwise dynamics at order
+    $\mathcal{O}(N^2)$. As real schools of fish have been recorded to contain
+    millions of members, FINDS, or Fish INteraction and Dynamics Simulator,
+    was created to enable the efficient simulation of schools of fish by
+    combining a simple, particle-like mathematical model of swimmers with
+    cutting-edge algorithms and post-processing techniques utilized in particle
+    dynamics and astrophysics simulation libraries such as GADGET-4 and
+    REBOUND. FINDS is implemented as a containerized, modular software suite
+    written predominantly in C (with Python for post-processing) to compute the
+    time-derivative for each state of the system of fish using brute-force
+    computation, Barnes-Hut approximaiton, or the Fast-Multipole Method,
+    then numerically integrate this derivative using adaptive time-stepping,
+    and then lastly, optionally process the calculated dataset to produce
+    various analytic plots as needed.
+  \end{abstract}
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+\lipsum[1]
+
+\section{Literature Review and Similar Work}
+
+\lipsum[1]
+
+\section{Mathematical Model of Swimmers}
+
+\lipsum[1]
+
+\section{Numerical Methods}
+
+\lipsum[1]
+
+\section{Software Architecture}
+
+\lipsum[1]
+
+\section{Validation}
+
+\lipsum[1]
+
+\section{Performance Evaluation}
+
+\lipsum[1]
+
+\section{Results}
+
+\lipsum[1]
+
+\section{Discussion}
+
+\lipsum[1]
+
+\section{Limitations}
+
+\lipsum[1]
+
+\section{Future Work}
+
+\lipsum[1]
+
+\section{Acknowledgements}
+
+In the development of FINDS, Alvin Ng's \texttt{grav\_sim} was used extensively
+as a reference for implementing a fast $N$-body simulator in C, particularly
+in the implementation of the Barnes-Hut algorithm. In addition, the direct
+advice of Alvin Ng was instrumental to the implementation of linear octrees
+and parallelization.
+
+Furthermore, generative artificial intelligence (OpenAI's ChatGPT-5.5 and
+Google's Gemini 3.3) were used heavily for initial code generation before
+being thoroughly tested and validated to ensure correctness. Artificial
+intelligence was not used in developing the content of this report, including
+the abstract, sections, and figures.
+
+\section{Bibliography}
+
+\printbibliography
+
+\section*{Appendix}
+
+\end{document}

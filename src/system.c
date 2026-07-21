@@ -97,10 +97,12 @@ static size_t generate_positions_cube(
  * @return The number of positions generated.
  */
 static size_t generate_positions_sphere(
-    double_3d_t **positions_ptr,
-    const double radius,
-    const double spacing)
-{}
+    UNUSED double_3d_t **positions_ptr,
+    UNUSED const double radius,
+    UNUSED const double spacing)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the positions of fish arranged as a ball-shaped lattice
@@ -113,10 +115,12 @@ static size_t generate_positions_sphere(
  * @return The number of positions generated.
  */
 static size_t generate_positions_ball(
-    double_3d_t **positions_ptr,
-    const double radius,
-    const double spacing)
-{}
+    UNUSED double_3d_t **positions_ptr,
+    UNUSED const double radius,
+    UNUSED const double spacing)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the positions of fish at random within a bound.
@@ -208,10 +212,12 @@ static void generate_orientation_random(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_radial_inward(
-    double_3d_t *orientations,
-    const double_3d_t *positions,
-    const size_t N)
-{}
+    UNUSED double_3d_t *orientations,
+    UNUSED const double_3d_t *positions,
+    UNUSED const size_t N)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the orientations radially outward.
@@ -221,10 +227,12 @@ static void generate_orientation_radial_inward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_radial_outward(
-    double_3d_t *orientations,
-    const double_3d_t *positions,
-    const size_t N)
-{}
+    UNUSED double_3d_t *orientations,
+    UNUSED const double_3d_t *positions,
+    UNUSED const size_t N)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the orientations as an inward-falling swirl.
@@ -234,10 +242,12 @@ static void generate_orientation_radial_outward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_swirl_inward(
-    double_3d_t *orientations,
-    const double_3d_t *positions,
-    const size_t N)
-{}
+    UNUSED double_3d_t *orientations,
+    UNUSED const double_3d_t *positions,
+    UNUSED const size_t N)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the orientations as an outward swirl.
@@ -247,10 +257,12 @@ static void generate_orientation_swirl_inward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_swirl_outward(
-    double_3d_t *orientations,
-    const double_3d_t *positions,
-    const size_t N)
-{}
+    UNUSED double_3d_t *orientations,
+    UNUSED const double_3d_t *positions,
+    UNUSED const size_t N)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the orientations as a divergent "saddle"-shape.
@@ -260,10 +272,12 @@ static void generate_orientation_swirl_outward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientations_saddle(
-    double_3d_t *orientations,
-    const double_3d_t *positions,
-    const size_t N)
-{}
+    UNUSED double_3d_t *orientations,
+    UNUSED const double_3d_t *positions,
+    UNUSED const size_t N)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the orientations all in one aligned in the +x direction.
@@ -285,8 +299,12 @@ static void generate_orientations_aligned(
  * @param[out] orientations  The array of orientation vectors.
  * @param[in]  theta         The maximum perturbation angle.
  */
-static void perturb_orientations(double_3d_t *orientations, const float theta)
-{}
+static void perturb_orientations(
+    UNUSED double_3d_t *orientations,
+    UNUSED const float theta)
+{
+    NOT_IMPLEMENTED();
+}
 
 /**
  * @brief Generates the orientations for a fish system.

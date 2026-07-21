@@ -1,55 +1,95 @@
 COMPOSE=docker compose
 SERVICE=dev
+DOCKER-SHELL=$(COMPOSE) run --rm $(SERVICE)
 
-.PHONY: update-docker build configure compile clean run shell docs test profile clinfo
+.PHONY: help update-docker build configure compile clean run shell docs test profile clinfo paper
+
+help:
+	@echo ""
+	@echo "FINDS - AVAILABLE COMMANDS"
+	@echo ""
+	@echo "  [ Building, Development, and Documentation ]"
+	@echo ""
+	@echo "  make update-docker - Rerun the Dockerfile."
+	@echo "  make build         - Build the FINDS library."
+	@echo "  make shell         - Open the Container shell."
+	@echo "  make clean         - Removes all output directories."
+	@echo "  make docs          - Build documentation as HTML and PDF."
+	@echo "  make paper         - Build the report PDF."
+	@echo "  make clinfo        - Prints CLInfo for OpenCL."
+	@echo ""
+	@echo "  THE FOLLOWING PROGRAMS ALL REQUIRE (make build):"
+	@echo ""
+	@echo "  [ No-Argument Programs ]"
+	@echo ""
+	@echo "  make profile   - Run Valgrind to profile memory usage."
+	@echo "  make test      - Run all tests."
+	@echo "  make validate  - Produce the validation plots."
+	@echo "  make run       - Run the simulation for a given config."
+	@echo ""
+	@echo "  make analyzize file=[FILE] - Analyze a produced dataset file."
+	@echo ""
+	@echo "  [ Compiled Programs ]"
+	@echo ""
+	@echo "  ./build/benchmark            - Benchmarks FINDS computation routines."
+	@echo "  ./build/benchmark_derivative - Benchmarks a single derivative."
+	@echo "  ./build/simulate             - Equivalent to 'make run'."
+	@echo "  ./build/validation           - Equivalent to 'make validate'."
 
 # Docker
 
 update-docker:
-	$(COMPOSE) build
-
-build: update-docker
-	$(COMPOSE) run --rm $(SERVICE) cmake -B build
-	$(COMPOSE) run --rm $(SERVICE) cmake --build build
+	@$(COMPOSE) build
 
 configure:
-	$(COMPOSE) run --rm $(SERVICE) cmake -B build
+	@$(DOCKER-SHELL) cmake -B build
 
 compile:
-	$(COMPOSE) run --rm $(SERVICE) cmake --build build
+	@$(DOCKER-SHELL) cmake --build build
+
+build: update-docker configure compile
 
 clean:
-	$(COMPOSE) run --rm $(SERVICE) rm -rf build
+	@$(DOCKER-SHELL) rm -rf build output paper/output
 
 shell:
-	$(COMPOSE) run --rm $(SERVICE)
+	@$(DOCKER-SHELL)
 
 # Project
 
+validate:
+	@$(DOCKER-SHELL) ./build/validation
+
 run:
-	$(COMPOSE) run --rm $(SERVICE) ./build/simulate
+	@$(DOCKER-SHELL) ./build/simulate
 
 file ?= NONE_PROVIDED
 analyze:
-	$(COMPOSE) run --rm $(SERVICE) python3 scripts/process_data.py $(file)
+	@$(DOCKER-SHELL) python3 scripts/process_data.py $(file)
 
 test:
-	$(COMPOSE) run --rm $(SERVICE) \
-	ctest --test-dir build --output-on-failure
+	@$(DOCKER-SHELL) ctest --test-dir build --output-on-failure
 
 docs:
-	$(COMPOSE) run --rm $(SERVICE) cmake --build build --target docs
+	@$(DOCKER-SHELL) cmake --build build --target docs
+
+# paper
+paper:
+	@$(DOCKER-SHELL) mkdir -p paper/output
+	@$(DOCKER-SHELL) sh -c \
+	"cd paper && latexmk -pdf -output-directory=output paper.tex"
+	@$(DOCKER-SHELL) [ -f paper/output/paper.pdf ] && \
+	mv paper/output/paper.pdf paper/paper.pdf
 
 # Profiling
 
 profile:
-	$(COMPOSE) run --rm $(SERVICE) \
-	valgrind \
-	--leak-check=full \
-	--track-origins=yes \
-	./build/simulation
+	@$(DOCKER-SHELL) valgrind \
+		--leak-check=full \
+		--track-origins=yes \
+		./build/simulation
 
 # OpenCL
 
 clinfo:
-	$(COMPOSE) run --rm $(SERVICE) clinfo
+	@$(DOCKER-SHELL) clinfo

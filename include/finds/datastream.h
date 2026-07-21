@@ -21,7 +21,7 @@ typedef struct {
 } datastream_t;
 
 
-int mkdir_p(const char *path, const mode_t mode);
+error_e mkdir_p(const char *path, const mode_t mode);
 
 error_e datastream_create_file(
     datastream_t *stream,

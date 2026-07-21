@@ -24,7 +24,10 @@ const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
 };
 
 /** Local alias for the derivative of feature_positions_t for clarity */
-typedef feature_positions_t feature_velocity_t;
+typedef struct {
+    double_3d_t *source, *sink;
+    size_t size;
+} feature_velocity_t;
 
 /**
  * @brief Allocates a new derivative object.

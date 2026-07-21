@@ -69,7 +69,7 @@ sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin \
 2. Clone the Repository
 
 ```shell
-git clone https://github.com/mufaro3/finds.git
+git clone --recurse-submodules https://github.com/mufaro3/finds.git
 ```
 
 3. `cd` into the repository and build the container and the documentation

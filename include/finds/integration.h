@@ -72,7 +72,7 @@ integrator_from_method(integration_method_e method)
         case RUNGE_KUTTA_54: return step_rk54;
         case RUNGE_KUTTA_65: return step_rk65;
         case RUNGE_KUTTA_78: return step_rk78;
-        case INTEGRATION_METHODS_COUNT: return NULL;
+        default: return NULL;
     }
 }
 
@@ -86,7 +86,7 @@ integration_method_order(integration_method_e method)
         case RUNGE_KUTTA_54: return 5;
         case RUNGE_KUTTA_65: return 6;
         case RUNGE_KUTTA_78: return 7;
-        case INTEGRATION_METHODS_COUNT: return -1;
+        default: return -1;
     }
 }
 

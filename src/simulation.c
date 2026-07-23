@@ -24,6 +24,8 @@
 #include <finds/datastream.h>
 #include <finds/constants.h>
 
+#define ABOUT_ZERO 1E-15
+
 /**
  * @brief Generates an output folder filename for the simulation, which is
  *        just "sim-(TIMESTAMP)".
@@ -80,11 +82,17 @@ static void generate_simulation_output_filename(
  */
 static double adapt_step_size(
     const double time_step,
-    const double error,
+    double error,
     const double tolerance,
     const int order)
 {
-    return time_step * SAFETY * pow(error / tolerance, -1.0 / (order + 1));
+    if (error < ABOUT_ZERO)
+        error = ABOUT_ZERO;
+    double factor = SAFETY * pow(tolerance / error, 1.0 / (order + 1));
+    /* note to self: do NOT introduce a CLAMP here, it WILL cause
+       an infinite loop */
+    printf("factor=%6lf, ", factor);
+    return time_step * factor;
 }
 
 /**
@@ -121,6 +129,14 @@ error_e perform_simulation(
     if (step_fn == NULL)
         return RAISE_ERROR(ERR_INVALID_ARG, "undefined step function");
 
+    if (int_opts.eval_time_step < ABOUT_ZERO)
+         return RAISE_ERROR(ERR_INVALID_ARG,
+            "time step must be nonzero");
+
+    if (int_opts.absolute_error_tolerance < ABOUT_ZERO)
+        return RAISE_ERROR(ERR_INVALID_ARG,
+            "absolute tolerance must be nonzero");
+
     error_e code = ERR_OK;
 
     double current_time = 0.0;
@@ -136,7 +152,7 @@ error_e perform_simulation(
     /* determine filename for the output file */
     snprintf(output_filename, output_filename_size, "%s/%s",
         output_folder_name, DATAFILE_NAME);
-    mkdir_p(output_folder_name, 0755);
+    mkdir_p(output_folder_name, MODE_RW_USERONLY);
 
     /* open a filestream to that file */
     datastream_t output_stream = {0};
@@ -151,20 +167,30 @@ error_e perform_simulation(
         fprintf(stderr, "Saving file output to %s\n", output_folder_name);
 
     /* setup the progress bar */
-    size_t n_time_steps = (size_t) int_opts.end_time / int_opts.eval_time_step;
+    progressbar *progress = NULL;
     char time_status_text[50];
-    snprintf(time_status_text, 50,
-        "Time Evolution (0.00/%.2lf s)", int_opts.end_time);
-    progressbar *progress = progressbar_new(time_status_text, n_time_steps);
-    if (progress == NULL) {
-        code = RAISE_ERROR(ERR_ALLOC, "could not create progress bar");
-        goto jmp_output_stream;
+    if (int_opts.print_time_progression) {
+        size_t n_time_steps = (size_t) int_opts.end_time / int_opts.eval_time_step;
+        snprintf(time_status_text, 50,
+            "Time Evolution (0.00/%.2lf s)", int_opts.end_time);
+        progress = progressbar_new(time_status_text, n_time_steps);
+        if (progress == NULL) {
+            code = RAISE_ERROR(ERR_ALLOC, "could not create progress bar");
+            goto jmp_output_stream;
+        }
     }
 
     while (next_eval_time <= int_opts.end_time) {
+        if (code != ERR_OK)
+            break;
+
         while (current_time < next_eval_time) {
             double dt = \
                 MIN(current_time_step, next_eval_time - current_time);
+            if (dt < ABOUT_ZERO) {
+                code = RAISE_ERROR(ERR_INVALID_STATE, "time step is zero");
+                break;
+            }
 
             double eval_error;
             fish_system_t *advanced_state = step_fn(
@@ -182,37 +208,48 @@ error_e perform_simulation(
             double tolerance = int_opts.absolute_error_tolerance + \
                 int_opts.relative_error_tolerance * state_norm;
 
+            printf("t=%6lf, dt=%6e, norm=%6lf, E=%6e, tol=%6lf, ",
+                current_time, current_time_step, state_norm, eval_error,
+                tolerance);
+
+            /* update the internal time step */
+            current_time_step = adapt_step_size(
+                current_time_step, eval_error, tolerance,
+                integration_method_order(int_opts.method));
+            printf("new dt=%6e, tol/en=%6e ", current_time_step,
+                tolerance / eval_error);
+
             if (eval_error <= tolerance) {
                 fish_system_destroy(&current_state);
                 current_state = advanced_state;
-                current_time += current_time_step;
-
-                /* update the progress bar */
-                snprintf(time_status_text, 50,
-                    "Time Evolution (%.2lf/%.2lf s)",
-                    current_time, int_opts.end_time);
-                progressbar_update_label(progress, time_status_text);
-
-                progressbar_inc(progress);
+                current_time += dt;
+                printf("ACCEPTED\n");
             }
-            else
+            else {
+                printf("REJECTED\n");
                 fish_system_destroy(&advanced_state);
-
-            /* update the internal time step */
-            if (eval_error > 0)
-                current_time_step = adapt_step_size(
-                    dt, eval_error, tolerance,
-                    integration_method_order(int_opts.method));
+            }
         }
 
         code = datastream_write_system(&output_stream,
             current_state, current_time);
         if (code != ERR_OK)
             break;
+
+        /* update the progress bar */
+        if (int_opts.print_time_progression) {
+            snprintf(time_status_text, sizeof(time_status_text),
+                "Time Evolution (%.3lf/%.3lf s)",
+                current_time, int_opts.end_time);
+            progressbar_update_label(progress, time_status_text);
+            progressbar_inc(progress);
+        }
+
         next_eval_time += int_opts.eval_time_step;
     }
 
-    progressbar_finish(progress);
+    if (int_opts.print_time_progression)
+        progressbar_finish(progress);
 
 jmp_output_stream:
     datastream_close(&output_stream);

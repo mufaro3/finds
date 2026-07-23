@@ -69,13 +69,13 @@ static size_t generate_positions_cube(
 
     size_t index = 0;
 
-    for (int i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
         double x = -half + i * spacing;
 
-        for (int j = 0; j < n; ++j) {
+        for (size_t j = 0; j < n; ++j) {
             double y = -half + j * spacing;
 
-            for (int k = 0; k < n; ++k) {
+            for (size_t k = 0; k < n; ++k) {
                 double z = -half + k * spacing;
 
                 positions[index++] = D3(x, y, z);
@@ -186,7 +186,10 @@ static size_t generate_positions(
                 positions_ptr,
                 (size_t) dist_opts.size_random,
                 dist_opts.abs_bound);
+        default:
+            return 0;
     }
+    return 0;
 }
 
 /**
@@ -328,23 +331,33 @@ static void generate_orientations(
     *orientations_ptr = orientations;
 
     switch (ori_opts.type) {
-    case ORIENTATION_RANDOM:
-        generate_orientation_random(orientations, N);
-    case ORIENTATION_RADIAL_INWARD:
-        generate_orientation_radial_inward(orientations, positions, N);
-    case ORIENTATION_RADIAL_OUTWARD:
-        generate_orientation_radial_outward(orientations, positions, N);
-    case ORIENTATION_SWIRL_INWARD:
-        generate_orientation_swirl_inward(orientations, positions, N);
-    case ORIENTATION_SWIRL_OUTWARD:
-        generate_orientation_swirl_outward(orientations, positions, N);
-    case ORIENTATION_SADDLE:
-        generate_orientations_saddle(orientations, positions, N);
-    case ORIENTATION_ALIGNED:
-        generate_orientations_aligned(orientations, N);
+        case ORIENTATION_RANDOM:
+            generate_orientation_random(orientations, N);
+            break;
+        case ORIENTATION_RADIAL_INWARD:
+            generate_orientation_radial_inward(orientations, positions, N);
+            break;
+        case ORIENTATION_RADIAL_OUTWARD:
+            generate_orientation_radial_outward(orientations, positions, N);
+            break;
+        case ORIENTATION_SWIRL_INWARD:
+            generate_orientation_swirl_inward(orientations, positions, N);
+            break;
+        case ORIENTATION_SWIRL_OUTWARD:
+            generate_orientation_swirl_outward(orientations, positions, N);
+            break;
+        case ORIENTATION_SADDLE:
+            generate_orientations_saddle(orientations, positions, N);
+            break;
+        case ORIENTATION_ALIGNED:
+            generate_orientations_aligned(orientations, N);
+            break;
+        default:
+            break;
     }
 
-    perturb_orientations(orientations, ori_opts.angular_perturbation);
+    if (ori_opts.angular_perturbation > 0.0f)
+        perturb_orientations(orientations, ori_opts.angular_perturbation);
 }
 
 /**
@@ -484,6 +497,10 @@ fish_system_t *fish_system_combine(
  *     | \mathbf{X} |^2 = \sum_{i=1}^N \left( | \mathbf{x}_{c,i} |^2 +
  *     | \mathbf{n}_{i} |^2 \right).
  * \f]
+ *
+ * @param[in] system  The system to compute the norm of.
+ *
+ * @return The norm of the system.
  */
 double fish_system_norm(const fish_system_t *system) {
     double total = 0;
@@ -494,6 +511,31 @@ double fish_system_norm(const fish_system_t *system) {
         total += pow(d3_norm(swimmer.orientation), 2);
     }
     return sqrt(total);
+}
+
+/**
+ * @brief Computes a fish-system representation of the difference.
+ *
+ * @param[in] a The first system.
+ * @param[in] b The second system.
+ *
+ * @return The difference.
+ */
+fish_system_t *fish_system_difference(
+    const fish_system_t *a,
+    const fish_system_t *b)
+{
+    if (a->size != b->size)
+        return NULL;
+    fish_system_t *diff = fish_system_allocate(a->size);
+    for (size_t i = 0; i < a->size; ++i) {
+        swimmer_t *s_diff = &diff->swimmers[i];
+        swimmer_t *sa = &a->swimmers[i];
+        swimmer_t *sb = &b->swimmers[i];
+        s_diff->position    = d3_sub(sa->position,    sb->position);
+        s_diff->orientation = d3_sub(sa->orientation, sb->orientation);
+    }
+    return diff;
 }
 
 /**

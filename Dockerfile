@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y \
     texlive-bibtex-extra \
     biber \
     latexmk \
+    xvfb \
     python3 \
     python3.12-venv \
     python3-pip \

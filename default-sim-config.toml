@@ -99,7 +99,7 @@ number_of_poles = 1
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error
 # computation for adaptive time-stepping.
-integration_method = "euler"
+integration_method = "RK23"
 
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are

@@ -235,15 +235,20 @@ static feature_velocity_t *calculate_feature_velocities(
         case BRUTE_FORCE:
             calc_ext_contrib_brute_force(
                 external_source, external_sink, system, feat_pos);
+            break;
         case BARNES_HUT:
             calc_ext_contrib_barnes_hut(
                 external_source, external_sink, system, feat_pos,
                 dc_opts.approximation_threshold);
+            break;
         case FAST_MULTIPOLE_METHOD:
             calc_ext_contrib_fmm(
                 external_source, external_sink, system, feat_pos,
                 dc_opts.approximation_threshold,
                 dc_opts.number_of_poles);
+            break;
+        default:
+            break;
     }
 
     feat_vel->source = d3_list_add(internal, external_source, N);
@@ -351,4 +356,51 @@ system_derivative_t *compute_system_derivative(
     }
     feature_velocity_destroy(&feat_vel);
     return derivative;
+}
+
+/**
+ * @brief Adds and scales one derivative onto another.
+ *
+ * @param[out] dest  The destination derivative buffer.
+ * @param[in]  coeff The scaling coefficient.
+ * @param[in]  other The input derivative.
+ *
+ * @return The error code for this process.
+ */
+static error_e derivative_add_scale(system_derivative_t *dest,
+    const double coeff, const system_derivative_t *other)
+{
+    if (dest->size != other->size)
+        return RAISE_ERROR(ERR_INVALID_ARG,
+            "lengths of the two derivatives don't match");
+    for (size_t i = 0; i < dest->size; ++i)
+    {
+        dest->translational[i] = d3_add(dest->translational[i],
+            d3_mult(other->translational[i], coeff));
+        dest->rotational[i] = d3_add(dest->rotational[i],
+            d3_mult(other->rotational[i], coeff));
+    }
+    return ERR_OK;
+}
+
+/**
+ * @brief Computes the weighted average of a derivative.
+ *
+ * @param[in] terms The terms to compute on.
+ * @param[in] N     The size of the outupt derivative.
+ *
+ * @return The weighted average derivative.
+ */
+system_derivative_t *derivative_average(
+    const derivative_weight_t terms[],
+    const size_t N, const size_t len)
+{
+    error_e errcode = ERR_OK;
+    system_derivative_t *dest = derivative_allocate(N);
+    for (size_t i = 0; i < len; ++i) {
+        errcode = derivative_add_scale(dest, terms[i].coeff, terms[i].deriv);
+        if (errcode != ERR_OK)
+            break; /* abort this computation */
+    }
+    return dest;
 }

@@ -270,6 +270,8 @@ int main(int argc, char *argv[])
             series_label_buf);
     }
 
+    gnuplot_hardcopy(fig_handle, "output/benchmark.ps", "color");
+
     /* free everything and close */
 jmp_fig_handle:
     gnuplot_close(fig_handle);

@@ -6,5 +6,6 @@
 #define DATAFILE_NAME           "data.h5"
 
 #define SAFETY 0.9f
+#define MODE_RW_USERONLY 0755
 
 #endif /* CONSTANTS_HEADER */

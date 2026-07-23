@@ -40,11 +40,18 @@ typedef struct {
     int number_of_poles;
 } derivative_computation_opts_t;
 
+typedef struct {
+    double coeff;
+    system_derivative_t *deriv;
+} derivative_weight_t;
+
 system_derivative_t *compute_system_derivative(
     const fish_system_t *system,
     const derivative_computation_opts_t dc_opts);
 
 void derivative_destroy(system_derivative_t **derivative);
 void derivative_print(const system_derivative_t *derivative);
+system_derivative_t *derivative_average(
+    const derivative_weight_t terms[], const size_t N, const size_t len);
 
 #endif /* DERIVATIVE_HEADER */

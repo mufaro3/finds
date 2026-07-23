@@ -205,6 +205,152 @@ static error_e create_datasets(datastream_t *stream)
 }
 
 /**
+ * @brief Opens a dataset file for reading.
+ *
+ * @param[out] stream   The datastream to read to.
+ * @param[in]  filename The file to open.
+ *
+ * @return The error code.
+ */
+error_e datastream_open_file(
+    datastream_t *stream,
+    const char *filename)
+{
+    stream->file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (stream->file == 0) {
+        return RAISE_ERROR(
+            ERR_DATASTREAM_OPEN,
+            "couldn't open HDF5 file"
+        );
+    }
+
+    stream->time_dataset        = \
+        H5Dopen2(stream->file, "/time", H5P_DEFAULT);
+    stream->position_dataset    = \
+        H5Dopen2(stream->file, "/position", H5P_DEFAULT);
+    stream->orientation_dataset = \
+        H5Dopen2(stream->file, "/orientation", H5P_DEFAULT);
+    stream->length_dataset      = \
+        H5Dopen2(stream->file, "/length", H5P_DEFAULT);
+    stream->sigma_dataset       = \
+        H5Dopen2(stream->file, "/volumetric_flow_rate", H5P_DEFAULT);
+
+    hid_t space = H5Dget_space(stream->position_dataset);
+
+    hsize_t dims[3];
+    H5Sget_simple_extent_dims(space, dims, NULL);
+
+    stream->n_frames    = dims[0];
+    stream->n_particles = dims[1];
+
+    H5Sclose(space);
+
+    stream->open = true;
+
+    return ERR_OK;
+}
+
+/**
+ * @brief Generalized function for reading variable rank tensors.
+ *
+ * @param[out] data_dest  Data pointer to write to.
+ * @param[in]  dataset    Dataset to read from.
+ * @param[in]  rank       Tensor rank.
+ * @param[in]  start      Where to begin reading.
+ * @param[in]  count      Amount of data to read.
+ */
+static error_e read_hdf5_tensor_frame(
+    void *data_dest,
+    const hid_t dataset,
+    const int rank,
+    const hsize_t *start,
+    const hsize_t *count)
+{
+    error_e errcode = ERR_OK;
+    hid_t file_space = H5I_INVALID_HID;
+    hid_t mem_space = H5I_INVALID_HID;
+
+    file_space = H5Dget_space(dataset);
+
+    WRAP_HDF5_CHECK(errcode, jmp_err,
+        H5Sselect_hyperslab(file_space, H5S_SELECT_SET,
+            start, NULL, count, NULL));
+
+    mem_space = WRAP_HDF5_CHECK(errcode, jmp_err,
+        H5Screate_simple(rank, count, NULL));
+
+    WRAP_HDF5_CHECK(errcode, jmp_err,
+        H5Dread(dataset, H5T_NATIVE_DOUBLE, mem_space,
+            file_space, H5P_DEFAULT, data_dest));
+
+jmp_err:
+    if (mem_space >= 0)
+        H5Sclose(mem_space);
+    if (file_space >= 0)
+        H5Sclose(file_space);
+
+    return errcode;
+}
+
+error_e datastream_read_frame(
+    datastream_t *stream,
+    const size_t frame,
+    fish_system_t **dest_ptr,
+    double *time)
+{
+    if (!stream->open)
+        return RAISE_ERROR(
+            ERR_DATASTREAM_CLOSED,
+            "datastream is not open");
+
+    if (frame >= stream->n_frames)
+        return RAISE_ERROR(
+            ERR_INVALID_ARG,
+            "frame index out of bounds");
+
+    /* rank 1 - time */
+    hsize_t start1[1] = { frame };
+    hsize_t count1[1] = { 1 };
+
+    read_hdf5_tensor_frame(time, stream->time_dataset, 1, start1, count1);
+
+    /* rank 2 - lengths and volumetric flow rates */
+    hsize_t start2[3] = { frame, 0, 0 };
+    hsize_t count2[3] = { 1, stream->n_particles, 3 };
+
+    double lengths[stream->n_particles];
+    double sigmas[stream->n_particles];
+
+    read_hdf5_tensor_frame(lengths, stream->length_dataset, 2, start2, count2);
+    read_hdf5_tensor_frame(sigmas, stream->sigma_dataset, 2, start2, count2);
+
+    /* rank 3 - positions and orientations */
+    hsize_t start3[3] = { frame, 0, 0 };
+    hsize_t count3[3] = { 1, stream->n_particles, 3 };
+
+    double_3d_t positions[stream->n_particles];
+    double_3d_t orientations[stream->n_particles];
+
+    read_hdf5_tensor_frame(positions, stream->position_dataset,
+        3, start3, count3);
+    read_hdf5_tensor_frame(orientations, stream->orientation_dataset,
+        3, start3, count3);
+
+    /* ---------- assemble fish objects ---------- */
+    fish_system_t *dest = fish_system_allocate(stream->n_particles);
+    *dest_ptr = dest;
+
+    for (size_t i = 0; i < stream->n_particles; ++i) {
+        d3_copy(&dest->swimmers[i].position, positions[i]);
+        d3_copy(&dest->swimmers[i].orientation, orientations[i]);
+        dest->swimmers[i].length = lengths[i];
+        dest->swimmers[i].volumetric_flow_rate = sigmas[i];
+    }
+
+    return ERR_OK;
+}
+
+/**
  * @brief Creates the root file for the datastream and marks it as open.
  *
  * @param[out] stream   The datastream to open.
@@ -281,20 +427,6 @@ error_e datastream_close(datastream_t *stream)
 
     return ERR_OK;
 }
-
-/** Wrapping function for HDF5 errors */
-#define WRAP_HDF5_CHECK(errcode, jmpto, result) \
-    ({ if (result < 0) {                        \
-            errcode = ERR_DATASTREAM_WRITE;     \
-            goto jmpto;                         \
-        } (result); })
-
-/** Wrapping function for native errors */
-#define WRAP_CHECK(errcode, jmpto, prev_errcode)    \
-    ({ if (prev_errcode != ERR_OK) {                \
-            errcode = prev_errcode;                 \
-            goto jmpto;                             \
-        } (prev_errcode); })
 
 /**
  * @brief Writes a single frame for a data record to its associated dataset.

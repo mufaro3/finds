@@ -58,7 +58,7 @@ shell:
 # Project
 
 validate:
-	@$(DOCKER-SHELL) ./build/validation
+	@$(DOCKER-SHELL) xvfb-run ./build/validation
 
 run:
 	@$(DOCKER-SHELL) ./build/simulate
@@ -77,7 +77,7 @@ docs:
 paper:
 	@$(DOCKER-SHELL) mkdir -p paper/output
 	@$(DOCKER-SHELL) sh -c \
-	"cd paper && latexmk -pdf -output-directory=output paper.tex"
+	"cd paper && latexmk -f -pdf -output-directory=output paper.tex"
 	@$(DOCKER-SHELL) [ -f paper/output/paper.pdf ] && \
 	mv paper/output/paper.pdf paper/paper.pdf
 

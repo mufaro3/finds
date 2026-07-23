@@ -23,6 +23,16 @@ typedef struct {
 
 error_e mkdir_p(const char *path, const mode_t mode);
 
+error_e datastream_open_file(
+    datastream_t *stream,
+    const char *filename);
+
+error_e datastream_read_frame(
+    datastream_t *stream,
+    const size_t frame,
+    fish_system_t **dest_ptr,
+    double *time);
+
 error_e datastream_create_file(
     datastream_t *stream,
     const char *filename,

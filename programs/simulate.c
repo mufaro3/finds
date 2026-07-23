@@ -29,8 +29,8 @@
 #define DEFAULT_SIMULATION_FILE "default-sim-config.toml"
 #define BUFFER_SIZE 2048
 
-const const char *argp_program_version = "FINDS simulation v1.0";
-const const char *argp_program_bug_address = \
+const char *argp_program_version = "FINDS simulation v1.0";
+const char *argp_program_bug_address = \
     "Mufaro J. Machaya <mufaro2@student.ubc.ca>";
 
 static const char argp_program_doc[] = \
@@ -42,11 +42,12 @@ typedef struct {
 
 static const struct argp_option OPTIONS[] = {
     {
-        "config-filepath",
-        'c',
-        "CONF",
-        0,
-        "Config file for the simulation."
+        .name  = "config-filepath",
+        .key   = 'c',
+        .arg   = "CONF",
+        .flags = 0,
+        .doc   = "Config file for the simulation.",
+        .group = 0
     },
     { 0 }
 };
@@ -146,7 +147,7 @@ static void load_sim_config_file(
         "system.distribution_type", TOML_STRING);
     opts->dist_opts.type = ne_lookup_enum(DISTRIBUTION_TYPE_TABLE,
         DISTRIBUTION_TYPE_COUNT, datum_dist_type.u.s);
-    if (opts->dist_opts.type == -1)
+    if ((int) opts->dist_opts.type == -1)
         conf_load_err(conf_filepath,
             "invalid value for system.distribution_type");
 
@@ -183,6 +184,10 @@ static void load_sim_config_file(
             toml_datum_t datum_abs_bound = conf_read_value(&result,
                 conf_filepath, "system.abs_bound", TOML_FP64);
             opts->dist_opts.abs_bound = datum_abs_bound.u.fp64;
+            break;
+
+        default:
+            conf_load_err(conf_filepath, "invalid distribution type");
             break;
     }
 
@@ -222,6 +227,12 @@ static void load_sim_config_file(
             if (datum_length_max.type != TOML_FP64)
                 conf_load_err(conf_filepath, "maximum length is not a float");
             opts->const_opts.max_length = datum_length_max.u.fp64;
+
+            break;
+
+        default:
+            conf_load_err(conf_filepath, "invalid length type");
+            break;
     }
 
     /* volumetric flow rate */
@@ -253,6 +264,12 @@ static void load_sim_config_file(
                 conf_load_err(conf_filepath,
                     "maximum volumetric flow is not a float");
             opts->const_opts.max_sigma = datum_sigma_max.u.fp64;
+            break;
+
+        default:
+            conf_load_err(conf_filepath,
+                "invalid volumetric flow rate type");
+            break;
     }
 
     /* differentiation */
@@ -318,10 +335,13 @@ int main(int argc, char *argv[])
     args.config_filepath = DEFAULT_SIMULATION_FILE;
 
     struct argp argp = {
-        OPTIONS,
-        parse_commandline_opts,
-        NULL,
-        argp_program_doc
+        .options     = OPTIONS,
+        .parser      = parse_commandline_opts,
+        .args_doc    = NULL,
+        .doc         = argp_program_doc,
+        .children    = NULL,
+        .help_filter = NULL,
+        .argp_domain = NULL
     };
 
     argp_parse(&argp, argc, argv, 0, 0, &args);
@@ -346,7 +366,8 @@ int main(int argc, char *argv[])
     char conf_copy_cmd[2*BUFFER_SIZE];
     snprintf(conf_copy_cmd, 2*BUFFER_SIZE, "cp %s %s/conf.toml",
         args.config_filepath, output_folder_name);
-    system(conf_copy_cmd);
+    if (system(conf_copy_cmd) != 0)
+        code = RAISE_ERROR(ERR_FAILURE, "could not copy toml file");
 
     if (code == ERR_OK)
         printf(

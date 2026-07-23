@@ -91,8 +91,10 @@ fish_system_t *fish_system_generate(
 fish_system_t *fish_system_combine(const fish_system_t *a, const fish_system_t *b);
 fish_system_t *fish_system_combine_destroy(fish_system_t *a, fish_system_t *b);
 
+fish_system_t *fish_system_difference(
+    const fish_system_t *a,
+    const fish_system_t *b);
 double fish_system_norm(const fish_system_t *system);
-
 void fish_system_normalize_orientation(fish_system_t *system);
 
 /* FISH SYSTEM JANITORIAL FUNCTIONS */

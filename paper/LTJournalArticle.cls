@@ -102,49 +102,6 @@
 \fancyfoot[LE]{\small\textbf{\thepage}} % Left-even page footer
 \fancyfoot[RE]{\footnotesize\footertext} % Left-even page footer
 
-%	SECTIONS
-
-% Required for modifying sections
-\usepackage{titlesec}
-
-% Section type being modified
-\titleformat{\section}
-% Section layout type, can be: hang, block, display, runin, leftmargin, rightmargin, drop, wrap, frame
-	    [block]
-            % Text formatting of the whole section, i.e. label and title
-	{\Large\bfseries\centering}
-	{\thesection} % Section label (e.g. number) and its formatting
-	{0.5em} % Horizontal space between the section label and title
-	{} % Code before the section title
-	[] % Code after the section title
-
-%------------------------------------------------
-
-\titleformat
-    {\subsection} % Section type being modified
-    % Section layout type, can be: hang, block, display, runin, leftmargin, rightmargin, drop, wrap, frame
-    [block]
-    % Text formatting of the whole section, i.e. label and title
-    {\raggedright\large\bfseries}
-	{\thesubsection} % Section label (e.g. number) and its formatting
-	{0.5em} % Horizontal space between the section label and title
-	{} % Code before the section title
-	[] % Code after the section title
-
-%------------------------------------------------
-
-\titleformat
-	{\subsubsection} % Section type being modified
-	[runin] % Section layout type, can be: hang, block, display, runin, leftmargin, rightmargin, drop, wrap, frame
-	{\bfseries} % Text formatting of the whole section, i.e. label and title
-	{} % Section label (e.g. number) and its formatting
-	{5pt} % Horizontal space between the section label and title
-	{} % Code before the section title
-	[] % Code after the section title
-
-% Spacing around section titles, the order is: left, before and after
-\titlespacing*{\subsubsection}{0pt}{0.5\baselineskip}{8pt}
-
 %	TITLE SECTION CUSTOMIZATION
 
 % Required for customizing the title section

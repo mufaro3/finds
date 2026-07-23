@@ -25,35 +25,35 @@
 
 \date{
   August 2026 \vspace{1em} \\
-  \footnotesize\textsuperscript{1}Department
-  of Physics and Astronomy, University of British Columbia \\
-  \footnotesize\textsuperscript{2}Department
-  of Mechanical and Aerospace Engineering, University of Houston
+  \footnotesize\textsuperscript{1}University of British Columbia \\
+  \footnotesize\textsuperscript{2}University of Houston
 }
 
 \renewcommand{\maketitlehookd}{
   \begin{abstract}
     \noindent
-    It is well known that animals travelling in cohesive groups yields many
-    collective and individual benefits, such as security against predators and
-    energy efficiency. As such, the replication of such benefits for analogous,
-    biology-inspired technologies like autonomous drone systems requires keen
-    understanding of the cohesion and evolution of systems of these groups,
-    but these investigations are fundamentally limited to small sizes due to
-    the high computational complexity in computing pairwise dynamics at order
-    $\mathcal{O}(N^2)$. As real schools of fish have been recorded to contain
-    millions of members, FINDS, or Fish INteraction and Dynamics Simulator,
-    was created to enable the efficient simulation of schools of fish by
-    combining a simple, particle-like mathematical model of swimmers with
-    cutting-edge algorithms and post-processing techniques utilized in particle
-    dynamics and astrophysics simulation libraries such as GADGET-4 and
-    REBOUND. FINDS is implemented as a containerized, modular software suite
-    written predominantly in C (with Python for post-processing) to compute the
-    time-derivative for each state of the system of fish using brute-force
-    computation, Barnes-Hut approximaiton, or the Fast-Multipole Method,
-    then numerically integrate this derivative using adaptive time-stepping,
-    and then lastly, optionally process the calculated dataset to produce
-    various analytic plots as needed.
+    Animals travelling in cohesive groups yields many collective and individual
+    benefits, such as security against predators and energy efficiency. The
+    replication of such benefits for analogous, biology-inspired technologies
+    like autonomous drone systems requires keen understanding of the cohesion
+    and evolution of systems of these groups, but these investigations are
+    fundamentally limited to small sizes due to the high computational
+    complexity in computing pairwise dynamics at order $N^2$.
+    As real schools of fish have been recorded to contain millions of members,
+    FINDS, or Fish INteraction and Dynamics Simulator, was created to
+    efficiently simulate the dynamics of very large schools of fish using
+    common computational techniques employed in $N$-body simulation. FINDS is
+    implemented as a containerized, modular software suite written
+    predominantly in C (with Python for post-processing) that handles three
+    core simulation processes in order. First, FINDS contains routines for
+    computing the time-derivative of a school, which is a function of the sum
+    of the pairwise interactions for each member of the school. As such, FINDS
+    contains implementations of Brute Force computation, the Barnes-Hut
+    algorithm, and the Fast Multipole Method. Second, FINDS contains custom
+    routines for numerically integrating these systems using embedded
+    Runge-Kutta schemes for adaptive time-stepping. Third, FINDS contains a
+    small library of post-processing modules available to end users to
+    stream-line the analysis of their generated data.
   \end{abstract}
 }
 
@@ -65,11 +65,19 @@
 
 \lipsum[1]
 
-\section{Literature Review and Similar Work}
-
-\lipsum[1]
-
 \section{Mathematical Model of Swimmers}
+
+FINDS is developed around the far-field source/sink dipole model designed by
+Mabrouk and Floryan for modelling how passive hydrodynamic interactions at far
+distances effects the evolution of a greater school \cite{mabrouk2024,mabrouk2025}.
+Under this model, each fish $i$ is defined as a dipole consisting of a fluid
+source at the head of the fish $\mathbf{x}_{f,i}$, and a fluid sink at the
+tail $\mathbf{x}_{b,i}$, separated by the length of the fish $\ell_i$. The
+source and the sink of each fish are defined to have the same volumetric flow
+rate, $\sigma_i$, to ensure the conservation of fluid by making the sources and
+sinks identical up to a point.
+
+\section{Literature Review and Similar Work}
 
 \lipsum[1]
 

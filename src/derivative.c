@@ -15,6 +15,7 @@
 #include <finds/vector.h>
 #include <finds/util.h>
 #include <finds/error.h>
+#include <finds/constants.h>
 
 /** Lookup table for the interaction computation methods */
 const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
@@ -81,7 +82,7 @@ static inline double_3d_t calculate_feature_interaction(
 {
     double_3d_t displacement = d3_sub(feat_a_pos, feat_b_pos);
     double distance = d3_norm(displacement);
-    return d3_div(displacement, distance * distance * distance);
+    return d3_div(displacement, pow(distance, 3));
 }
 
 /**

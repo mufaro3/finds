@@ -78,6 +78,9 @@ typedef struct {
     constant_options_t const_opts;
     derivative_computation_opts_t dc_opts;
     integration_opts_t int_opts;
+
+    /* debug options */
+    bool print_output_file, print_generated_system;
 } finds_opts_t;
 
 
@@ -326,11 +329,26 @@ static void load_sim_config_file(
         conf_filepath, "integration.absolute_error_tolerance", TOML_FP64);
     opts->int_opts.absolute_error_tolerance = datum_atol.u.fp64;
 
+    /* debug options */
+    toml_datum_t datum_print_output_file = conf_read_value(&result,
+        conf_filepath, "debug.print_output_file", TOML_BOOLEAN);
+    opts->print_output_file = datum_print_output_file.u.boolean;
+
+    toml_datum_t datum_print_generated_system = conf_read_value(&result,
+        conf_filepath, "debug.print_generated_system", TOML_BOOLEAN);
+    opts->print_generated_system = datum_print_generated_system.u.boolean;
+
+    toml_datum_t datum_show_time_progression = conf_read_value(&result,
+        conf_filepath, "debug.show_time_progression", TOML_BOOLEAN);
+    opts->int_opts.print_time_progression = datum_show_time_progression.u.boolean;
+
     toml_free(result);
 }
 
 int main(int argc, char *argv[])
 {
+    error_e code = ERR_OK;
+
     cmdline_args_t args;
     args.config_filepath = DEFAULT_SIMULATION_FILE;
 
@@ -350,17 +368,18 @@ int main(int argc, char *argv[])
     load_sim_config_file(&conf, args.config_filepath);
 
     fish_system_t *initial_system = fish_system_generate(
-        conf.dist_opts, conf.ori_opts, conf.const_opts, true);
+        conf.dist_opts, conf.ori_opts, conf.const_opts,
+        conf.print_generated_system);
     if (initial_system == NULL) {
-        perror("could not allocate initial system");
+        code = RAISE_ERROR(ERR_FAILURE, "could not allocate initial system");
         goto jmp_initial_system;
     }
 
     char output_folder_name[BUFFER_SIZE];
     char output_filename[2*BUFFER_SIZE];
-    error_e code = perform_simulation(initial_system, conf.dc_opts,
+    code = perform_simulation(initial_system, conf.dc_opts,
         conf.int_opts, output_filename, output_folder_name,
-        2*BUFFER_SIZE, BUFFER_SIZE, true);
+        2*BUFFER_SIZE, BUFFER_SIZE, conf.print_output_file);
 
     /* copy over the config file as well */
     char conf_copy_cmd[2*BUFFER_SIZE];
@@ -369,13 +388,15 @@ int main(int argc, char *argv[])
     if (system(conf_copy_cmd) != 0)
         code = RAISE_ERROR(ERR_FAILURE, "could not copy toml file");
 
-    if (code == ERR_OK)
-        printf(
-            "Dataset written to \'%s\'\n"
-            "Run\n\n"
-            "  make analyze file=\'%s\'\n\n"
-            "to perform post-processing and data analysis on this dataset.\n",
-            output_filename, output_filename);
+    if (code == ERR_OK) {
+        if (conf.print_output_file)
+            printf(
+                "Dataset written to \'%s\'\n"
+                "Run\n\n"
+                "  make analyze file=\'%s\'\n\n"
+                "to perform post-processing and data analysis on this dataset.\n",
+                output_filename, output_filename);
+    }
     else
         puts("Error occurred! Dataset is likely corrupted.");
 

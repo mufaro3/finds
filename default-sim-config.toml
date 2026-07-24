@@ -13,11 +13,11 @@
 
 # The distribution type essentially defines the shape/geometry of the fish
 # system. Valid options are "cube", "sphere", "ball", and "random".
-distribution_type = "random"
+distribution_type = "sphere"
 
 # The radius of the sphere or ball comprised of swimmers. Set this only if
 # 'distribution_type' is set to 'sphere' or 'ball'.
-radius = 2.0
+radius = 20.0
 
 # The side length of the cubic lattice comprised of swimmers. Set this only if
 # 'distribution_type' is set to 'cube'.
@@ -26,7 +26,7 @@ side_length = 2.0
 # The spacing between each fish within the cubic lattice, sphere, or ball
 # comprised of swimmers. Set this only if 'distribution_type' is NOT set to
 # 'random'.
-spacing = 1.0
+spacing = 5.0
 
 # The number of swimmers to generate in the system. Set this only if
 # 'distribution_type' is set to 'random' (the number of swimmers for the
@@ -44,7 +44,7 @@ abs_bound = 10.0
 # The orientation type defines the alignment of each of the fish in the system.
 # Valid options are "random", "radial-inward", "radial-outward", "swirl-inward",
 # "swirl-outward", "saddle", and "aligned".
-orientation_type = "random"
+orientation_type = "swirl-inward"
 
 # This is the maximum random angular perturbation to apply to each of the fish
 # along the polar and azimuthal angles (not including the roll-axis as each
@@ -99,7 +99,7 @@ number_of_poles = 1
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error
 # computation for adaptive time-stepping.
-integration_method = "RK23"
+integration_method = "RK45"
 
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are
@@ -108,10 +108,21 @@ time_step = 0.01
 
 # The ending time for the simulation, provided that the initial state begins
 # at 0 simulation-seconds.
-end_time = 1.0
+end_time = 10.0
 
 # These are the error tolerances used for determining the overall tolerance
 # threshold for adaptive time-stepping. These can only be set if the numerical
 # integration method is a non-naive (error estimating) method.
-relative_error_tolerance = 1E-2
-absolute_error_tolerance = 1E-4
+relative_error_tolerance = 1E-4
+absolute_error_tolerance = 1E-8
+
+[debug]
+
+# Whether or not to print the location of the output file.
+print_output_file = true
+
+# Whether or not to print the details of the generated system.
+print_generated_system = true
+
+# Whether or not to show the time-progression as a progress bar.
+show_time_progression = true

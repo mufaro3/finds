@@ -20,8 +20,10 @@
 
 typedef enum {
     EULER,
+    RUNGE_KUTTA_4,
+
     /* Embedded Runge-Kutta Methods */
-    RUNGE_KUTTA_23,
+    RUNGE_KUTTA_23, /* Bogacki-Shampine */
     RUNGE_KUTTA_45,
     RUNGE_KUTTA_54, /* Dormand-Prince method DOPRI */
     RUNGE_KUTTA_65, /* Verner's method DVERK */
@@ -55,7 +57,11 @@ typedef fish_system_t *(*integration_step_fn)(
         double *error \
     )
 
+/* non adaptive integrators */
 DECLARE_INTEGRATOR(step_euler);
+DECLARE_INTEGRATOR(step_rk4);
+
+/* adaptive integrators */
 DECLARE_INTEGRATOR(step_rk23);
 DECLARE_INTEGRATOR(step_rk45);
 DECLARE_INTEGRATOR(step_rk54);
@@ -67,6 +73,8 @@ integrator_from_method(integration_method_e method)
 {
     switch (method) {
         case EULER: return step_euler;
+        case RUNGE_KUTTA_4: return step_rk4;
+
         case RUNGE_KUTTA_23: return step_rk23;
         case RUNGE_KUTTA_45: return step_rk45;
         case RUNGE_KUTTA_54: return step_rk54;
@@ -81,12 +89,31 @@ integration_method_order(integration_method_e method)
 {
     switch (method) {
         case EULER: return 1;
+        case RUNGE_KUTTA_4: return 4;
+
         case RUNGE_KUTTA_23: return 2;
         case RUNGE_KUTTA_45: return 4;
         case RUNGE_KUTTA_54: return 5;
         case RUNGE_KUTTA_65: return 6;
         case RUNGE_KUTTA_78: return 7;
         default: return -1;
+    }
+}
+
+static inline bool
+is_adaptive_method(integration_method_e method)
+{
+    switch (method) {
+        case EULER: return false;
+        case RUNGE_KUTTA_4: return false;
+
+        /* adaptive integrators */
+        case RUNGE_KUTTA_23: return true;
+        case RUNGE_KUTTA_45: return true;
+        case RUNGE_KUTTA_54: return true;
+        case RUNGE_KUTTA_65: return true;
+        case RUNGE_KUTTA_78: return true;
+        default: return false;
     }
 }
 

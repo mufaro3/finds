@@ -46,7 +46,7 @@ static void generate_simulation_output_filename(
     timenow = gmtime(&now);
 
     char datetime_fmt[40];
-    strftime(datetime_fmt, sizeof(datetime_fmt), "%Y-%m-%d_%H:%M:%S", timenow);
+    strftime(datetime_fmt, sizeof(datetime_fmt), "%Y%m%d-%H%M%S", timenow);
 
     snprintf(output_folder_filename,
         buffer_size,
@@ -91,7 +91,6 @@ static double adapt_step_size(
     double factor = SAFETY * pow(tolerance / error, 1.0 / (order + 1));
     /* note to self: do NOT introduce a CLAMP here, it WILL cause
        an infinite loop */
-    printf("factor=%6lf, ", factor);
     return time_step * factor;
 }
 
@@ -139,10 +138,6 @@ error_e perform_simulation(
 
     error_e code = ERR_OK;
 
-    double current_time = 0.0;
-    double next_eval_time = 0.0;
-    double current_time_step = int_opts.eval_time_step;
-
     /* copy the initial state to a current state */
     fish_system_t *current_state = fish_system_copy(initial_state);
 
@@ -169,8 +164,8 @@ error_e perform_simulation(
     /* setup the progress bar */
     progressbar *progress = NULL;
     char time_status_text[50];
+    size_t n_time_steps = (size_t) int_opts.end_time / int_opts.eval_time_step;
     if (int_opts.print_time_progression) {
-        size_t n_time_steps = (size_t) int_opts.end_time / int_opts.eval_time_step;
         snprintf(time_status_text, 50,
             "Time Evolution (0.00/%.2lf s)", int_opts.end_time);
         progress = progressbar_new(time_status_text, n_time_steps);
@@ -180,74 +175,110 @@ error_e perform_simulation(
         }
     }
 
-    while (next_eval_time <= int_opts.end_time) {
-        if (code != ERR_OK)
-            break;
+    /* adaptive integration */
+    if (is_adaptive_method(int_opts.method)) {
+        double current_time = 0.0;
+        double next_eval_time = 0.0;
+        double current_time_step = int_opts.eval_time_step;
 
-        while (current_time < next_eval_time) {
-            double dt = \
-                MIN(current_time_step, next_eval_time - current_time);
-            if (dt < ABOUT_ZERO) {
-                code = RAISE_ERROR(ERR_INVALID_STATE, "time step is zero");
+        while (next_eval_time <= int_opts.end_time) {
+            if (code != ERR_OK)
                 break;
+
+            while (current_time < next_eval_time) {
+                double dt = \
+                    MIN(current_time_step, next_eval_time - current_time);
+                if (dt < ABOUT_ZERO) {
+                    code = RAISE_ERROR(ERR_INVALID_STATE, "time step is zero");
+                    goto jmp_time_step;
+                }
+
+                double eval_error;
+                fish_system_t *advanced_state = step_fn(
+                    current_state, dt, dc_opts, &eval_error);
+                fish_system_normalize_orientation(advanced_state);
+
+                /* computes each of the norms */
+                double current_norm = fish_system_norm(current_state);
+                double advanced_norm = fish_system_norm(advanced_state);
+
+                /* the norm we use to compute the tolerance is just the
+                   maximum of the previous norm and the current norm */
+                double state_norm = MAX(current_norm, advanced_norm);
+
+                /* calculates the */
+                double tolerance = int_opts.absolute_error_tolerance + \
+                    int_opts.relative_error_tolerance * state_norm;
+
+                /* update the internal time step if the error is nonzero */
+                current_time_step = adapt_step_size(
+                    current_time_step, eval_error, tolerance,
+                    integration_method_order(int_opts.method));
+
+                printf("time=%6lf dt=%6e norm=%6lf error=%6e tol=%6e\n",
+                    current_time, current_time_step, state_norm,
+                    eval_error, tolerance);
+
+                /* make sure we don't go over the user-supplied dt */
+                if (current_time_step > int_opts.eval_time_step)
+                    current_time_step = int_opts.eval_time_step;
+
+                if (eval_error <= tolerance) {
+                    fish_system_destroy(&current_state);
+                    current_state = advanced_state;
+                    current_time += dt;
+                }
+                else {
+                    fish_system_destroy(&advanced_state);
+                }
             }
 
-            double eval_error;
-            fish_system_t *advanced_state = step_fn(
-                current_state, dt, dc_opts, &eval_error);
+            code = datastream_write_system(&output_stream,
+                current_state, current_time);
+            if (code != ERR_OK)
+                break;
 
-            /* computes each of the norms */
-            double current_norm = fish_system_norm(current_state);
-            double advanced_norm = fish_system_norm(advanced_state);
-
-            /* the norm we use to compute the tolerance is just the
-               maximum of the previous norm and the current norm */
-            double state_norm = MAX(current_norm, advanced_norm);
-
-            /* calculates the */
-            double tolerance = int_opts.absolute_error_tolerance + \
-                int_opts.relative_error_tolerance * state_norm;
-
-            printf("t=%6lf, dt=%6e, norm=%6lf, E=%6e, tol=%6lf, ",
-                current_time, current_time_step, state_norm, eval_error,
-                tolerance);
-
-            /* update the internal time step */
-            current_time_step = adapt_step_size(
-                current_time_step, eval_error, tolerance,
-                integration_method_order(int_opts.method));
-            printf("new dt=%6e, tol/en=%6e ", current_time_step,
-                tolerance / eval_error);
-
-            if (eval_error <= tolerance) {
-                fish_system_destroy(&current_state);
-                current_state = advanced_state;
-                current_time += dt;
-                printf("ACCEPTED\n");
+            /* update the progress bar */
+            if (int_opts.print_time_progression) {
+                snprintf(time_status_text, sizeof(time_status_text),
+                    "Time Evolution (%.3lf/%.3lf s)",
+                    current_time, int_opts.end_time);
+                progressbar_update_label(progress, time_status_text);
+                progressbar_inc(progress);
             }
-            else {
-                printf("REJECTED\n");
-                fish_system_destroy(&advanced_state);
-            }
+
+            next_eval_time += int_opts.eval_time_step;
         }
-
-        code = datastream_write_system(&output_stream,
-            current_state, current_time);
-        if (code != ERR_OK)
-            break;
-
-        /* update the progress bar */
-        if (int_opts.print_time_progression) {
-            snprintf(time_status_text, sizeof(time_status_text),
-                "Time Evolution (%.3lf/%.3lf s)",
-                current_time, int_opts.end_time);
-            progressbar_update_label(progress, time_status_text);
-            progressbar_inc(progress);
-        }
-
-        next_eval_time += int_opts.eval_time_step;
     }
 
+    /* non-adaptive integration */
+    else {
+        double end_time = int_opts.end_time;
+        double time_step = int_opts.eval_time_step;
+
+        for (double time = 0; time < end_time; time += time_step) {
+            code = datastream_write_system(&output_stream,
+                current_state, time);
+            if (code != ERR_OK)
+                break;
+
+            double error;
+            fish_system_t *advanced_state = step_fn(
+                current_state, time_step, dc_opts, &error);
+            fish_system_destroy(&current_state);
+            current_state = advanced_state;
+
+            if (int_opts.print_time_progression) {
+                snprintf(time_status_text, sizeof(time_status_text),
+                    "Time Evolution (%.3lf/%.3lf s)",
+                    time, end_time);
+                progressbar_update_label(progress, time_status_text);
+                progressbar_inc(progress);
+            }
+        }
+    }
+
+jmp_time_step:
     if (int_opts.print_time_progression)
         progressbar_finish(progress);
 

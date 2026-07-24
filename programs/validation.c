@@ -25,7 +25,7 @@
 
 #define LENGTH 1
 #define VOLUMETRIC_FLOW_RATE (4 * M_PI)
-#define SP_SPEED (VOLUMETRIC_FLOW_RATE / LENGTH)
+#define SP_SPEED (VOLUMETRIC_FLOW_RATE / (4 * M_PI * LENGTH * LENGTH))
 #define BUFFER_SIZE 1024
 #define DOUBLE_BUFFER_SIZE (2 * BUFFER_SIZE)
 
@@ -82,12 +82,12 @@ static error_e generate_coplanar_simulation(
     dc_opts.method = BRUTE_FORCE;
 
     integration_opts_t int_opts = {0};
-    int_opts.method = RUNGE_KUTTA_23;
-    int_opts.eval_time_step = 0.01;
-    int_opts.end_time = 20;
-    int_opts.absolute_error_tolerance = 1E-2;
-    int_opts.relative_error_tolerance = 1E-4;
-    int_opts.print_time_progression = false;
+    int_opts.method = RUNGE_KUTTA_4;
+    int_opts.eval_time_step = 0.001;
+    int_opts.end_time = 10;
+    int_opts.absolute_error_tolerance = 1E-8;
+    int_opts.relative_error_tolerance = 1E-6;
+    int_opts.print_time_progression = true;
 
     errcode = perform_simulation(
         initial_state, dc_opts, int_opts,
@@ -157,18 +157,42 @@ static error_e plot_coplanar_trajectory(
     gnuplot_set_axislabel(fig, "x", "x");
     gnuplot_set_axislabel(fig, "y", "y");
 
-    fprintf(fig->gnucmd, "plot '-' with lines title 'Fish A', "
-        "'-' with lines title 'Fish B'\n");
+    swimmer_t *fish_a_trajectory = trajectory->data[0];
+    swimmer_t *fish_b_trajectory = trajectory->data[1];
+
+    const size_t last_frame = trajectory->num_frames - 1;
+    const size_t s2l_frame = last_frame - 1; /* second to last frame */
+
+    fprintf(fig->gnucmd,
+        "set arrow 1 from %g,%g to %g,%g "
+        "head filled lw 3 lc rgb '#D65AD1'\n",
+        fish_a_trajectory[s2l_frame].position.x,
+        fish_a_trajectory[s2l_frame].position.y,
+        fish_a_trajectory[last_frame].position.x,
+        fish_a_trajectory[last_frame].position.y);
+
+    fprintf(fig->gnucmd,
+        "set arrow 2 from %g,%g to %g,%g "
+        "head filled lw 3 dt 2 lc rgb '#2E8B57'\n",
+        fish_b_trajectory[s2l_frame].position.x,
+        fish_b_trajectory[s2l_frame].position.y,
+        fish_b_trajectory[last_frame].position.x,
+        fish_b_trajectory[last_frame].position.y);
+
+    fprintf(fig->gnucmd,
+        "plot "
+        "'-' with lines lw 2 lc rgb '#D65AD1' title 'Fish A', "
+        "'-' with lines lw 2 dt 1 lc rgb '#2E8B57' title 'Fish B'\n");
 
     WRAP_CHECK(errcode, jmp_err,
         plot_swimmer_trajectory(fig,
-            trajectory->data[0], trajectory->num_frames));
+            fish_a_trajectory, trajectory->num_frames));
     fprintf(fig->gnucmd, "e\n");
     fflush(fig->gnucmd);
 
     WRAP_CHECK(errcode, jmp_err,
         plot_swimmer_trajectory(fig,
-            trajectory->data[1], trajectory->num_frames));
+            fish_b_trajectory, trajectory->num_frames));
     fprintf(fig->gnucmd, "e\n");
     fflush(fig->gnucmd);
 
@@ -180,39 +204,49 @@ static error_e reproduce_2025_fig_8()
 {
     error_e errcode = ERR_OK;
 
-    system_trajectory_t top_right, top_left, bottom_right, bottom_left;
+    system_trajectory_t a, b, c, d;
     error_e err_a, err_b, err_c, err_d;
 
-    err_a = generate_coplanar_simulation(&top_right,    0.0, 0.5, 0.0);
-    err_b = generate_coplanar_simulation(&top_left,     0.0, 5.0, 0.5);
-    err_c = generate_coplanar_simulation(&bottom_right, 0.0, 1.0, 1.0);
-    err_d = generate_coplanar_simulation(&bottom_left,  0.0, 0.5, 1.0);
-
+    err_a = generate_coplanar_simulation(&a, 0.0, 0.5, 0.0);
     WRAP_CHECK(errcode, jmp_err, err_a);
+
+    err_b = generate_coplanar_simulation(&b, 0.0, 5.0, 0.5);
     WRAP_CHECK(errcode, jmp_err, err_b);
+
+    err_c = generate_coplanar_simulation(&c, 0.0, 1.0, 1.0);
     WRAP_CHECK(errcode, jmp_err, err_c);
+
+    err_d = generate_coplanar_simulation(&d, 0.0, 0.5, 1.0);
     WRAP_CHECK(errcode, jmp_err, err_d);
 
     gnuplot_ctrl *fig = gnuplot_init();
     gnuplot_cmd(fig, "set terminal pngcairo size 1200,800");
     gnuplot_cmd(fig, "set output '" ROOT_OUTPUT_PATH "/validation-2025-8.png'");
-    gnuplot_cmd(fig, "set multiplot layout 2,2");
+    gnuplot_cmd(fig, "set multiplot layout 2,2 rowsfirst");
 
-    gnuplot_cmd(fig, "set xrange [-0.5:0.8]");
-    gnuplot_cmd(fig, "set yrange [0:1]");
-    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &top_right));
+    /* top left */
+    gnuplot_cmd(fig, "set xrange [-40:40]");
+    gnuplot_cmd(fig, "set yrange [-10:4]");
+    gnuplot_cmd(fig, "set title '(a)'");
+    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &a));
 
-    gnuplot_cmd(fig, "set xrange [-20:5]");
-    gnuplot_cmd(fig, "set yrange [0:16]");
-    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &top_left));
+    /* top right */
+    gnuplot_cmd(fig, "set xrange [-2:6]");
+    gnuplot_cmd(fig, "set yrange [-3:20]");
+    gnuplot_cmd(fig, "set title '(b)'");
+    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &b));
 
-    gnuplot_cmd(fig, "set xrange [-20:5]");
-    gnuplot_cmd(fig, "set yrange [0:16]");
-    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &bottom_right));
+    /* bottom left */
+    gnuplot_cmd(fig, "set xrange [-5:2]");
+    gnuplot_cmd(fig, "set yrange [0:6]");
+    gnuplot_cmd(fig, "set title '(c)'");
+    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &c));
 
-    gnuplot_cmd(fig, "set xrange [-1:5]");
-    gnuplot_cmd(fig, "set yrange [0:3]");
-    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &bottom_left));
+    /* bottom right */
+    gnuplot_cmd(fig, "set xrange [-1:3]");
+    gnuplot_cmd(fig, "set yrange [-1:3]");
+    gnuplot_cmd(fig, "set title '(d)'");
+    WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &d));
 
     gnuplot_cmd(fig, "unset multiplot");
     gnuplot_cmd(fig, "set output");

@@ -88,7 +88,7 @@ static size_t generate_positions_cube(
 
 /**
  * @brief Generates the positions of fish arranged as a spherical lattice
- *        centered at the origin (an unfilled ball).
+ *        centered at the origin (an unfilled ball) as a Fibonacci sphere.
  *
  * @param[out] positions  The destination vector.
  * @param[in]  radius     The radius of the sphere.
@@ -97,11 +97,53 @@ static size_t generate_positions_cube(
  * @return The number of positions generated.
  */
 static size_t generate_positions_sphere(
-    UNUSED double_3d_t **positions_ptr,
-    UNUSED const double radius,
-    UNUSED const double spacing)
+    double_3d_t **positions_ptr,
+    const double radius,
+    const double spacing)
 {
-    NOT_IMPLEMENTED();
+    /*
+     * Surface area / particle area estimate:
+     */
+    size_t count = (size_t)(
+        4.0 * M_PI * radius * radius /
+        (spacing * spacing)
+    );
+
+    if (count < 1)
+        count = 1;
+
+    double_3d_t *positions = malloc(
+        count * sizeof(*positions)
+    );
+
+    const double golden_ratio =
+        (1.0 + sqrt(5.0)) / 2.0;
+
+    const double golden_angle =
+        2.0 * M_PI / golden_ratio;
+
+    for (size_t i = 0; i < count; i++) {
+
+        double z = 1.0 -
+            2.0 * ((double)i + 0.5) / (double)count;
+
+        double xy_radius = sqrt(1.0 - z*z);
+
+        double theta = golden_angle * (double)i;
+
+        positions[i].x =
+            radius * xy_radius * cos(theta);
+
+        positions[i].y =
+            radius * xy_radius * sin(theta);
+
+        positions[i].z =
+            radius * z;
+    }
+
+    *positions_ptr = positions;
+
+    return count;
 }
 
 /**
@@ -115,11 +157,42 @@ static size_t generate_positions_sphere(
  * @return The number of positions generated.
  */
 static size_t generate_positions_ball(
-    UNUSED double_3d_t **positions_ptr,
-    UNUSED const double radius,
-    UNUSED const double spacing)
+    double_3d_t **positions_ptr,
+    const double radius,
+    const double spacing)
 {
-    NOT_IMPLEMENTED();
+    size_t capacity = 128;
+    size_t count = 0;
+
+    double_3d_t *positions = malloc(capacity * sizeof(*positions));
+
+    for (double x = -radius; x <= radius; x += spacing)
+        for (double y = -radius; y <= radius; y += spacing)
+            for (double z = -radius; z <= radius; z += spacing)
+            {
+                double r2 = x*x + y*y + z*z;
+
+                if (r2 <= radius * radius) {
+
+                    if (count == capacity) {
+                        capacity *= 2;
+                        positions = realloc(
+                            positions,
+                            capacity * sizeof(*positions)
+                        );
+                    }
+
+                    positions[count++] = (double_3d_t){
+                        .x = x,
+                        .y = y,
+                        .z = z
+                    };
+                }
+            }
+
+    *positions_ptr = positions;
+
+    return count;
 }
 
 /**
@@ -215,11 +288,12 @@ static void generate_orientation_random(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_radial_inward(
-    UNUSED double_3d_t *orientations,
-    UNUSED const double_3d_t *positions,
-    UNUSED const size_t N)
+    double_3d_t *orientations,
+    const double_3d_t *positions,
+    const size_t N)
 {
-    NOT_IMPLEMENTED();
+    for (size_t i = 0; i < N; ++i)
+        orientations[i] = d3_mult(positions[i], -1);
 }
 
 /**
@@ -230,11 +304,12 @@ static void generate_orientation_radial_inward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_radial_outward(
-    UNUSED double_3d_t *orientations,
-    UNUSED const double_3d_t *positions,
-    UNUSED const size_t N)
+    double_3d_t *orientations,
+    const double_3d_t *positions,
+    const size_t N)
 {
-    NOT_IMPLEMENTED();
+    for (size_t i = 0; i < N; ++i)
+        orientations[i] = positions[i];
 }
 
 /**
@@ -245,11 +320,25 @@ static void generate_orientation_radial_outward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_swirl_inward(
-    UNUSED double_3d_t *orientations,
-    UNUSED const double_3d_t *positions,
-    UNUSED const size_t N)
+    double_3d_t *orientations,
+    const double_3d_t *positions,
+    const size_t N)
 {
-    NOT_IMPLEMENTED();
+    for (size_t i = 0; i < N; ++i) {
+        double theta = atan2(positions[i].y, positions[i].x);
+        double alpha = M_PI / 4;
+
+        double sin_t = sin(theta);
+        double cos_t = cos(theta);
+
+        double cos_a = cos(alpha);
+        double sin_a = sin(alpha);
+
+        orientations[i] = D3(
+            -sin_t * sin_a - cos_t * cos_a,
+            cos_t * sin_a - sin_t * cos_a,
+            0);
+    }
 }
 
 /**
@@ -260,11 +349,14 @@ static void generate_orientation_swirl_inward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientation_swirl_outward(
-    UNUSED double_3d_t *orientations,
-    UNUSED const double_3d_t *positions,
-    UNUSED const size_t N)
+    double_3d_t *orientations,
+    const double_3d_t *positions,
+    const size_t N)
 {
-    NOT_IMPLEMENTED();
+    for (size_t i = 0; i < N; ++i) {
+        double theta = atan2(positions[i].y, positions[i].x);
+        orientations[i] = D3(-sin(theta), cos(theta), 0);
+    }
 }
 
 /**
@@ -275,11 +367,14 @@ static void generate_orientation_swirl_outward(
  * @param[in]  N             The number to generate.
  */
 static void generate_orientations_saddle(
-    UNUSED double_3d_t *orientations,
-    UNUSED const double_3d_t *positions,
-    UNUSED const size_t N)
+    double_3d_t *orientations,
+    const double_3d_t *positions,
+    const size_t N)
 {
-    NOT_IMPLEMENTED();
+    for (size_t i = 0; i < N; ++i) {
+        double theta = atan2(positions[i].y, positions[i].x);
+        orientations[i] = D3(-sin(theta), -cos(theta), 0);
+    }
 }
 
 /**
@@ -303,10 +398,17 @@ static void generate_orientations_aligned(
  * @param[in]  theta         The maximum perturbation angle.
  */
 static void perturb_orientations(
-    UNUSED double_3d_t *orientations,
-    UNUSED const float theta)
+    double_3d_t *orientations,
+    const float theta,
+    const size_t N)
 {
-    NOT_IMPLEMENTED();
+    for (size_t i = 0; i < N; ++i) {
+        double roll = random_double(-theta, theta);
+        double pitch = random_double(-theta, theta);
+        double yaw = random_double(-theta, theta);
+
+        orientations[i] = d3_rotate(orientations[i], roll, pitch, yaw);
+    }
 }
 
 /**
@@ -357,7 +459,7 @@ static void generate_orientations(
     }
 
     if (ori_opts.angular_perturbation > 0.0f)
-        perturb_orientations(orientations, ori_opts.angular_perturbation);
+        perturb_orientations(orientations, ori_opts.angular_perturbation, N);
 }
 
 /**
@@ -437,6 +539,7 @@ fish_system_t *fish_system_generate(
         swimmer->volumetric_flow_rate = sigmas[i];
         swimmer->sp_speed = sigmas[i] / (4 * M_PI * lengths[i] * lengths[i]);
     }
+    fish_system_normalize_orientation(new_system);
 
     free(positions);
     free(orientations);
@@ -568,9 +671,9 @@ fish_system_t *fish_system_combine_destroy(
 void fish_system_normalize_orientation(fish_system_t *system)
 {
     for (size_t i = 0; i < system->size; ++i) {
-        swimmer_t swimmer = system->swimmers[i];
-        double norm = d3_norm(swimmer.orientation);
-        swimmer.orientation = d3_div(swimmer.orientation, norm);
+        swimmer_t *swimmer = &system->swimmers[i];
+        double norm = d3_norm(swimmer->orientation);
+        swimmer->orientation = d3_div(swimmer->orientation, norm);
     }
 }
 

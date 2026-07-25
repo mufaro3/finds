@@ -108,6 +108,7 @@ static uint64_t builder_create_node(
     tree->num_particles[new_node_index]             = 0;
     tree->positions_sums[new_node_index]            = D3_ZERO;
     tree->orientations_sums[new_node_index]         = D3_ZERO;
+    tree->length_sums[new_node_index]               = 0.0;
     tree->volumetric_flow_rate_sums[new_node_index] = 0.0;
 
     return new_node_index;
@@ -266,6 +267,104 @@ static uint64_t builder_construct_tree_recursive(
     return new_node_index;
 }
 
+static void linear_octree_print_node(
+    const linear_octree_t *restrict tree,
+    uint64_t node_index,
+    int depth)
+{
+    /* indent to show tree shape */
+    for (int i = 0; i < depth; ++i)
+        printf("  ");
+
+    printf("[node %llu] leaf=%s n=%zu side_len=%.6g center=",
+        (unsigned long long) node_index,
+        tree->is_leaf[node_index] ? "t" : "f",
+        tree->num_particles[node_index],
+        tree->side_lengths[node_index]);
+    d3_print(tree->centers[node_index]);
+
+    printf(" pos_avg=");
+    if (tree->num_particles[node_index] > 0) {
+        double_3d_t pos_avg = d3_div(
+            tree->positions_sums[node_index],
+            tree->num_particles[node_index]);
+        d3_print(pos_avg);
+    } else {
+        printf("(empty)");
+    }
+
+    printf(" src_avg=");
+    d3_print(tree->source_position_avg[node_index]);
+    printf(" sink_avg=");
+    d3_print(tree->sink_position_avg[node_index]);
+    printf(" flow_avg=%.6g",
+        tree->volumetric_flow_rate_sums[node_index] /
+        tree->num_particles[node_index]);
+    printf("\n");
+
+    if (tree->is_leaf[node_index])
+        return;
+
+    for (int oct = 0; oct < 8; ++oct) {
+        uint64_t child = tree->child_indices[node_index][oct];
+        if (child != OCTREE_NO_CHILD)
+            linear_octree_print_node(tree, child, depth + 1);
+    }
+}
+
+void linear_octree_print(const linear_octree_t *restrict tree)
+{
+    printf("=== linear_octree (num_nodes=%zu) ===\n", tree->count);
+    if (tree->count == 0) {
+        printf("(empty tree)\n");
+        return;
+    }
+    linear_octree_print_node(tree, /* root = */ 0, /* depth = */ 0);
+    printf("=== end tree ===\n");
+}
+
+bool linear_octree_check_nan(const linear_octree_t *restrict tree, bool verbose)
+{
+    bool found_any = false;
+
+    for (size_t i = 0; i < tree->count; ++i)
+    {
+        if (d3_has_nan(tree->centers[i])) {
+            if (verbose) printf("NaN: node %zu centers\n", i);
+            found_any = true;
+        }
+        if (isnan(tree->side_lengths[i])) {
+            if (verbose) printf("NaN: node %zu side_lengths\n", i);
+            found_any = true;
+        }
+        if (d3_has_nan(tree->positions_sums[i])) {
+            if (verbose) printf("NaN: node %zu positions_sums\n", i);
+            found_any = true;
+        }
+        if (d3_has_nan(tree->orientations_sums[i])) {
+            if (verbose) printf("NaN: node %zu orientations_sums\n", i);
+            found_any = true;
+        }
+        if (isnan(tree->volumetric_flow_rate_sums[i])) {
+            if (verbose) printf("NaN: node %zu volumetric_flow_rate_sums\n", i);
+            found_any = true;
+        }
+        if (d3_has_nan(tree->source_position_avg[i])) {
+            if (verbose) printf("NaN: node %zu source_position_avg\n", i);
+            found_any = true;
+        }
+        if (d3_has_nan(tree->sink_position_avg[i])) {
+            if (verbose) printf("NaN: node %zu sink_position_avg\n", i);
+            found_any = true;
+        }
+    }
+
+    if (verbose && found_any)
+        printf("linear_octree_check_nan: tree contains NaN values (num_nodes=%zu)\n", tree->count);
+
+    return found_any;
+}
+
 linear_octree_t *linear_octree_build(const fish_system_t *restrict system)
 {
     const size_t N = system->size;
@@ -328,6 +427,14 @@ linear_octree_t *linear_octree_build(const fish_system_t *restrict system)
 
     /* now we can shrink the builder tree to make it dense */
     linear_octree_realloc(&builder.tree, builder.tree.count);
+
+    /* watch out for NaN */
+    if (linear_octree_check_nan(&builder.tree, true)) {
+        fprintf(stderr, "NaN detected in tree immediately after build "
+            "(bug is in build, not traversal)\n");
+        linear_octree_print(&builder.tree);
+        abort();
+    }
 
     /* and return the final constructed tree */
     linear_octree_t *constructed_tree = calloc(1, sizeof(linear_octree_t));
@@ -395,10 +502,11 @@ static void linear_octree_compute_vel_contrib_recurse(
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink)
 {
-    if (tree->count == 0)
+    if (tree->num_particles[current_node_index] == 0)
         return;
     double_3d_t current_node_position_avg = \
-        d3_div(tree->positions_sums[current_node_index], tree->count);
+        d3_div(tree->positions_sums[current_node_index],
+            tree->num_particles[current_node_index]);
 
     /* if this is a leaf then compute the interaction automatically */
     if (tree->is_leaf[current_node_index])

@@ -13,7 +13,7 @@
 
 # The distribution type essentially defines the shape/geometry of the fish
 # system. Valid options are "cube", "sphere", "ball", and "random".
-distribution_type = "sphere"
+distribution_type = "random"
 
 # The radius of the sphere or ball comprised of swimmers. Set this only if
 # 'distribution_type' is set to 'sphere' or 'ball'.
@@ -104,11 +104,11 @@ integration_method = "RK4"
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are
 # multiples of this time-step regardless of the internal, adapted time-step.
-time_step = 0.01
+time_step = 1.0
 
 # The ending time for the simulation, provided that the initial state begins
 # at 0 simulation-seconds.
-end_time = 10.0
+end_time = 100.0
 
 # These are the error tolerances used for determining the overall tolerance
 # threshold for adaptive time-stepping. These can only be set if the numerical

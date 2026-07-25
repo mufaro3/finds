@@ -83,7 +83,7 @@ target_link_libraries(finds PUBLIC
 )
 
 target_compile_definitions(finds PUBLIC CL_TARGET_OPENCL_VERSION=300)
-target_compile_options(finds PRIVATE -Wall -Wextra -Wno-missing-braces)
+target_compile_options(finds PRIVATE -Wall -Wextra -Wno-missing-braces -O3)
 
 # ------------------------------------------------------------------------------
 # Programs

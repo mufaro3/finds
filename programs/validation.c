@@ -80,7 +80,7 @@ static error_e generate_coplanar_simulation(
 
     derivative_computation_opts_t dc_opts = {0};
     dc_opts.method = BARNES_HUT;
-    dc_opts.approximation_threshold = 0.5;
+    dc_opts.approximation_threshold = 1.0;
 
     integration_opts_t int_opts = {0};
     int_opts.method = RUNGE_KUTTA_4;

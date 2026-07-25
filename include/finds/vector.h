@@ -158,6 +158,11 @@ static inline double_3d_t d3_max_each_dim(
     return D3(MAX(a.x,b.x), MAX(a.y,b.y), MAX(a.z,b.z));
 }
 
+static inline bool d3_has_nan(double_3d_t v)
+{
+    return isnan(v.x) || isnan(v.y) || isnan(v.z);
+}
+
 static inline double d3_max_component(const double_3d_t v)
 {
     return MAX(v.z, MAX(v.y, v.x));

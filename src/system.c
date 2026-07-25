@@ -734,7 +734,9 @@ fish_system_t *fish_system_copy(const fish_system_t *system)
  *
  * @param[in] N  The number of swimmers to generate.
  */
-fish_system_t *fish_system_generate_random(const size_t N)
+fish_system_t *fish_system_generate_random(
+    const size_t N,
+    const bool print_debug)
 {
     distribution_options_t dist_opts = {
         .type = DISTRIBUTION_RANDOM,
@@ -758,7 +760,7 @@ fish_system_t *fish_system_generate_random(const size_t N)
     };
 
     fish_system_t *system = fish_system_generate(
-        dist_opts, ori_opts, const_opts, true);
+        dist_opts, ori_opts, const_opts, print_debug);
 
     return system;
 }

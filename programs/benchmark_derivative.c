@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 
     /* build the system */
 
-    fish_system_t *system = fish_system_generate_random(arguments.size);
+    fish_system_t *system = fish_system_generate_random(arguments.size, true);
 
     /* compute derivative */
 

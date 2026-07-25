@@ -20,18 +20,20 @@
 #include <gnuplot_i/gnuplot_i.h>
 
 #include <finds/system.h>
+#include <finds/datastream.h>
+#include <finds/constants.h>
 #include <finds/derivative.h>
 #include <finds/util.h>
 #include <finds/evaluation.h>
 
-#define FIGURE_WIDTH  600
-#define FIGURE_HEIGHT 400
+#define FIGURE_WIDTH  1200
+#define FIGURE_HEIGHT 800
 
 #define SERIES_LABEL_SIZE 200
 #define DEFAULT_MIN_LOG_N 1
 #define DEFAULT_MAX_LOG_N 3
 
-#define N_METHODS 9
+#define N_METHODS 5
 
 const char *argp_program_version = "FINDS benchmarker v1.0";
 const char *argp_program_bug_address = \
@@ -61,7 +63,7 @@ static const struct argp_option OPTIONS[] = {
         .arg   = "MAX-LOGN",
         .flags = 0,
         .doc   = "Maximum (ending) log10(N)",
-        .group = 0 
+        .group = 0
     },
     { 0 }
 };
@@ -97,15 +99,19 @@ static void analyze_time_series(
     /* the scaling coefficient k is the exponent of the intercept */
     double log_coeff;
 
+    double cov00;
+    double cov01;
+    double cov11;
+
     gsl_fit_linear(
         log_n, 1,
         log_t, 1,
         len,
         &log_coeff,
         exponent,
-        NULL,
-        NULL,
-        NULL,
+        &cov00,
+        &cov01,
+        &cov11,
         chisq);
 
     *scaling_coeff = pow(10,log_coeff);
@@ -155,7 +161,9 @@ static void write_series_label(
 int main(int argc, char *argv[])
 {
     seed_rand();
-    int errno;
+    int exit_code = EXIT_SUCCESS;
+
+    mkdir_p(ROOT_OUTPUT_PATH, MODE_RW_USERONLY);
 
     cmdline_options_t args = {
         .min_log_n = DEFAULT_MIN_LOG_N,
@@ -180,28 +188,29 @@ int main(int argc, char *argv[])
     double *nvalues = calloc(N_SYS, sizeof(double));
     if (nvalues == NULL) {
         perror("nvalues calloc failed");
-        errno = EXIT_FAILURE;
+        exit_code = EXIT_FAILURE;
         goto jmp_nvalues;
     }
 
     double *log_nvalues = calloc(N_SYS, sizeof(double));
     if (log_nvalues == NULL) {
         perror("log_nvalues calloc failed");
-        errno = EXIT_FAILURE;
+        exit_code = EXIT_FAILURE;
         goto jmp_log_nvalues;
     }
 
     fish_system_t **systems = calloc(N_SYS, sizeof(fish_system_t *));
     if (systems == NULL) {
         perror("systems calloc failed");
-        errno = EXIT_FAILURE;
+        exit_code = EXIT_FAILURE;
         goto jmp_systems;
     }
 
+    puts("Generating systems..");
     for (size_t i = 0; i < N_SYS; ++i) {
         log_nvalues[i] = args.min_log_n + i;
         nvalues[i] = (int) pow(10, log_nvalues[i]);
-        systems[i] = fish_system_generate_random((size_t) nvalues[i]);
+        systems[i] = fish_system_generate_random((size_t) nvalues[i], false);
     }
 
     derivative_computation_opts_t methods[N_METHODS];
@@ -227,32 +236,40 @@ int main(int argc, char *argv[])
         times[meth_i] = calloc(N_SYS, sizeof(double));
         if (times[meth_i] == NULL) {
             perror("time array calloc failed");
-            errno = EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
             break;
         }
-        for (size_t sys_i = 0; sys_i < N_SYS; ++sys_i)
+        for (size_t sys_i = 0; sys_i < N_SYS; ++sys_i) {
             times[meth_i][sys_i] = time_derivative_computation(
                 systems[sys_i], methods[meth_i]);
+        }
     }
-    if (errno = EXIT_FAILURE)
+    if (exit_code == EXIT_FAILURE)
         goto jmp_systems;
 
     /* plot setup */
     gnuplot_ctrl *fig_handle = gnuplot_init();
     if (fig_handle == NULL) {
         perror("fig_handle calloc failed");
-        errno = EXIT_FAILURE;
+        exit_code = EXIT_FAILURE;
         goto jmp_fig_handle;
     }
 
-    gnuplot_setterm(fig_handle, "wxt", FIGURE_WIDTH, FIGURE_HEIGHT);
+    gnuplot_setterm(fig_handle, "pngcairo", FIGURE_WIDTH, FIGURE_HEIGHT);
+    gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark.png'");
     gnuplot_cmd(fig_handle, "set logscale xy");
     gnuplot_set_axislabel(fig_handle, "x", "System Size {/Symbol N}");
     gnuplot_set_axislabel(fig_handle, "y", "Runtime (s)");
     gnuplot_cmd(fig_handle, "set title 'Derivative computation scaling'");
     gnuplot_setstyle(fig_handle, "linespoints");
 
-    for (int meth_i = 0; meth_i < N_METHODS; ++meth_i) {
+    puts("Plotting data..");
+
+    /* Store labels because gnuplot needs them before the data */
+    char series_labels[N_METHODS][SERIES_LABEL_SIZE];
+
+    for (int meth_i = 0; meth_i < N_METHODS; ++meth_i)
+    {
         /* compute the logarithm of the runtimes */
         double log_times[N_SYS];
         vector_log10(log_times, times[meth_i], N_SYS);
@@ -261,26 +278,49 @@ int main(int argc, char *argv[])
            to obtain the slope and k-value */
         double exponent, scaling_coeff, chisq;
         analyze_time_series(
-            &exponent, &scaling_coeff, &chisq,
-            log_nvalues, log_times, N_SYS);
+            &exponent,
+            &scaling_coeff,
+            &chisq,
+            log_nvalues,
+            log_times,
+            N_SYS);
 
         /* develop the label */
-        char series_label_buf[SERIES_LABEL_SIZE];
         write_series_label(
-            series_label_buf,
+            series_labels[meth_i],
             SERIES_LABEL_SIZE,
             methods[meth_i],
             exponent,
             scaling_coeff,
             chisq);
-
-        /* plot the data */
-        gnuplot_plot_coordinates(fig_handle,
-            nvalues, times[meth_i], N_SYS,
-            series_label_buf);
     }
 
-    gnuplot_hardcopy(fig_handle, "output/benchmark.ps", "color");
+    /* Tell gnuplot how many datasets are coming */
+    fprintf(fig_handle->gnucmd, "plot ");
+
+    for (int meth_i = 0; meth_i < N_METHODS; ++meth_i)
+    {
+        fprintf(fig_handle->gnucmd,
+            "'-' with linespoints title '%s'%s",
+            series_labels[meth_i],
+            (meth_i == N_METHODS - 1) ? "\n" : ", ");
+    }
+
+    /* Stream each dataset */
+    for (int meth_i = 0; meth_i < N_METHODS; ++meth_i)
+    {
+        for (size_t i = 0; i < N_SYS; ++i)
+        {
+            fprintf(fig_handle->gnucmd,
+                "%lf %lf\n",
+                nvalues[i],
+                times[meth_i][i]);
+        }
+
+        fprintf(fig_handle->gnucmd, "e\n");
+    }
+
+    fflush(fig_handle->gnucmd);
 
     /* free everything and close */
 jmp_fig_handle:
@@ -300,5 +340,5 @@ jmp_log_nvalues:
 jmp_nvalues:
     free(nvalues);
 
-    return errno;
+    return exit_code;
 }

@@ -509,7 +509,7 @@ error_e datastream_write_system(
     {
         errcode = RAISE_ERROR(ERR_ALLOC,
             "Could not allocate HDF5 buffers!");
-        goto jmp_err;
+        goto jmp_alloc;
     }
 
     /* Convert fish_system_t into contiguous arrays */
@@ -591,7 +591,7 @@ error_e datastream_write_system(
     ++stream->n_frames;
 
     /* free everything */
-jmp_err:
+jmp_alloc:
     if (positions_buf != NULL)
         free(positions_buf);
     if (orientations_buf != NULL)
@@ -600,6 +600,8 @@ jmp_err:
         free(lengths_buf);
     if (sigmas_buf != NULL)
         free(sigmas_buf);
+
+jmp_err:
 
     return errcode;
 }

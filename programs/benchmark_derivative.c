@@ -22,8 +22,8 @@
 #define DEFAULT_APPROX_THRESHOLD 0.0
 #define DEFAULT_POLE_EXPANSION   0
 
-const const char *argp_program_version = "FINDS derivative timer v1.0";
-const const char *argp_program_bug_address = \
+const char *argp_program_version = "FINDS derivative timer v1.0";
+const char *argp_program_bug_address = \
     "Mufaro J. Machaya <mufaro2@student.ubc.ca>";
 
 static const char argp_program_doc[] = \
@@ -35,37 +35,37 @@ typedef struct {
 } benchmark_options_t;
 
 static const struct argp_option OPTIONS[] = {
-
     {
-        "size",
-        'n',
-        "N",
-        0,
-        "Number of fish-particles"
+        .name  = "size",
+        .key   = 'n',
+        .arg   = "N",
+        .flags = 0,
+        .doc   = "Number of fish-particles",
+        .group = 0
     },
-
     {
-        "method",
-        'm',
-        "METHOD",
-        0,
-        "Force computation method (direct, barnes-hut, fmm)"
+        .name  = "method",
+        .key   = 'm',
+        .arg   = "METHOD",
+        .flags = 0,
+        .doc   = "Force computation method (direct, barnes-hut, fmm)",
+        .group = 0
     },
-
     {
-        "theta",
-        't',
-        "THETA",
-        0,
-        "Barnes-Hut opening angle"
+        .name  = "theta",
+        .key   = 't',
+        .arg   = "THETA",
+        .flags = 0,
+        .doc   = "Barnes-Hut opening angle",
+        .group = 0
     },
-
     {
-        "poles",
-        'p',
-        "P",
-        0,
-        "Number of multipole expansion terms (FMM only)"
+        .name  = "poles",
+        .key   = 'p',
+        .arg   = "P",
+        .flags = 0,
+        .doc   = "Number of multipole expansion terms (FMM only)",
+        .group = 0
     },
 
     {0}
@@ -135,10 +135,13 @@ int main(int argc, char *argv[])
     };
 
     struct argp argp = {
-        OPTIONS,
-        parse_commandline_opts,
-        NULL,
-        argp_program_doc
+        .options     = OPTIONS,
+        .parser      = parse_commandline_opts,
+        .args_doc    = NULL,
+        .doc         = argp_program_doc,
+        .children    = NULL,
+        .help_filter = NULL,
+        .argp_domain = NULL
     };
 
     argp_parse(&argp, argc, argv, 0, 0, &arguments);

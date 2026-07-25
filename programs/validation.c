@@ -79,7 +79,8 @@ static error_e generate_coplanar_simulation(
     char output_filename[DOUBLE_BUFFER_SIZE];
 
     derivative_computation_opts_t dc_opts = {0};
-    dc_opts.method = BRUTE_FORCE;
+    dc_opts.method = BARNES_HUT;
+    dc_opts.approximation_threshold = 0.5;
 
     integration_opts_t int_opts = {0};
     int_opts.method = RUNGE_KUTTA_4;

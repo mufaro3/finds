@@ -24,8 +24,6 @@
 #include <finds/datastream.h>
 #include <finds/constants.h>
 
-#define ABOUT_ZERO 1E-15
-
 /**
  * @brief Generates an output folder filename for the simulation, which is
  *        just "sim-(TIMESTAMP)".

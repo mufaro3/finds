@@ -856,6 +856,18 @@ void fish_system_rotate(
 
 /* FEATURE POSITIONS */
 
+void calculate_swimmer_features(
+    const double_3d_t position,
+    const double_3d_t orientation,
+    const double length,
+    double_3d_t *source_position_ptr,
+    double_3d_t *sink_position_ptr)
+{
+    double_3d_t delta = d3_mult(orientation, length / 2);
+    *source_position_ptr = d3_add(position, delta);
+    *sink_position_ptr = d3_sub(position, delta);
+}
+
 /**
  * @brief Calculates the feature positions for a fish system.
  *
@@ -872,12 +884,12 @@ feature_positions_t *calculate_feature_positions(const fish_system_t *system)
 {
     feature_positions_t *feat_pos = feature_positions_allocate(system->size);
     for (size_t i = 0; i < system->size; ++i)
-    {
-        swimmer_t swimmer = system->swimmers[i];
-        double_3d_t delta = d3_mult(swimmer.orientation, swimmer.length / 2);
-        feat_pos->swimmers[i].source = d3_add(swimmer.position, delta);
-        feat_pos->swimmers[i].sink   = d3_sub(swimmer.position, delta);
-    }
+        calculate_swimmer_features(
+            system->swimmers[i].position,
+            system->swimmers[i].orientation,
+            system->swimmers[i].length,
+            &feat_pos->swimmers[i].source,
+            &feat_pos->swimmers[i].sink);
     return feat_pos;
 }
 

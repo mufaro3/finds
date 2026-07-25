@@ -55,6 +55,9 @@ clean:
 shell:
 	@$(DOCKER-SHELL)
 
+jupyter:
+	@$(COMPOSE) up jupyter
+
 # Project
 
 validate:

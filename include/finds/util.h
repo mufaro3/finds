@@ -20,6 +20,10 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define CLAMP(val, min, max) (MAX((min), MIN((val), (max))))
 
+#define ABOUT_ZERO 1E-10
+#define ABS(a) ((a) > 0 ? (a) : -(a))
+#define IS_CLOSE(a, b) (ABS((a) - (b)) < ABOUT_ZERO)
+
 #define NOT_IMPLEMENTED() \
     do { \
         fprintf(stderr, "Function not implemented: %s\n", __func__); \

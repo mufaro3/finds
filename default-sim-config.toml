@@ -77,7 +77,7 @@ volumetric_flow_rate = 8.0
 # method. Barnes-Hut refers to the O(N log N) interaction computation method
 # based on clustering far-away groups. FMM is the Fast Multipole Method, which
 # clusters close and far groups in O(N) or O(N log N) time.
-interaction_method = "brute-force"
+interaction_method = "barnes-hut"
 
 # This is the Barnes-Hut approximation threshold (theta), used as the maximum
 # ratio between the side-length of an octant and the distance to that octant
@@ -93,13 +93,13 @@ number_of_poles = 1
 
 # This is the numerical integration scheme to be used in the simulation. Some
 # of the options are naive, meaning that there will be no internal error
-# estimation or adaptive time-stepping. Valid options are "euler", "RK23",
-# "RK45", "RK54", "RK65", and "RK78".
+# estimation or adaptive time-stepping. Valid options are "euler", "RK4",
+# "RK23", "RK45", "RK54", "RK65", and "RK78".
 #
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error
 # computation for adaptive time-stepping.
-integration_method = "RK45"
+integration_method = "RK4"
 
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are

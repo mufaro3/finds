@@ -17,6 +17,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
+#include "util.h"
 
 typedef union {
     struct { double x, y, z; };
@@ -28,7 +30,9 @@ typedef struct {
 } mat3_t;
 
 #define D3(x,y,z) ((double_3d_t) {x,y,z})
-#define D3_ONE ((double_3d_t) { 1, 1, 1 })
+#define D3_FILL(a) D3(a,a,a)
+#define D3_ONE D3_FILL(1)
+#define D3_ZERO D3_FILL(0)
 
 #define MAT3(m11,m12,m13,m21,m22,m23,m31,m32,m33)   \
     ((mat3_t){ .data = {                            \
@@ -142,6 +146,23 @@ static inline double_3d_t d3_mat3_mult(const mat3_t mat, const double_3d_t v)
     );
 }
 
+static inline double_3d_t d3_min_each_dim(
+    const double_3d_t a, const double_3d_t b)
+{
+    return D3(MIN(a.x,b.x), MIN(a.y,b.y), MIN(a.z,b.z));
+}
+
+static inline double_3d_t d3_max_each_dim(
+    const double_3d_t a, const double_3d_t b)
+{
+    return D3(MAX(a.x,b.x), MAX(a.y,b.y), MAX(a.z,b.z));
+}
+
+static inline double d3_max_component(const double_3d_t v)
+{
+    return MAX(v.z, MAX(v.y, v.x));
+}
+
 static inline double_3d_t d3_rotate(
     const double_3d_t v,
     const double roll,
@@ -149,6 +170,11 @@ static inline double_3d_t d3_rotate(
     const double yaw)
 {
     return d3_mat3_mult(rotation_matrix(roll, pitch, yaw), v);
+}
+
+static inline bool d3_is_close(const double_3d_t a, const double_3d_t b)
+{
+    return IS_CLOSE(a.x, b.x) && IS_CLOSE(a.y, b.y) && IS_CLOSE(a.z, b.z);
 }
 
 static inline double d3_dot(const double_3d_t a, const double_3d_t b)

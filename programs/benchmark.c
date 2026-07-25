@@ -33,8 +33,8 @@
 
 #define N_METHODS 9
 
-const const char *argp_program_version = "FINDS benchmarker v1.0";
-const const char *argp_program_bug_address = \
+const char *argp_program_version = "FINDS benchmarker v1.0";
+const char *argp_program_bug_address = \
     "Mufaro J. Machaya <mufaro2@student.ubc.ca>";
 
 static const char argp_program_doc[] = \
@@ -48,19 +48,22 @@ typedef struct {
 
 static const struct argp_option OPTIONS[] = {
     {
-        "min-logn",
-        'a',
-        "MIN-LOGN",
-        0,
-        "Minimum (starting) log10(N)"
+        .name  = "min-logn",
+        .key   = 'a',
+        .arg   = "MIN-LOGN",
+        .flags = 0,
+        .doc   = "Minimum (starting) log10(N)",
+        .group = 0
     },
     {
-        "max-logn",
-        'b',
-        "MAX-LOGN",
-        0,
-        "Maximum (ending) log10(N)"
-    }
+        .name  = "max-logn",
+        .key   = 'b',
+        .arg   = "MAX-LOGN",
+        .flags = 0,
+        .doc   = "Maximum (ending) log10(N)",
+        .group = 0 
+    },
+    { 0 }
 };
 
 static error_t parse_commandline_opts(
@@ -72,8 +75,10 @@ static error_t parse_commandline_opts(
     {
         case 'a':
             opts->min_log_n = (size_t) strtoul(arg, NULL, 10);
+            break;
         case 'b':
             opts->max_log_n = (size_t) strtoul(arg, NULL, 10);
+            break;
         default:
             return ARGP_ERR_UNKNOWN;
     }
@@ -139,6 +144,8 @@ static void write_series_label(
             snprintf(method_buf, sizeof(method_buf),
                 "FMM, {/Symbol p}=%d", dc_opts.number_of_poles);
             break;
+        default:
+            break;
     }
 
     snprintf(series_label_buf, label_buf_size,
@@ -156,10 +163,13 @@ int main(int argc, char *argv[])
     };
 
     struct argp argp = {
-        OPTIONS,
-        parse_commandline_opts,
-        NULL,
-        argp_program_doc
+        .options     = OPTIONS,
+        .parser      = parse_commandline_opts,
+        .args_doc    = NULL,
+        .doc         = argp_program_doc,
+        .children    = NULL,
+        .help_filter = NULL,
+        .argp_domain = NULL
     };
 
     argp_parse(&argp, argc, argv, 0, 0, &args);
@@ -188,7 +198,7 @@ int main(int argc, char *argv[])
         goto jmp_systems;
     }
 
-    for (int i = 0; i < N_SYS; ++i) {
+    for (size_t i = 0; i < N_SYS; ++i) {
         log_nvalues[i] = args.min_log_n + i;
         nvalues[i] = (int) pow(10, log_nvalues[i]);
         systems[i] = fish_system_generate_random((size_t) nvalues[i]);
@@ -276,7 +286,6 @@ int main(int argc, char *argv[])
 jmp_fig_handle:
     gnuplot_close(fig_handle);
 
-jmp_times:
     for (size_t i = 0; i < N_METHODS; ++i)
         free(times[i]);
 

@@ -1,5 +1,5 @@
 services:
-  dev:
+  dev: &dev
     build: .
     container_name: c-dev
 
@@ -14,3 +14,15 @@ services:
 
     stdin_open: true
     tty: true
+
+  jupyter:
+    <<: *dev
+    build: .
+    ports:
+      - "8888:8888"
+    command: >
+      python3 -m jupyterlab
+      --ip=0.0.0.0
+      --port=8888
+      --no-browser
+      --allow-root

@@ -129,6 +129,12 @@ typedef struct {
     size_t size;
 } feature_positions_t;
 
+void calculate_swimmer_features(
+    const double_3d_t position,
+    const double_3d_t orientation,
+    const double length,
+    double_3d_t *source_position_ptr,
+    double_3d_t *sink_position_ptr);
 feature_positions_t *calculate_feature_positions(const fish_system_t *system);
 
 void feature_positions_print(const feature_positions_t *feat_pos);

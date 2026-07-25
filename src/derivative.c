@@ -16,6 +16,9 @@
 #include <finds/util.h>
 #include <finds/error.h>
 #include <finds/constants.h>
+#include <finds/interaction.h>
+#include <finds/barneshut.h>
+#include <finds/fmm.h>
 
 /** Lookup table for the interaction computation methods */
 const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
@@ -66,54 +69,6 @@ static void feature_velocity_destroy(feature_velocity_t **feat_vel_ptr)
 }
 
 /**
- * @brief Comptues the individual interaction between two features.
- *
- * Indiviudal interaction is computed as the displacement vector divided by
- * the distance cubed.
- *
- * @param[in] feat_a_pos  Position of feature A.
- * @param[in] feat_b_pos  Position of feature B.
- *
- * @return The interaction vector between A and B.
- */
-static inline double_3d_t calculate_feature_interaction(
-    const double_3d_t feat_a_pos,
-    const double_3d_t feat_b_pos)
-{
-    double_3d_t displacement = d3_sub(feat_a_pos, feat_b_pos);
-    double distance = d3_norm(displacement);
-    return d3_div(displacement, pow(distance, 3));
-}
-
-/**
- * @brief Computes the front and back interaction between the fishes i and j.
- *
- * @param[in]  fish_i  This fish (fish \(i\)).
- * @param[in]  fish_j  The other fish (fish \(j\)).
- *
- * @param[out] front_interaction  The output vector list for front interaction.
- * @param[out] back_interaction   The output vector list for back interaction.
- */
-static void calculate_fish_interaction(
-    const swimmer_features_t fish_i,
-    const swimmer_features_t fish_j,
-    double_3d_t *front_interaction,
-    double_3d_t *back_interaction)
-{
-    double_3d_t front_front = \
-        calculate_feature_interaction(fish_i.source, fish_j.source);
-    double_3d_t front_back = \
-        calculate_feature_interaction(fish_i.source, fish_j.sink);
-    *front_interaction = d3_sub(front_front, front_back);
-
-    double_3d_t back_front = \
-        calculate_feature_interaction(fish_i.sink, fish_j.source);
-    double_3d_t back_back = \
-        calculate_feature_interaction(fish_i.sink, fish_j.sink);
-    *back_interaction = d3_sub(back_front, back_back);
-}
-
-/**
  * @brief Computes the external velocity contribution using the naive
  *        brute-force method.
  *
@@ -125,10 +80,10 @@ static void calculate_fish_interaction(
  * @param[in]  feat_pos         The feature positions.
  */
 static void calc_ext_contrib_brute_force(
-    double_3d_t *external_source,
-    double_3d_t *external_sink,
-    const fish_system_t *system,
-    const feature_positions_t *feat_pos)
+    double_3d_t *restrict external_source,
+    double_3d_t *restrict external_sink,
+    const fish_system_t *restrict system,
+    const feature_positions_t *restrict feat_pos)
 {
     size_t N = system->size;
 
@@ -171,13 +126,25 @@ static void calc_ext_contrib_brute_force(
  * @param[in]  theta            The maximum approximation ratio for Barnes-Hut.
  */
 static void calc_ext_contrib_barnes_hut(
-    UNUSED double_3d_t *external_source,
-    UNUSED double_3d_t *external_sink,
-    UNUSED const fish_system_t *system,
-    UNUSED const feature_positions_t *feat_pos,
-    UNUSED const double theta)
+    double_3d_t *restrict external_source,
+    double_3d_t *restrict external_sink,
+    const fish_system_t *restrict system,
+    const feature_positions_t *restrict feat_pos,
+    const double theta)
 {
-    NOT_IMPLEMENTED();
+    const size_t N = system->size;
+    linear_octree_t *tree = linear_octree_build(system);
+
+    for (size_t i = 0; i < N; ++i)
+        linear_octree_compute_vel_contrib(
+            tree,
+            system->swimmers[i].position,
+            feat_pos->swimmers[i],
+            theta,
+            &external_source[i],
+            &external_sink[i]);
+
+    linear_octree_destroy(&tree);
 }
 
 /**
@@ -195,10 +162,10 @@ static void calc_ext_contrib_barnes_hut(
  *                              multipole expansion.
  */
 static void calc_ext_contrib_fmm(
-    UNUSED double_3d_t *external_source,
-    UNUSED double_3d_t *external_sink,
-    UNUSED const fish_system_t *system,
-    UNUSED const feature_positions_t *feat_pos,
+    UNUSED double_3d_t *restrict external_source,
+    UNUSED double_3d_t *restrict external_sink,
+    UNUSED const fish_system_t *restrict system,
+    UNUSED const feature_positions_t *restrict feat_pos,
     UNUSED const double theta,
     UNUSED const uint8_t order)
 {
@@ -214,7 +181,7 @@ static void calc_ext_contrib_fmm(
  * @return The velocities of the sources and sinks for this system.
  */
 static feature_velocity_t *calculate_feature_velocities(
-    const fish_system_t *system,
+    const fish_system_t *restrict system,
     const derivative_computation_opts_t dc_opts)
 {
     size_t N = system->size;

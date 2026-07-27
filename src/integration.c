@@ -77,6 +77,24 @@ fish_system_t *step_euler(
 }
 
 /**
+ * @brief Naive 2nd-order Runge-Kutta
+ *
+ * @param[in]  state     The system state for this time.
+ * @param[in]  time_step The time-step to advance to.
+ * @param[out] error     The RMS error-norm for this state.
+ *
+ * @return The advanced state \f$y(t + \delta t)\f$.
+ */
+fish_system_t *step_rk2(
+    UNUSED const fish_system_t *state,
+    UNUSED const double time_step,
+    UNUSED const derivative_computation_opts_t dc_opts,
+    UNUSED double *error)
+{
+    NOT_IMPLEMENTED();
+}
+
+/**
  * @brief Naive 4th-order Runge-Kutta
  *
  * @param[in]  state     The system state for this time.
@@ -154,6 +172,60 @@ jmp_err:
     }
 
     return next;
+}
+
+/**
+ * @brief Naive 5th-order Runge-Kutta
+ *
+ * @param[in]  state     The system state for this time.
+ * @param[in]  time_step The time-step to advance to.
+ * @param[out] error     The RMS error-norm for this state.
+ *
+ * @return The advanced state \f$y(t + \delta t)\f$.
+ */
+fish_system_t *step_rk5(
+    UNUSED const fish_system_t *state,
+    UNUSED const double time_step,
+    UNUSED const derivative_computation_opts_t dc_opts,
+    UNUSED double *error)
+{
+    NOT_IMPLEMENTED();
+}
+
+/**
+ * @brief Naive 6th-order Runge-Kutta
+ *
+ * @param[in]  state     The system state for this time.
+ * @param[in]  time_step The time-step to advance to.
+ * @param[out] error     The RMS error-norm for this state.
+ *
+ * @return The advanced state \f$y(t + \delta t)\f$.
+ */
+fish_system_t *step_rk6(
+    UNUSED const fish_system_t *state,
+    UNUSED const double time_step,
+    UNUSED const derivative_computation_opts_t dc_opts,
+    UNUSED double *error)
+{
+    NOT_IMPLEMENTED();
+}
+
+/**
+ * @brief Naive 8th-order Runge-Kutta
+ *
+ * @param[in]  state     The system state for this time.
+ * @param[in]  time_step The time-step to advance to.
+ * @param[out] error     The RMS error-norm for this state.
+ *
+ * @return The advanced state \f$y(t + \delta t)\f$.
+ */
+fish_system_t *step_rk8(
+    UNUSED const fish_system_t *state,
+    UNUSED const double time_step,
+    UNUSED const derivative_computation_opts_t dc_opts,
+    UNUSED double *error)
+{
+    NOT_IMPLEMENTED();
 }
 
 /**

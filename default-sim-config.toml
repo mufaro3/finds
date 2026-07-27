@@ -85,9 +85,8 @@ interaction_method = "barnes-hut"
 # "interaction_method" is set to "barnes-hut".
 approximation_threshold = 0.5
 
-# This is the expansion order for the Fast Multipole Method. Requires that
-# "interaction_method" is set to "FMM".
-number_of_poles = 1
+# Relative tolerance for the Fast-Multipole Method
+precision = 1E-6
 
 [integration]
 

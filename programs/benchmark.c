@@ -11,7 +11,6 @@
  *
  * License: MIT
  */
-#include <argp.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,63 +29,15 @@
 #define FIGURE_HEIGHT 800
 
 #define SERIES_LABEL_SIZE 200
-#define DEFAULT_MIN_LOG_N 1
-#define DEFAULT_MAX_LOG_N 3
 
-#define N_METHODS 5
+#define BRUTE_MAX_LOG_N 4
+#define BH_MAX_LOG_N    7
+#define FMM_MAX_LOG_N   8
 
-const char *argp_program_version = "FINDS benchmarker v1.0";
-const char *argp_program_bug_address = \
-    "Mufaro J. Machaya <mufaro2@student.ubc.ca>";
+#define MIN_LOG_N 1
+#define MAX_LOG_N 5
 
-static const char argp_program_doc[] = \
-    "Times and compares the derivative computations for each computation "
-    "method within FINDS, including Brute Force, Barnes-Hut from theta=1/4 to "
-    "theta=1), and the Fast Multipole Method (FMM) from p=4 to p=16.";
-
-typedef struct {
-    size_t min_log_n, max_log_n;
-} cmdline_options_t;
-
-static const struct argp_option OPTIONS[] = {
-    {
-        .name  = "min-logn",
-        .key   = 'a',
-        .arg   = "MIN-LOGN",
-        .flags = 0,
-        .doc   = "Minimum (starting) log10(N)",
-        .group = 0
-    },
-    {
-        .name  = "max-logn",
-        .key   = 'b',
-        .arg   = "MAX-LOGN",
-        .flags = 0,
-        .doc   = "Maximum (ending) log10(N)",
-        .group = 0
-    },
-    { 0 }
-};
-
-static error_t parse_commandline_opts(
-    int key, char *arg, struct argp_state *state)
-{
-    cmdline_options_t *opts = state->input;
-
-    switch (key)
-    {
-        case 'a':
-            opts->min_log_n = (size_t) strtoul(arg, NULL, 10);
-            break;
-        case 'b':
-            opts->max_log_n = (size_t) strtoul(arg, NULL, 10);
-            break;
-        default:
-            return ARGP_ERR_UNKNOWN;
-    }
-
-    return 0;
-}
+#define N_METHODS 9
 
 static void analyze_time_series(
     double *exponent,
@@ -117,10 +68,17 @@ static void analyze_time_series(
     *scaling_coeff = pow(10,log_coeff);
 }
 
-static void vector_log10(double *dest, const double *src, const size_t len)
+static size_t count_non_nan(const double *array, size_t size)
 {
-    for (size_t i = 0; i < len; ++i)
-        dest[i] = log(src[i]) / log(10);
+    size_t count = 0;
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (!isnan(array[i]))
+            count++;
+    }
+
+    return count;
 }
 
 static void write_series_label(
@@ -133,22 +91,22 @@ static void write_series_label(
 {
     char statistics_buf[100] = {0};
     snprintf(statistics_buf, sizeof(statistics_buf),
-        "slope=%.1f, k=%.2e, {/Symbol c}^2=%.1e",
+        "Slope=%.1f, k=%.2e, {/Symbol c}^2=%.1e",
         exponent, scaling_coeff, chisq);
 
     char method_buf[100] = {0};
     switch (dc_opts.method) {
         case BRUTE_FORCE:
-            snprintf(method_buf, sizeof(method_buf), "Brute Force");
+            snprintf(method_buf, sizeof(method_buf), "Brute Force, ");
             break;
         case BARNES_HUT:
             snprintf(method_buf, sizeof(method_buf),
-                "Barnes-Hut, {/Symbol q}=%.2f",
+                "Barnes-Hut, {/Symbol q}=%.2f, ",
                 dc_opts.approximation_threshold);
             break;
         case FAST_MULTIPOLE_METHOD:
             snprintf(method_buf, sizeof(method_buf),
-                "FMM, {/Symbol p}=%d", dc_opts.number_of_poles);
+                "FMM, {/Symbol e}=%.0e, ", dc_opts.precision);
             break;
         default:
             break;
@@ -158,67 +116,64 @@ static void write_series_label(
         "%s %s", method_buf, statistics_buf);
 }
 
-int main(int argc, char *argv[])
+static bool method_runs_at_size(
+    derivative_computation_opts_t method,
+    size_t logN)
+{
+    switch (method.method)
+    {
+        case BRUTE_FORCE:
+            return logN <= BRUTE_MAX_LOG_N;
+
+        case BARNES_HUT:
+            return logN <= BH_MAX_LOG_N;
+
+        case FAST_MULTIPOLE_METHOD:
+            return logN <= FMM_MAX_LOG_N;
+
+        default:
+            return false;
+    }
+}
+
+
+int main(void)
 {
     seed_rand();
-    int exit_code = EXIT_SUCCESS;
 
+    int exit_code = EXIT_SUCCESS;
     mkdir_p(ROOT_OUTPUT_PATH, MODE_RW_USERONLY);
 
-    cmdline_options_t args = {
-        .min_log_n = DEFAULT_MIN_LOG_N,
-        .max_log_n = DEFAULT_MAX_LOG_N
-    };
-
-    struct argp argp = {
-        .options     = OPTIONS,
-        .parser      = parse_commandline_opts,
-        .args_doc    = NULL,
-        .doc         = argp_program_doc,
-        .children    = NULL,
-        .help_filter = NULL,
-        .argp_domain = NULL
-    };
-
-    argp_parse(&argp, argc, argv, 0, 0, &args);
-
-
-    const size_t N_SYS = args.max_log_n - args.min_log_n;
+    const size_t N_SYS = MAX_LOG_N - MIN_LOG_N;
 
     double *nvalues = calloc(N_SYS, sizeof(double));
-    if (nvalues == NULL) {
+    if (nvalues == NULL)
+    {
         perror("nvalues calloc failed");
-        exit_code = EXIT_FAILURE;
-        goto jmp_nvalues;
+        return EXIT_FAILURE;
     }
 
     double *log_nvalues = calloc(N_SYS, sizeof(double));
-    if (log_nvalues == NULL) {
+    if (log_nvalues == NULL)
+    {
         perror("log_nvalues calloc failed");
-        exit_code = EXIT_FAILURE;
-        goto jmp_log_nvalues;
+        free(nvalues);
+        return EXIT_FAILURE;
     }
 
-    fish_system_t **systems = calloc(N_SYS, sizeof(fish_system_t *));
-    if (systems == NULL) {
-        perror("systems calloc failed");
-        exit_code = EXIT_FAILURE;
-        goto jmp_systems;
-    }
-
-    puts("Generating systems..");
-    for (size_t i = 0; i < N_SYS; ++i) {
-        log_nvalues[i] = args.min_log_n + i;
-        nvalues[i] = (int) pow(10, log_nvalues[i]);
-        systems[i] = fish_system_generate_random((size_t) nvalues[i], false);
+    puts("Generating system sizes..");
+    for (size_t i = 0; i < N_SYS; ++i)
+    {
+        log_nvalues[i] = MIN_LOG_N + i;
+        nvalues[i] = pow(10, log_nvalues[i]);
     }
 
     derivative_computation_opts_t methods[N_METHODS];
 
-    /* Brute-Force */
+    /* Brute force */
     methods[0].method = BRUTE_FORCE;
 
-    /* Barnes-Hut*/
+    /* Barnes-Hut */
     for (int meth_i = 1; meth_i < 5; ++meth_i) {
         methods[meth_i].method = BARNES_HUT;
         methods[meth_i].approximation_threshold = 0.25 * meth_i;
@@ -227,118 +182,148 @@ int main(int argc, char *argv[])
     /* Fast Multipole Method */
     for (int meth_i = 5; meth_i < N_METHODS; ++meth_i) {
         methods[meth_i].method = FAST_MULTIPOLE_METHOD;
-        methods[meth_i].number_of_poles = 4 * (meth_i - 4);
+        methods[meth_i].precision = pow(10, 3 - meth_i);
     }
 
-    /* compute the times for each method with each N */
+    /* Compute timings */
     double *times[N_METHODS];
-    for (size_t meth_i = 0; meth_i < N_METHODS; ++meth_i) {
+
+    for (size_t meth_i = 0; meth_i < N_METHODS; ++meth_i)
+    {
         times[meth_i] = calloc(N_SYS, sizeof(double));
         if (times[meth_i] == NULL) {
-            perror("time array calloc failed");
+            perror("times calloc failed");
             exit_code = EXIT_FAILURE;
-            break;
+            goto jmp_times;
         }
-        for (size_t sys_i = 0; sys_i < N_SYS; ++sys_i) {
+
+        for (size_t sys_i = 0; sys_i < N_SYS; ++sys_i)
+            times[meth_i][sys_i] = NAN;
+    }
+
+    for (size_t sys_i = 0; sys_i < N_SYS; ++sys_i)
+    {
+        size_t logN = log_nvalues[sys_i];
+
+        printf("Generating system: N = %zu\n", (size_t)nvalues[sys_i]);
+
+        fish_system_t *system = fish_system_generate_random(
+            (size_t)nvalues[sys_i], false);
+
+        if (system == NULL) {
+            fprintf(stderr, "Failed to generate system\n");
+            exit_code = EXIT_FAILURE;
+            goto jmp_systems;
+        }
+
+
+        for (size_t meth_i = 0; meth_i < N_METHODS; ++meth_i)
+        {
+            if (!method_runs_at_size(methods[meth_i], logN)) {
+                continue;
+            }
+
+            printf("  Method %zu\n", meth_i);
+
             times[meth_i][sys_i] = time_derivative_computation(
-                systems[sys_i], methods[meth_i]);
+                system,
+                methods[meth_i]
+                );
         }
-    }
-    if (exit_code == EXIT_FAILURE)
-        goto jmp_systems;
 
-    /* plot setup */
-    gnuplot_ctrl *fig_handle = gnuplot_init();
-    if (fig_handle == NULL) {
-        perror("fig_handle calloc failed");
-        exit_code = EXIT_FAILURE;
-        goto jmp_fig_handle;
+    jmp_systems:
+        fish_system_destroy(&system);
     }
 
-    gnuplot_setterm(fig_handle, "pngcairo", FIGURE_WIDTH, FIGURE_HEIGHT);
-    gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark.png'");
-    gnuplot_cmd(fig_handle, "set logscale xy");
-    gnuplot_set_axislabel(fig_handle, "x", "System Size {/Symbol N}");
-    gnuplot_set_axislabel(fig_handle, "y", "Runtime (s)");
-    gnuplot_cmd(fig_handle, "set title 'Derivative computation scaling'");
-    gnuplot_setstyle(fig_handle, "linespoints");
-
-    puts("Plotting data..");
-
-    /* Store labels because gnuplot needs them before the data */
+    /* Generate plot labels */
     char series_labels[N_METHODS][SERIES_LABEL_SIZE];
 
     for (int meth_i = 0; meth_i < N_METHODS; ++meth_i)
     {
-        /* compute the logarithm of the runtimes */
         double log_times[N_SYS];
-        vector_log10(log_times, times[meth_i], N_SYS);
 
-        /* perform linear regression of the logarithms
-           to obtain the slope and k-value */
-        double exponent, scaling_coeff, chisq;
+        for (size_t i = 0; i < N_SYS; ++i)
+            if (isnan(times[meth_i][i]))
+                log_times[i] = NAN;
+            else
+                log_times[i] = log10(times[meth_i][i]);
+
+        double exponent;
+        double scaling_coeff;
+        double chisq;
+
+        const size_t len = count_non_nan(log_times, N_SYS);
+
         analyze_time_series(
             &exponent,
             &scaling_coeff,
             &chisq,
             log_nvalues,
             log_times,
-            N_SYS);
+            len
+        );
 
-        /* develop the label */
         write_series_label(
             series_labels[meth_i],
             SERIES_LABEL_SIZE,
             methods[meth_i],
             exponent,
             scaling_coeff,
-            chisq);
+            chisq
+        );
     }
 
-    /* Tell gnuplot how many datasets are coming */
-    fprintf(fig_handle->gnucmd, "plot ");
+    gnuplot_ctrl *fig_handle = gnuplot_init();
+    if (fig_handle == NULL) {
+        perror("gnuplot_init failed");
+        exit_code = EXIT_FAILURE;
+        goto jmp_times;
+    }
 
+    gnuplot_setterm(fig_handle, "pngcairo", FIGURE_WIDTH, FIGURE_HEIGHT);
+    gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark.png'");
+    gnuplot_cmd(fig_handle, "set logscale xy");
+    gnuplot_cmd(fig_handle, "set key bottom right");
+    gnuplot_set_axislabel(fig_handle, "x", "System Size {/Symbol N}");
+    gnuplot_set_axislabel(fig_handle, "y", "Runtime (s)");
+    gnuplot_cmd(fig_handle, "set title 'Derivative computation scaling'");
+    gnuplot_setstyle(fig_handle, "linespoints");
+
+    /* plot data */
+    puts("Plotting data..");
+    fprintf(fig_handle->gnucmd, "plot ");
     for (int meth_i = 0; meth_i < N_METHODS; ++meth_i)
-    {
-        fprintf(fig_handle->gnucmd,
+        fprintf(
+            fig_handle->gnucmd,
             "'-' with linespoints title '%s'%s",
             series_labels[meth_i],
-            (meth_i == N_METHODS - 1) ? "\n" : ", ");
-    }
+            meth_i == N_METHODS - 1 ? "\n" : ", "
+        );
 
-    /* Stream each dataset */
-    for (int meth_i = 0; meth_i < N_METHODS; ++meth_i)
-    {
-        for (size_t i = 0; i < N_SYS; ++i)
-        {
-            fprintf(fig_handle->gnucmd,
+    /* Send datasets to gnuplot */
+    for (int meth_i = 0; meth_i < N_METHODS; ++meth_i) {
+        for (size_t i = 0; i < N_SYS; ++i) {
+            if (isnan(times[meth_i][i]))
+                continue;
+
+            fprintf(
+                fig_handle->gnucmd,
                 "%lf %lf\n",
                 nvalues[i],
                 times[meth_i][i]);
         }
-
         fprintf(fig_handle->gnucmd, "e\n");
     }
-
     fflush(fig_handle->gnucmd);
-
-    /* free everything and close */
-jmp_fig_handle:
     gnuplot_close(fig_handle);
 
+jmp_times:
     for (size_t i = 0; i < N_METHODS; ++i)
         free(times[i]);
 
-jmp_systems:
-    for (size_t i = 0; i < N_SYS; ++i)
-        fish_system_destroy(&systems[i]);
-    free(systems);
-
-jmp_log_nvalues:
     free(log_nvalues);
-
-jmp_nvalues:
     free(nvalues);
+
 
     return exit_code;
 }

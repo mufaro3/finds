@@ -7,3 +7,6 @@
 [submodule "lib/progressbar"]
 	path = lib/progressbar
 	url = https://github.com/doches/progressbar.git
+[submodule "lib/FMM3D"]
+	path = lib/FMM3D
+	url = https://github.com/flatironinstitute/FMM3D.git

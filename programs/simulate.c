@@ -294,9 +294,9 @@ static void load_sim_config_file(
                 datum_approximation_threshold.u.fp64;
             break;
         case FAST_MULTIPOLE_METHOD:
-            toml_datum_t datum_num_poles = conf_read_value(&result,
-                conf_filepath, "differentiation.number_of_poles", TOML_INT64);
-            opts->dc_opts.number_of_poles = datum_num_poles.u.int64;
+            toml_datum_t datum_precision = conf_read_value(&result,
+                conf_filepath, "differentiation.precision", TOML_FP64);
+            opts->dc_opts.precision = datum_precision.u.fp64;
             break;
         default:
             conf_load_err(conf_filepath,

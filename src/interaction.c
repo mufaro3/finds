@@ -1,25 +1,6 @@
 #include <finds/vector.h>
 #include <finds/system.h>
-
-/**
- * @brief Comptues the individual interaction between two features.
- *
- * Indiviudal interaction is computed as the displacement vector divided by
- * the distance cubed.
- *
- * @param[in] feat_a_pos  Position of feature A.
- * @param[in] feat_b_pos  Position of feature B.
- *
- * @return The interaction vector between A and B.
- */
-static inline double_3d_t calculate_feature_interaction(
-    const double_3d_t feat_a_pos,
-    const double_3d_t feat_b_pos)
-{
-    double_3d_t displacement = d3_sub(feat_a_pos, feat_b_pos);
-    double distance = d3_norm(displacement);
-    return d3_div(displacement, pow(distance, 3));
-}
+#include <finds/interaction.h>
 
 /**
  * @brief Computes the front and back interaction between the fishes i and j.

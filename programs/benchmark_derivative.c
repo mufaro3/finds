@@ -20,7 +20,7 @@
 #define DEFAULT_SIZE             100
 #define DEFAULT_METHOD           BRUTE_FORCE
 #define DEFAULT_APPROX_THRESHOLD 0.0
-#define DEFAULT_POLE_EXPANSION   0
+#define DEFAULT_PRECISION        1E-6
 
 const char *argp_program_version = "FINDS derivative timer v1.0";
 const char *argp_program_bug_address = \
@@ -60,11 +60,11 @@ static const struct argp_option OPTIONS[] = {
         .group = 0
     },
     {
-        .name  = "poles",
+        .name  = "precision",
         .key   = 'p',
         .arg   = "P",
         .flags = 0,
-        .doc   = "Number of multipole expansion terms (FMM only)",
+        .doc   = "Relative error tolerance (FMM only)",
         .group = 0
     },
 
@@ -101,7 +101,7 @@ static error_t parse_commandline_opts(
             break;
 
         case 'p':
-            opts->dc_opts.number_of_poles = (size_t) strtoul(arg, NULL, 10);
+            opts->dc_opts.precision = (double) strtod(arg, NULL);
             break;
 
         case ARGP_KEY_END:
@@ -110,8 +110,8 @@ static error_t parse_commandline_opts(
                 argp_error(state, "Barnes-Hut requires --theta");
 
             if (opts->dc_opts.method == FAST_MULTIPOLE_METHOD && \
-                opts->dc_opts.number_of_poles == 0)
-                argp_error(state, "FMM requires --poles");
+                opts->dc_opts.precision == 0)
+                argp_error(state, "FMM requires --precision");
             break;
 
         default:
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
         .dc_opts = {
             .method = DEFAULT_METHOD,
             .approximation_threshold = DEFAULT_APPROX_THRESHOLD,
-            .number_of_poles = DEFAULT_POLE_EXPANSION
+            .precision = DEFAULT_PRECISION
         }
     };
 

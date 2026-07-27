@@ -4,6 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gfortran \
     gcc \
     g++ \
     cmake \
@@ -37,6 +38,11 @@ RUN apt-get update && apt-get install -y \
     python3.12-venv \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+COPY lib/FMM3D /workspace/lib/FMM3D
+
+RUN cd /workspace/lib/FMM3D && \
+    make lib
 
 USER 1000
 

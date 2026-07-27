@@ -79,12 +79,12 @@ static error_e generate_coplanar_simulation(
     char output_filename[DOUBLE_BUFFER_SIZE];
 
     derivative_computation_opts_t dc_opts = {0};
-    dc_opts.method = BARNES_HUT;
-    dc_opts.approximation_threshold = 1.0;
+    dc_opts.method = FAST_MULTIPOLE_METHOD;
+    dc_opts.approximation_threshold = 1E-8;
 
     integration_opts_t int_opts = {0};
     int_opts.method = RUNGE_KUTTA_4;
-    int_opts.eval_time_step = 0.001;
+    int_opts.eval_time_step = 0.025;
     int_opts.end_time = 10;
     int_opts.absolute_error_tolerance = 1E-8;
     int_opts.relative_error_tolerance = 1E-6;

@@ -11,6 +11,8 @@
  * License: MIT
  */
 #include <stdlib.h>
+#include <stdint.h>
+#include <lfmm3d_c.h>
 #include <finds/derivative.h>
 #include <finds/vector.h>
 #include <finds/util.h>
@@ -18,7 +20,6 @@
 #include <finds/constants.h>
 #include <finds/interaction.h>
 #include <finds/barneshut.h>
-#include <finds/fmm.h>
 
 /** Lookup table for the interaction computation methods */
 const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
@@ -87,6 +88,7 @@ static void calc_ext_contrib_brute_force(
 {
     size_t N = system->size;
 
+    #pragma omp parallel for
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
             if (i == j)
@@ -135,6 +137,7 @@ static void calc_ext_contrib_barnes_hut(
     const size_t N = system->size;
     linear_octree_t *tree = linear_octree_build(system);
 
+    #pragma omp parallel for
     for (size_t i = 0; i < N; ++i)
         linear_octree_compute_vel_contrib(
             tree,
@@ -162,14 +165,133 @@ static void calc_ext_contrib_barnes_hut(
  *                              multipole expansion.
  */
 static void calc_ext_contrib_fmm(
-    UNUSED double_3d_t *restrict external_source,
-    UNUSED double_3d_t *restrict external_sink,
-    UNUSED const fish_system_t *restrict system,
-    UNUSED const feature_positions_t *restrict feat_pos,
-    UNUSED const double theta,
-    UNUSED const uint8_t order)
+    double_3d_t *restrict external_source,
+    double_3d_t *restrict external_sink,
+    const fish_system_t *restrict system,
+    const feature_positions_t *restrict feat_pos,
+    const double precision)
 {
-    NOT_IMPLEMENTED();
+    const size_t N = system->size;
+    int64_t N_CHARGES = (int64_t)(2 * N);
+
+    /* Allocate FMM arrays */
+
+    double *positions = calloc(3 * N_CHARGES, sizeof(double));
+    double *charges   = calloc(N_CHARGES, sizeof(double));
+
+    double *pot  = calloc(N_CHARGES, sizeof(double));
+    double *grad = calloc(3 * N_CHARGES, sizeof(double));
+
+    /* We evaluate on the same locations, so targets == sources. */
+
+    double *pottarg  = calloc(N_CHARGES, sizeof(double));
+    double *gradtarg = calloc(3 * N_CHARGES, sizeof(double));
+
+    if (!positions || !charges || !pot || !grad ||
+        !pottarg || !gradtarg)
+    {
+        goto cleanup;
+    }
+
+    /* Build charge list */
+
+    for (size_t i = 0; i < N; ++i) {
+
+        const int src = 2 * (int)i;
+        const int snk = src + 1;
+
+        const double sigma = system->swimmers[i].volumetric_flow_rate;
+
+        /* source */
+        positions[3 * src + 0] = feat_pos->swimmers[i].source.x;
+        positions[3 * src + 1] = feat_pos->swimmers[i].source.y;
+        positions[3 * src + 2] = feat_pos->swimmers[i].source.z;
+        charges[src] = +sigma;
+
+        /* sink */
+        positions[3 * snk + 0] = feat_pos->swimmers[i].sink.x;
+        positions[3 * snk + 1] = feat_pos->swimmers[i].sink.y;
+        positions[3 * snk + 2] = feat_pos->swimmers[i].sink.z;
+        charges[snk] = -sigma;
+    }
+
+    /* Run FMM */
+
+    int64_t ier = 0;
+    double eps = precision;
+
+    lfmm3d_st_c_g_(
+        &eps,
+        &N_CHARGES,
+        positions,
+        charges,
+        pot,
+        grad,
+        &N_CHARGES,
+        positions,
+        pottarg,
+        gradtarg,
+        &ier);
+
+    if (ier != 0) {
+        fprintf(stderr, "lfmm3d_st_c_g failed (ier=%d)\n", (int)ier);
+        goto cleanup;
+    }
+
+    /* Copy target gradients into output */
+
+    for (size_t i = 0; i < N; ++i) {
+
+        const int src = 2 * (int)i;
+        const int snk = src + 1;
+
+        /* velocity = -grad(phi) */
+
+        external_source[i].x = -gradtarg[3 * src + 0];
+        external_source[i].y = -gradtarg[3 * src + 1];
+        external_source[i].z = -gradtarg[3 * src + 2];
+
+        external_sink[i].x = -gradtarg[3 * snk + 0];
+        external_sink[i].y = -gradtarg[3 * snk + 1];
+        external_sink[i].z = -gradtarg[3 * snk + 2];
+    }
+
+    /* Remove intra-swimmer interaction to match the brute-force code
+       Note: this comes with an additional O(N) cost */
+
+    #pragma omp parallel for
+    for (size_t i = 0; i < N; ++i) {
+
+        const double q =
+            system->swimmers[i].volumetric_flow_rate / (4.0 * M_PI);
+
+        double_3d_t fs =
+            calculate_feature_interaction(
+                feat_pos->swimmers[i].source,
+                feat_pos->swimmers[i].sink);
+
+        double_3d_t sf =
+            calculate_feature_interaction(
+                feat_pos->swimmers[i].sink,
+                feat_pos->swimmers[i].source);
+
+        external_source[i] =
+            d3_add(external_source[i], d3_mult(fs, q));
+
+        external_sink[i] =
+            d3_sub(external_sink[i], d3_mult(sf, q));
+    }
+
+cleanup:
+
+    free(positions);
+    free(charges);
+
+    free(pot);
+    free(grad);
+
+    free(pottarg);
+    free(gradtarg);
 }
 
 /**
@@ -212,8 +334,7 @@ static feature_velocity_t *calculate_feature_velocities(
         case FAST_MULTIPOLE_METHOD:
             calc_ext_contrib_fmm(
                 external_source, external_sink, system, feat_pos,
-                dc_opts.approximation_threshold,
-                dc_opts.number_of_poles);
+                dc_opts.precision);
             break;
         default:
             break;

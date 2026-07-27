@@ -14,6 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ------------------------------------------------------------------------------
 
 find_package(OpenCL REQUIRED)
+find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)
 
 find_package(PkgConfig REQUIRED)
@@ -51,6 +52,9 @@ set(TOMLC17_ROOT ${LIB_DIR}/tomlc17)
 add_library(tomlc17 STATIC ${TOMLC17_ROOT}/src/tomlc17.c)
 target_include_directories(tomlc17 PUBLIC ${TOMLC17_ROOT}/src)
 
+# FMM3D
+set(FMM3D_DIR ${PROJECT_SOURCE_DIR}/lib/FMM3D)
+
 # ------------------------------------------------------------------------------
 # Simulation library
 # ------------------------------------------------------------------------------
@@ -69,6 +73,7 @@ target_include_directories(finds
     ${CHECK_INCLUDE_DIRS}
     ${HDF5_INCLUDE_DIRS}
     ${PROGRESSBAR_ROOT}/include
+    ${FMM3D_DIR}/c
 )
 
 target_link_libraries(finds PUBLIC
@@ -79,7 +84,13 @@ target_link_libraries(finds PUBLIC
     progressbar
     tomlc17
     HDF5::HDF5
+
+    ${FMM3D_DIR}/lib-static/libfmm3d.a
+
+    OpenMP::OpenMP_C
+    gfortran
     m
+    mvec
 )
 
 target_compile_definitions(finds PUBLIC CL_TARGET_OPENCL_VERSION=300)
@@ -97,6 +108,7 @@ foreach(PROGRAM ${PROGRAM_SOURCES})
     target_include_directories(${PROGRAM_NAME} PRIVATE
         ${PROGRESSBAR_ROOT}/include
         ${TOMLC17_ROOT}/src
+        ${FMM3D_DIR}/c
     )
     target_link_libraries(${PROGRAM_NAME} PRIVATE finds)
     target_compile_options(${PROGRAM_NAME} PRIVATE -Wall -Wextra

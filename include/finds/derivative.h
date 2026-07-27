@@ -36,8 +36,7 @@ extern const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT];
 
 typedef struct {
     interaction_computation_methods_e method;
-    double approximation_threshold;
-    int number_of_poles;
+    double approximation_threshold, precision;
 } derivative_computation_opts_t;
 
 typedef struct {

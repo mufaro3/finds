@@ -1,8 +1,20 @@
+/**
+ * @file error.h
+ *
+ * @brief Basic error handling module.
+ *
+ * This file contains some simple macros for producing and handling errors.
+ *
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
 #ifndef ERROR_HEADER
 #define ERROR_HEADER
 
 #include <errno.h>
 
+/** @brief Enum for error types. */
 typedef enum {
     ERR_DATASTREAM_OPEN,
     ERR_DATASTREAM_CLOSED,

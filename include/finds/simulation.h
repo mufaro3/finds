@@ -1,3 +1,15 @@
+/**
+ * @file simulation.h
+ *
+ * @brief Core simulation function.
+ *
+ * This file contains the routine for performing a simulation over a specified
+ * integration time domain.
+ *
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
 #ifndef SIMULATION_HEADER
 #define SIMULATION_HEADER
 

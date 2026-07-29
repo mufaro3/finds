@@ -21,14 +21,14 @@
 #include <finds/interaction.h>
 #include <finds/barneshut.h>
 
-/** Lookup table for the interaction computation methods */
+/** @brief Lookup table for the interaction computation methods */
 const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
     { BRUTE_FORCE, "brute-force" },
     { BARNES_HUT,  "barnes-hut" },
     { FAST_MULTIPOLE_METHOD, "FMM" }
 };
 
-/** Local alias for the derivative of feature_positions_t for clarity */
+/** @brief Local alias for the derivative of feature_positions_t for clarity */
 typedef struct {
     double_3d_t *source, *sink;
     size_t size;
@@ -36,9 +36,7 @@ typedef struct {
 
 /**
  * @brief Allocates a new derivative object.
- *
  * @param[in] N  The number of swimmers to account for.
- *
  * @return The allocated feature velocity object.
  */
 static feature_velocity_t *feature_velocity_allocate(const size_t N)
@@ -175,7 +173,6 @@ static void calc_ext_contrib_fmm(
     int64_t N_CHARGES = (int64_t)(2 * N);
 
     /* Allocate FMM arrays */
-
     double *positions = calloc(3 * N_CHARGES, sizeof(double));
     double *charges   = calloc(N_CHARGES, sizeof(double));
 
@@ -183,40 +180,34 @@ static void calc_ext_contrib_fmm(
     double *grad = calloc(3 * N_CHARGES, sizeof(double));
 
     /* We evaluate on the same locations, so targets == sources. */
-
     double *pottarg  = calloc(N_CHARGES, sizeof(double));
     double *gradtarg = calloc(3 * N_CHARGES, sizeof(double));
 
-    if (!positions || !charges || !pot || !grad ||
-        !pottarg || !gradtarg)
-    {
+    if (!positions || !charges || !pot || !grad || !pottarg || !gradtarg)
         goto cleanup;
-    }
 
     /* Build charge list */
-
-    for (size_t i = 0; i < N; ++i) {
-
-        const int src = 2 * (int)i;
-        const int snk = src + 1;
+    for (size_t i = 0; i < N; ++i)
+    {
+        const int source_index = 2 * i;
+        const int sink_index   = source_index + 1;
 
         const double sigma = system->swimmers[i].volumetric_flow_rate;
 
         /* source */
-        positions[3 * src + 0] = feat_pos->swimmers[i].source.x;
-        positions[3 * src + 1] = feat_pos->swimmers[i].source.y;
-        positions[3 * src + 2] = feat_pos->swimmers[i].source.z;
-        charges[src] = +sigma;
+        positions[3 * source_index + 0] = feat_pos->swimmers[i].source.x;
+        positions[3 * source_index + 1] = feat_pos->swimmers[i].source.y;
+        positions[3 * source_index + 2] = feat_pos->swimmers[i].source.z;
+        charges[source_index] = +sigma;
 
         /* sink */
-        positions[3 * snk + 0] = feat_pos->swimmers[i].sink.x;
-        positions[3 * snk + 1] = feat_pos->swimmers[i].sink.y;
-        positions[3 * snk + 2] = feat_pos->swimmers[i].sink.z;
-        charges[snk] = -sigma;
+        positions[3 * sink_index + 0] = feat_pos->swimmers[i].sink.x;
+        positions[3 * sink_index + 1] = feat_pos->swimmers[i].sink.y;
+        positions[3 * sink_index + 2] = feat_pos->swimmers[i].sink.z;
+        charges[sink_index] = -sigma;
     }
 
     /* Run FMM */
-
     int64_t ier = 0;
     double eps = precision;
 
@@ -239,57 +230,49 @@ static void calc_ext_contrib_fmm(
     }
 
     /* Copy target gradients into output */
-
-    for (size_t i = 0; i < N; ++i) {
-
-        const int src = 2 * (int)i;
-        const int snk = src + 1;
+    for (size_t i = 0; i < N; ++i)
+    {
+        const size_t source_index = 2 * i;
+        const size_t sink_index   = source_index + 1;
 
         /* velocity = -grad(phi) */
 
-        external_source[i].x = -gradtarg[3 * src + 0];
-        external_source[i].y = -gradtarg[3 * src + 1];
-        external_source[i].z = -gradtarg[3 * src + 2];
+        external_source[i].x = -gradtarg[3 * source_index + 0];
+        external_source[i].y = -gradtarg[3 * source_index + 1];
+        external_source[i].z = -gradtarg[3 * source_index + 2];
 
-        external_sink[i].x = -gradtarg[3 * snk + 0];
-        external_sink[i].y = -gradtarg[3 * snk + 1];
-        external_sink[i].z = -gradtarg[3 * snk + 2];
+        external_sink[i].x = -gradtarg[3 * sink_index + 0];
+        external_sink[i].y = -gradtarg[3 * sink_index + 1];
+        external_sink[i].z = -gradtarg[3 * sink_index + 2];
     }
 
     /* Remove intra-swimmer interaction to match the brute-force code
        Note: this comes with an additional O(N) cost */
-
     #pragma omp parallel for
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i)
+    {
+        /* calculate the weight */
+        double vol_flow_rate = system->swimmers[i].volumetric_flow_rate;
+        double weight = vol_flow_rate / (4.0 * M_PI);
 
-        const double q =
-            system->swimmers[i].volumetric_flow_rate / (4.0 * M_PI);
+        /* compute the interal interaction */
+        double_3d_t internal_interaction = calculate_feature_interaction(
+            feat_pos->swimmers[i].source, feat_pos->swimmers[i].sink);
 
-        double_3d_t fs =
-            calculate_feature_interaction(
-                feat_pos->swimmers[i].source,
-                feat_pos->swimmers[i].sink);
+        /* compute the correction for the sink and the source */
+        double_3d_t source_correction = d3_mult(internal_interaction,  weight);
+        double_3d_t sink_correction   = d3_mult(internal_interaction, -weight);
 
-        double_3d_t sf =
-            calculate_feature_interaction(
-                feat_pos->swimmers[i].sink,
-                feat_pos->swimmers[i].source);
-
-        external_source[i] =
-            d3_add(external_source[i], d3_mult(fs, q));
-
-        external_sink[i] =
-            d3_sub(external_sink[i], d3_mult(sf, q));
+        /* then add it back to the output vectors */
+        external_source[i] = d3_add(external_source[i], source_correction);
+        external_sink[i]   = d3_sub(external_sink[i],   sink_correction);
     }
 
 cleanup:
-
     free(positions);
     free(charges);
-
     free(pot);
     free(grad);
-
     free(pottarg);
     free(gradtarg);
 }
@@ -486,10 +469,16 @@ system_derivative_t *derivative_average(
 {
     error_e errcode = ERR_OK;
     system_derivative_t *dest = derivative_allocate(N);
-    for (size_t i = 0; i < len; ++i) {
+
+    for (size_t i = 0; i < len; ++i)
+    {
         errcode = derivative_add_scale(dest, terms[i].coeff, terms[i].deriv);
+
+        /* if the computing the average was not successful,
+           then abort this computation */
         if (errcode != ERR_OK)
-            break; /* abort this computation */
+            break;
     }
+
     return dest;
 }

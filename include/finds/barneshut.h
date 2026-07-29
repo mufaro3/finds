@@ -1,3 +1,15 @@
+/**
+ * @file barneshut.h
+ *
+ * @brief External velocity contribution calculation through Barnes-Hut.
+ *
+ * This file contains an implementation of the Barnes-Hut algorithm for
+ * external velocity contribution using linear octrees as a backend.
+ *
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
 #ifndef BARNES_HUT_HEADER
 #define BARNES_HUT_HEADER
 
@@ -6,11 +18,13 @@
 #include "vector.h"
 #include "error.h"
 
-/** sentinel value for "no child in this octant" */
+/** @brief Sentinel value for "no child in this octant" */
 #define OCTREE_NO_CHILD UINT64_MAX
 
+/** @brief Typedef for size-8 indices */
 typedef uint64_t child_indices_t[8];
 
+/** @brief Linear octree implementation for swimmer data. */
 typedef struct {
     /* overall tree data */
     uint64_t count;
@@ -33,6 +47,10 @@ typedef struct {
     double_3d_t *sink_position_avg;
 } linear_octree_t;
 
+bool linear_octree_check_nan(
+    const linear_octree_t *restrict tree,
+    bool verbose);
+void linear_octree_print(const linear_octree_t *restrict tree);
 linear_octree_t *linear_octree_build(const fish_system_t *restrict system);
 void linear_octree_destroy(linear_octree_t **octree_ptr);
 void linear_octree_compute_vel_contrib(
@@ -42,5 +60,4 @@ void linear_octree_compute_vel_contrib(
     const double approx_ratio,
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink);
-
 #endif

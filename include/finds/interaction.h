@@ -1,3 +1,13 @@
+/**
+ * @file interaction.h
+ *
+ * @brief Compuatation function for calculating the Laplacian interaction
+ *        between two fish or two features.
+ *
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
 #ifndef INTERACTION_HEADER
 #define INTERACTION_HEADER
 

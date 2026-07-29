@@ -1,3 +1,15 @@
+/**
+ * @file datastream.h
+ *
+ * @brief I/O routines.
+ *
+ * This contains the implementation of the datastream object, which is used for
+ * creating and writing to simulation data files.
+ *
+ * @author Mufaro Machaya
+ *
+ * License: MIT
+ */
 #ifndef IO_HEADER
 #define IO_HEADER
 
@@ -6,6 +18,7 @@
 #include "system.h"
 #include "error.h"
 
+/** @brief File I/O structure for HDF5 output */
 typedef struct {
     bool open;
     hid_t file;
@@ -19,7 +32,6 @@ typedef struct {
     size_t n_particles;
     size_t n_frames;
 } datastream_t;
-
 
 error_e mkdir_p(const char *path, const mode_t mode);
 

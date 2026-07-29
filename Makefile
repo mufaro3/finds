@@ -86,11 +86,15 @@ paper:
 
 # Profiling
 
-profile:
-	@$(DOCKER-SHELL) valgrind \
+VALGRIND := @$(DOCKER-SHELL) valgrind \
 		--leak-check=full \
-		--track-origins=yes \
-		./build/simulation
+        --show-leak-kinds=all \
+		--track-origins=yes
+
+exe ?= ./build/simulate
+args ?=
+profile:
+	@$(VALGRIND) $(exe) $(args)
 
 # OpenCL
 

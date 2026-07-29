@@ -1,3 +1,16 @@
+/**
+ * @file barneshut.c
+ *
+ * @brief External velocity contribution calculation through Barnes-Hut.
+ *
+ * This file contains an implementation of the Barnes-Hut algorithm for
+ * external velocity contribution using linear octrees as a backend.
+ *
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
+#include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <finds/barneshut.h>
@@ -5,11 +18,24 @@
 #include <finds/vector.h>
 #include <finds/interaction.h>
 
-/** floor( 64 bits / 3 axes ) = 21 bits for storing morton codes */
+/**
+ * @brief The number of bits for storing morton codes (and subsequently, the
+ *        maximum number of levels for the octree).
+ *
+ * In essence, there are floor( 64 bits / 3 axes ) = 21 bits available to each
+ * dimension (x, y, and z) using 64-bit integers, allowing our tree to have up
+ * to 21 levels (for a theoretical maximum of 9.2E18 nodes in the tree).
+ */
 #define MORTON_BITS 21
 
-/*
- * Taken from https://stackoverflow.com/questions/1024754#18528775
+/**
+ * @brief Spreads out the bits of an implicitly 21-bit (maximum) integer for
+ *        encoding in a Morton number.
+ *
+ * @param[in] x  Scalar value to spread out. Maximum 21-bits.
+ * @return The 63-bit partial morton code.
+ *
+ * @ref stackoverflow.com/questions/1024754/18528775#18528775
  */
 static uint64_t spread_bits_3d(uint64_t x)
 {
@@ -22,19 +48,40 @@ static uint64_t spread_bits_3d(uint64_t x)
     return x;
 }
 
-static uint64_t morton_encode_3d(uint64_t x, uint64_t y, uint64_t z)
+/**
+ * @brief Encodes a position containing three (maximally 21-bit) integers into
+ *        a singular morton number.
+ *
+ * @param[in] x
+ * @param[in] y
+ * @param[in] z
+ * @return The 63-bit morton code.
+ *
+ * @ref stackoverflow.com/questions/1024754/18528775#18528775
+ */
+static uint64_t morton_encode_3d(
+    const uint64_t x, const uint64_t y, const uint64_t z)
 {
     return spread_bits_3d(x) | \
         (spread_bits_3d(y) << 1) | \
         (spread_bits_3d(z) << 2);
 }
 
+/**
+ * @brief This maps morton codes to node indices in a linear octree.
+ */
 typedef struct {
     uint64_t morton_code;
     size_t assoc_node_index;
 } morton_key_t;
 
-/** use this for performing a quicksort */
+/**
+ * @brief A sorting predicate for morton numbers, used for performing a
+ *        quicksort on the linear octree to ensure cache locality.
+ * @param[in] a A morton key map (A).
+ * @param[in] b A morton key map (B).
+ * @return An integer comparison value between the morton codes of a and b.
+ */
 static int compare_morton(const void *a, const void *b)
 {
     uint64_t ca = ((const morton_key_t *) a)->morton_code;
@@ -43,9 +90,11 @@ static int compare_morton(const void *a, const void *b)
 }
 
 /**
- * Growable builder — trimmed to exact size once construction finishes.
- * Defined to be variable-size so that the actual linear octree can be
- * nicely fixed-size upon construction. Otherwise, it is completely identical
+ * @brief A variable-sized wrapper for building linear octrees.
+ *
+ * Growable builder that is trimmed to exact size once construction finishes.
+ * Defined to be variable-size so that the actual linear octree can be nicely
+ * fixed-size upon construction. Otherwise, it is completely identical
  * to the linear octree.
  */
 typedef struct {
@@ -53,9 +102,18 @@ typedef struct {
     linear_octree_t tree;
 } linear_octree_builder_t;
 
+/**
+ * @brief Simple macro for reallocating the size of an octree (only for
+ *        internal use when building).
+ */
 #define LINEAR_OCTREE_REALLOC(arrptr, cap) \
     arrptr = realloc((arrptr), (cap) * sizeof *(arrptr))
 
+/**
+ * @brief Reallocates the linear octree to a new capacity size.
+ * @param[out] tree         The linear octree.
+ * @param[in]  new_capacity The new capacity to reallocate to.
+ */
 static void linear_octree_realloc(
     linear_octree_t *restrict tree,
     const size_t new_capacity)
@@ -73,6 +131,10 @@ static void linear_octree_realloc(
     LINEAR_OCTREE_REALLOC(tree->sink_position_avg,         new_capacity);
 }
 
+/**
+ * @brief Doubles the capacity of the linear octree during building.
+ * @param[out] builder  The linear octree builder to expand.
+ */
 static void builder_double_capacity(linear_octree_builder_t *restrict builder)
 {
     if (builder->capacity == 0)
@@ -83,6 +145,14 @@ static void builder_double_capacity(linear_octree_builder_t *restrict builder)
     linear_octree_realloc(&builder->tree, builder->capacity);
 }
 
+/**
+ * @brief Creates a new node on the linear octree given a center position and
+ *        a side length computed previously.
+ * @param[out] builder         The linear octree builder.
+ * @param[in]  center_position The center position of this node.
+ * @param[in]  side_length     The side length of this node.
+ * @return The array index of this node within the linear octree array.
+ */
 static uint64_t builder_create_node(
     linear_octree_builder_t *restrict builder,
     const double_3d_t center_position,
@@ -114,6 +184,14 @@ static uint64_t builder_create_node(
     return new_node_index;
 }
 
+/**
+ * @brief Computes the center position of the child node given the parent
+ *        node's center position and side length.
+ * @param[in] center_position    The center position of the parent node.
+ * @param[in] side_length        The side length of the parent node.
+ * @param[in] child_octant_index The index (0-7) of the child node.
+ * @return The center position of the child node.
+ */
 static double_3d_t calculate_child_octant_center_position(
     const double_3d_t center_position,
     const double side_length,
@@ -127,9 +205,27 @@ static double_3d_t calculate_child_octant_center_position(
         center_position.z + ((child_octant_index & 4) ? offset : -offset));
 }
 
+/**
+ * @brief Simple macro for adding vector data to a cluster sum.
+ */
 #define VECTOR_CLUSTER_APPEND(vector_sum_ptr, new_vector) \
     vector_sum_ptr = d3_add(vector_sum_ptr, new_vector)
 
+/**
+ * @brief Recursively builds a linear octree.
+ *
+ * @param[out] builder The linear octree builder.
+ * @param[in]  system  The fish system to construct the tree from.
+ * @param[in]  morton_index_map_sorted The morton curve-array index map.
+ *
+ * @param[in]  index_range_begin  The start of the index range for this octant.
+ * @param[in]  index_range_end    The end of the index range for this octant.
+ * @param[in]  center_position    The center position for this current node.
+ * @param[in]  side_length        The side length of this current node.
+ * @param[in]  depth              The depth of this current node.
+ *
+ * @return The index of the new created node.
+ */
 static uint64_t builder_construct_tree_recursive(
     linear_octree_builder_t *restrict builder,
     const fish_system_t *restrict system,
@@ -140,7 +236,9 @@ static uint64_t builder_construct_tree_recursive(
     const double side_length,
     const size_t depth)
 {
+    /* the width of the range for the swimmers contained within this octant */
     const size_t range_width = index_range_end - index_range_begin;
+    assert(index_range_begin < index_range_end);
 
     linear_octree_t *tree = &builder->tree;
     uint64_t new_node_index = \
@@ -207,26 +305,19 @@ static uint64_t builder_construct_tree_recursive(
          ++child_octant_index)
     {
         size_t morton_index = child_morton_index_bounds[child_octant_index];
-        uint64_t morton_code = \
-            morton_index_map_sorted[morton_index].morton_code;
-        bool in_range = morton_index < index_range_end;
 
-        /* 8 is a sentinel: if we can't match any real octant (0-7),
-           force loop to exit */
-        uint8_t octant_of_point = \
-            in_range ? (uint8_t) (morton_code >> depth_shift) & 7 : 8;
-        bool in_octant = (octant_of_point == (uint8_t) child_octant_index);
-
-        while (in_range && in_octant)
+        while (morton_index < index_range_end)
         {
-            ++morton_index;
+            uint64_t morton_code =
+                morton_index_map_sorted[morton_index].morton_code;
 
-            /* recompute the above values */
-            in_range = morton_index < index_range_end;
-            morton_code = morton_index_map_sorted[morton_index].morton_code;
-            octant_of_point = \
-                in_range ? (uint8_t)(morton_code >> depth_shift) & 7 : 8;
-            in_octant = octant_of_point == (uint8_t) child_octant_index;
+            uint8_t octant =
+                (uint8_t)((morton_code >> depth_shift) & 7);
+
+            if (octant != child_octant_index)
+                break;
+
+            ++morton_index;
         }
 
         child_morton_index_bounds[child_octant_index + 1] = morton_index;
@@ -267,6 +358,13 @@ static uint64_t builder_construct_tree_recursive(
     return new_node_index;
 }
 
+/**
+ * @brief Recursively prints a node of a linear octree (alongside its
+ *        children).
+ * @param[out] tree       The linear octree to print.
+ * @param[in]  node_index The index of the node to print.
+ * @param[in]  depth      The depth of this node.
+ */
 static void linear_octree_print_node(
     const linear_octree_t *restrict tree,
     uint64_t node_index,
@@ -276,6 +374,7 @@ static void linear_octree_print_node(
     for (int i = 0; i < depth; ++i)
         printf("  ");
 
+    /* node details */
     printf("[node %llu] leaf=%s n=%zu side_len=%.6g center=",
         (unsigned long long) node_index,
         tree->is_leaf[node_index] ? "t" : "f",
@@ -305,6 +404,7 @@ static void linear_octree_print_node(
     if (tree->is_leaf[node_index])
         return;
 
+    /* print the node's children */
     for (int oct = 0; oct < 8; ++oct) {
         uint64_t child = tree->child_indices[node_index][oct];
         if (child != OCTREE_NO_CHILD)
@@ -312,6 +412,10 @@ static void linear_octree_print_node(
     }
 }
 
+/**
+ * @brief Prints a full octree to STDOUT (for debugging).
+ * @param[in] tree The octree to print.
+ */
 void linear_octree_print(const linear_octree_t *restrict tree)
 {
     printf("=== linear_octree (num_nodes=%zu) ===\n", tree->count);
@@ -323,7 +427,15 @@ void linear_octree_print(const linear_octree_t *restrict tree)
     printf("=== end tree ===\n");
 }
 
-bool linear_octree_check_nan(const linear_octree_t *restrict tree, bool verbose)
+/**
+ * @brief Checks if a linear octree has any NaN values.
+ * @param[in] tree    The octree.
+ * @param[in] verbose Whether to print the exact value which contains NaN.
+ * @return Whether or not any NaN values were found inside the tree.
+ */
+bool linear_octree_check_nan(
+    const linear_octree_t *restrict tree,
+    bool verbose)
 {
     bool found_any = false;
 
@@ -360,11 +472,17 @@ bool linear_octree_check_nan(const linear_octree_t *restrict tree, bool verbose)
     }
 
     if (verbose && found_any)
-        printf("linear_octree_check_nan: tree contains NaN values (num_nodes=%zu)\n", tree->count);
+        printf("linear_octree_check_nan: tree "
+            "contains NaN values (num_nodes=%zu)\n", tree->count);
 
     return found_any;
 }
 
+/**
+ * @brief Builds a linear octree from a fish system.
+ * @param[in] system  The fish system to construct from.
+ * @return The constructed linear octree.
+ */
 linear_octree_t *linear_octree_build(const fish_system_t *restrict system)
 {
     const size_t N = system->size;
@@ -381,6 +499,7 @@ linear_octree_t *linear_octree_build(const fish_system_t *restrict system)
         maxs = d3_max_each_dim(maxs, pos);
     }
 
+    /* compute the center position of the ROOT node */
     const double_3d_t root_center_position = d3_div(d3_add(mins, maxs), 2);
     const double root_side_length = \
         d3_max_component(d3_sub(maxs, mins)) * 1.001;
@@ -443,6 +562,10 @@ linear_octree_t *linear_octree_build(const fish_system_t *restrict system)
     return constructed_tree;
 }
 
+/**
+ * @brief De-allocates a linear octree.
+ * @param[out] octree_ptr The point to the octree to destroy.
+ */
 void linear_octree_destroy(linear_octree_t **octree_ptr)
 {
     if (!octree_ptr || !*octree_ptr)
@@ -457,6 +580,7 @@ void linear_octree_destroy(linear_octree_t **octree_ptr)
     free(tree->num_particles);
     free(tree->positions_sums);
     free(tree->orientations_sums);
+    free(tree->length_sums);
     free(tree->volumetric_flow_rate_sums);
     free(tree->source_position_avg);
     free(tree->sink_position_avg);
@@ -465,6 +589,15 @@ void linear_octree_destroy(linear_octree_t **octree_ptr)
     *octree_ptr = NULL;
 }
 
+/**
+ * @brief Helper function for computing the velocity contribution between a
+ *        swimmer and the current node (given its index).
+ * @param[in]  tree                The linear octree.
+ * @param[in]  swimmer_i_feat_pos  The feature positions for swimmer i.
+ * @param[in]  current_node_index  The index of the cluster for swimmer j.
+ * @param[out] external_source     The output vector for the source contrib.
+ * @param[out] external_sink       The output vector for the sink contribution.
+ */
 static void linear_octree_compute_velocity_contribution(
     const linear_octree_t *restrict tree,
     const swimmer_features_t swimmer_i_feat_pos,
@@ -472,6 +605,7 @@ static void linear_octree_compute_velocity_contribution(
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink)
 {
+    /* obtain the feature positions for the back as well */
     const swimmer_features_t current_node_feat_pos = {
         .source = tree->source_position_avg[current_node_index],
         .sink = tree->sink_position_avg[current_node_index]
@@ -486,13 +620,34 @@ static void linear_octree_compute_velocity_contribution(
         &front_interaction,
         &back_interaction);
 
-    double weight = \
-        tree->volumetric_flow_rate_sums[current_node_index] / (4.0 * M_PI);
-    *external_source = \
-        d3_add(*external_source, d3_mult(front_interaction, weight));
-    *external_sink = d3_add(*external_sink, d3_mult(back_interaction, weight));
+    /* obtain the average volumetric flow rate for this node */
+    const double avg_vol_flow_rate = \
+        tree->volumetric_flow_rate_sums[current_node_index] / \
+        tree->num_particles[current_node_index];
+
+    /* compute the weight as the volumetric flow rate divided by 4 pi */
+    const double weight = avg_vol_flow_rate / (4.0 * M_PI);
+
+    /* now compute the velocity contrib. by scaling interaction by weight */
+    double_3d_t source_contrib = d3_mult(front_interaction, weight);
+    double_3d_t sink_contrib   = d3_mult(back_interaction, weight);
+
+    /* and then we add this to the external source and sink */
+    *external_source = d3_add(*external_source, source_contrib);
+    *external_sink   = d3_add(*external_sink,   sink_contrib);
 }
 
+/**
+ * @brief Recursively computes the external velocity contribution onto a
+ *        swimmer (swimmer i) from all other swimmers in the system.
+ * @param[in]  tree                The linear octree.
+ * @param[in]  current_node_index  The index of this node.
+ * @param[in]  swimmer_i_pos       The position of swimmer i.
+ * @param[in]  swimmer_i_feat_pos  The feature positions of swimmer i.
+ * @param[in]  approx_ratio        The Barnes-Hut Approximation Ratio.
+ * @param[out] external_source     The output vec. for external source contrib.
+ * @param[out] external_sink       The output vec. for external sink contrib.
+ */
 static void linear_octree_compute_vel_contrib_recurse(
     const linear_octree_t *restrict tree,
     const uint64_t current_node_index,
@@ -502,8 +657,11 @@ static void linear_octree_compute_vel_contrib_recurse(
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink)
 {
+    /* if the tree is empty, then do nothing */
     if (tree->num_particles[current_node_index] == 0)
         return;
+
+    /* obtain the position for this node */
     double_3d_t current_node_position_avg = \
         d3_div(tree->positions_sums[current_node_index],
             tree->num_particles[current_node_index]);
@@ -511,12 +669,13 @@ static void linear_octree_compute_vel_contrib_recurse(
     /* if this is a leaf then compute the interaction automatically */
     if (tree->is_leaf[current_node_index])
     {
-        /* if this is a self-comparison, then we skip this node */
+        /* if this is a self-comparison, then we skip this node entirely */
         bool current_node_is_swimmer_i = \
             d3_is_close(swimmer_i_pos, current_node_position_avg);
         if (current_node_is_swimmer_i)
             return;
 
+        /* compute the velocity contribution directly */
         linear_octree_compute_velocity_contribution(
             tree, swimmer_i_feat_pos, current_node_index,
             external_source, external_sink);
@@ -530,12 +689,11 @@ static void linear_octree_compute_vel_contrib_recurse(
     double ratio = IS_CLOSE(distance, 0) ? INFINITY : \
         tree->side_lengths[current_node_index] / distance;
 
-    /* if its sufficiently far away, then cluster */
+    /* if its sufficiently far away, then compute the contribution */
     if (ratio < approx_ratio) {
         linear_octree_compute_velocity_contribution(
             tree, swimmer_i_feat_pos, current_node_index,
             external_source, external_sink);
-
         return;
     }
 
@@ -544,8 +702,13 @@ static void linear_octree_compute_vel_contrib_recurse(
          child_octant_index < 8;
          ++child_octant_index)
     {
+        /* obtain the tree index for the child node associated with this
+           child octant index */
         uint64_t child_node_index = \
             tree->child_indices[current_node_index][child_octant_index];
+
+        /* if there is a child node found at that index, then compute the
+           contribution from it */
         if (child_node_index != OCTREE_NO_CHILD)
             linear_octree_compute_vel_contrib_recurse(
                 tree, child_node_index, swimmer_i_pos, swimmer_i_feat_pos,
@@ -553,6 +716,16 @@ static void linear_octree_compute_vel_contrib_recurse(
     }
 }
 
+/**
+ * @brief Computes the velocity contribution on a swimmer by all of the
+ *        non-self swimmers in the system.
+ * @param[in]  tree             The linear octree.
+ * @param[in]  position_i       The position of swimmer i.
+ * @param[in]  features_i       The feature positions of swimmer i.
+ * @param[in]  approx_ratio     The Barnes-Hut approximation ratio.
+ * @param[out] external_source  The output vec. for external source contrib.
+ * @param[out] external_sink    The output vec. for external sink contrib.
+ */
 void linear_octree_compute_vel_contrib(
     const linear_octree_t *restrict tree,
     const double_3d_t position_i,
@@ -565,9 +738,11 @@ void linear_octree_compute_vel_contrib(
     *external_source = D3_ZERO;
     *external_sink = D3_ZERO;
 
+    /* if the tree is empty, then do nothing */
     if (tree->count == 0)
         return;
 
+    /* begin computing the velocity contribution */
     linear_octree_compute_vel_contrib_recurse(
         tree, 0, position_i, features_i,
         approx_ratio, external_source, external_sink);

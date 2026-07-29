@@ -336,7 +336,7 @@ error_e datastream_read_frame(
     read_hdf5_tensor_frame(orientations, stream->orientation_dataset,
         3, start3, count3);
 
-    /* ---------- assemble fish objects ---------- */
+    /* assemble fish objects */
     fish_system_t *dest = fish_system_allocate(stream->n_particles);
     *dest_ptr = dest;
 

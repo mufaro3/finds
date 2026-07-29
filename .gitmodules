@@ -10,3 +10,6 @@
 [submodule "lib/FMM3D"]
 	path = lib/FMM3D
 	url = https://github.com/flatironinstitute/FMM3D.git
+[submodule "lib/zen-doxygen-theme"]
+	path = lib/zen-doxygen-theme
+	url = https://github.com/samvv/zen-doxygen-theme.git

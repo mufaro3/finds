@@ -28,11 +28,10 @@
  * @brief Generates an output folder filename for the simulation, which is
  *        just "sim-(TIMESTAMP)".
  *
- * Note: this implementation of timestamp generation was (shamelessly) stolen
- * from [StackOverFlow](https://stackoverflow.com/questions/25030055/ddg#25030474).
- *
  * @param[out] output_folder_filename  The output buffer for the folder name.
  * @param[in]  buffer_size             The output buffer length.
+ *
+ * @ref https://stackoverflow.com/questions/25030055#25030474
  */
 static void generate_simulation_output_filename(
     char *output_folder_filename,
@@ -58,9 +57,8 @@ static void generate_simulation_output_filename(
  * @brief Computes the adapted step-size.
  *
  * Computes the adapted time-step based on the embedded Runge-Kutta adaption
- * equation as described in equation 4.4 of section 4.3 of
- * [Solving Ordinary Differential Equations in Python](https://link.springer.com/book/10.1007/978-3-031-46768-4)
- * by Joakim Sundnes, which is
+ * equation as described in equation 4.4 of section 4.3 of Solving Ordinary
+ * Differential Equations in Python by Joakim Sundnes, which is
  *
  * \f[
  *   \delta t_{i + 1} = \eta \delta t_i \sqrt[p+1]{\frac{\xi_i}{E_i}}
@@ -77,6 +75,8 @@ static void generate_simulation_output_filename(
  * @param[in] order      The evaluation order \f$p\f$.
  *
  * @return The adapted step-size, \f$\delta t_{i+1}\f$.
+ *
+ * @ref https://link.springer.com/book/10.1007/978-3-031-46768-4
  */
 static double adapt_step_size(
     const double time_step,

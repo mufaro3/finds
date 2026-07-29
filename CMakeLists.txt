@@ -9,6 +9,8 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(COMPILE_ARGS -Wall -Wextra -Wno-missing-braces -lm -O0)
+
 # ------------------------------------------------------------------------------
 # Dependencies
 # ------------------------------------------------------------------------------
@@ -94,7 +96,7 @@ target_link_libraries(finds PUBLIC
 )
 
 target_compile_definitions(finds PUBLIC CL_TARGET_OPENCL_VERSION=300)
-target_compile_options(finds PRIVATE -Wall -Wextra -Wno-missing-braces -O3)
+target_compile_options(finds PRIVATE ${COMPILE_ARGS})
 
 # ------------------------------------------------------------------------------
 # Programs
@@ -111,8 +113,7 @@ foreach(PROGRAM ${PROGRAM_SOURCES})
         ${FMM3D_DIR}/c
     )
     target_link_libraries(${PROGRAM_NAME} PRIVATE finds)
-    target_compile_options(${PROGRAM_NAME} PRIVATE -Wall -Wextra
-        -Wno-missing-braces -lm -O3)
+    target_compile_options(${PROGRAM_NAME} PRIVATE ${COMPILE_ARGS})
 endforeach()
 
 # ------------------------------------------------------------------------------

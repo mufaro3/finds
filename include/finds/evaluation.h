@@ -1,3 +1,12 @@
+/**
+ * @file evaluation.h
+ *
+ * @brief Derivative timing.
+ *
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
+ *
+ * License: MIT
+ */
 #ifndef EVALUATION_HEADER
 #define EVALUATION_HEADER
 

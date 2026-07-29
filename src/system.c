@@ -17,7 +17,7 @@
 #include <finds/system.h>
 #include <finds/util.h>
 
-/** Enum naming table for distribution generation types. */
+/** @brief Enum naming table for distribution generation types. */
 const named_enum_t DISTRIBUTION_TYPE_TABLE[DISTRIBUTION_TYPE_COUNT] = {
     { DISTRIBUTION_CUBE,    "cube" },
     { DISTRIBUTION_SPHERE,  "sphere" },
@@ -25,7 +25,7 @@ const named_enum_t DISTRIBUTION_TYPE_TABLE[DISTRIBUTION_TYPE_COUNT] = {
     { DISTRIBUTION_RANDOM,  "random" }
 };
 
-/** Enum naming table for orientation generation types. */
+/** @brief Enum naming table for orientation generation types. */
 const named_enum_t ORIENTATION_TYPE_TABLE[ORIENTATION_TYPE_COUNT] = {
     { ORIENTATION_RANDOM,         "random" },
     { ORIENTATION_RADIAL_INWARD,  "radial-inward" },
@@ -69,7 +69,8 @@ static size_t generate_positions_cube(
 
     size_t index = 0;
 
-    for (size_t i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i)
+    {
         double x = -half + i * spacing;
 
         for (size_t j = 0; j < n; ++j) {
@@ -101,44 +102,28 @@ static size_t generate_positions_sphere(
     const double radius,
     const double spacing)
 {
-    /*
-     * Surface area / particle area estimate:
-     */
-    size_t count = (size_t)(
-        4.0 * M_PI * radius * radius /
-        (spacing * spacing)
-    );
+    /* Estimate the number of particles to generate as
+       count = surface area / particle surface area */
+    double sphere_surface_area = 4.0 * M_PI * radius * radius;
+    double particle_surface_area = spacing * spacing;
+    size_t count = (size_t)(sphere_surface_area / particle_surface_area);
 
-    if (count < 1)
+    if (count == 0)
         count = 1;
 
-    double_3d_t *positions = malloc(
-        count * sizeof(*positions)
-    );
+    double_3d_t *positions = calloc(count, sizeof(double_3d_t));
+    const double golden_ratio = (1.0 + sqrt(5.0)) / 2.0;
+    const double golden_angle = 2.0 * M_PI / golden_ratio;
 
-    const double golden_ratio =
-        (1.0 + sqrt(5.0)) / 2.0;
-
-    const double golden_angle =
-        2.0 * M_PI / golden_ratio;
-
-    for (size_t i = 0; i < count; i++) {
-
-        double z = 1.0 -
-            2.0 * ((double)i + 0.5) / (double)count;
-
+    for (size_t i = 0; i < count; i++)
+    {
+        double z = 1.0 - 2.0 * ((double)i + 0.5) / (double)count;
         double xy_radius = sqrt(1.0 - z*z);
-
         double theta = golden_angle * (double)i;
 
-        positions[i].x =
-            radius * xy_radius * cos(theta);
-
-        positions[i].y =
-            radius * xy_radius * sin(theta);
-
-        positions[i].z =
-            radius * z;
+        positions[i].x = radius * xy_radius * cos(theta);
+        positions[i].y = radius * xy_radius * sin(theta);
+        positions[i].z = radius * z;
     }
 
     *positions_ptr = positions;
@@ -213,7 +198,6 @@ static size_t generate_positions_random(
     double_3d_t *positions = d3_list_allocate(N);
     if (positions == NULL)
         return 0;
-
     *positions_ptr = positions;
 
     for (size_t i = 0; i < N; ++i)
@@ -531,7 +515,8 @@ fish_system_t *fish_system_generate(
     generate_constants(&lengths, &sigmas, const_opts, N);
 
     fish_system_t *new_system = fish_system_allocate(N);
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i)
+    {
         swimmer_t *swimmer = &new_system->swimmers[i];
         swimmer->position = positions[i];
         swimmer->orientation = orientations[i];
@@ -546,8 +531,10 @@ fish_system_t *fish_system_generate(
     free(lengths);
     free(sigmas);
 
-    if (print_debug) {
-        printf("Generated System. N = %zu, Distribution = %s, Orientation = %s\n", N,
+    if (print_debug)
+    {
+        printf("Generated System. N = %zu, "
+            "Distribution = %s, Orientation = %s\n", N,
             ne_lookup_name(
                 DISTRIBUTION_TYPE_TABLE,
                 DISTRIBUTION_TYPE_COUNT,
@@ -631,7 +618,8 @@ fish_system_t *fish_system_difference(
     if (a->size != b->size)
         return NULL;
     fish_system_t *diff = fish_system_allocate(a->size);
-    for (size_t i = 0; i < a->size; ++i) {
+    for (size_t i = 0; i < a->size; ++i)
+    {
         swimmer_t *s_diff = &diff->swimmers[i];
         swimmer_t *sa = &a->swimmers[i];
         swimmer_t *sb = &b->swimmers[i];
@@ -858,6 +846,15 @@ void fish_system_rotate(
 
 /* FEATURE POSITIONS */
 
+/**
+ * @brief Computes the feature positions for a singular swimmer.
+ * @param[in]  position     The position of the swimmer.
+ * @param[in]  orientation  The orientation of the swimmer.
+ * @param[in]  length       The length of the swimmer.
+ *
+ * @param[out] source_position_ptr  The output vector for the source position.
+ * @param[out] sink_position_ptr    The output vector for the sink position.
+ */
 void calculate_swimmer_features(
     const double_3d_t position,
     const double_3d_t orientation,

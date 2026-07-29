@@ -1,13 +1,13 @@
 /**
- * \file integration.h
+ * @file integration.h
  *
- * \brief Implementation of various embedded Runge-Kutta integrators and
- *        Adams–Bashforth–Moulton predictor–corrector.
+ * @brief Implementation of various adaptive and non-adaptive Runge-Kutta
+ *        integrators.
  *
- * This file contains the core routine for computing the derivative of the
- * fish system.
+ * This file contains the core routine for computing a singular integral
+ * time-step of the fish system (including optional error estimation).
  *
- * \author Mufaro Machaya <mufaro2@student.ubc.ca>
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
  *
  * License: MIT
  */
@@ -18,6 +18,7 @@
 #include "system.h"
 #include "derivative.h"
 
+/** @brief Enum for integration methods. */
 typedef enum {
     EULER,
     RUNGE_KUTTA_2,
@@ -34,6 +35,7 @@ typedef enum {
 
 extern const named_enum_t INTEGRATION_METHODS_TABLE[INTEGRATION_METHODS_COUNT];
 
+/** @brief Struct for integration options. */
 typedef struct {
     integration_method_e method;
     double eval_time_step;
@@ -49,6 +51,7 @@ typedef fish_system_t *(*integration_step_fn)(
     const derivative_computation_opts_t dc_opts,
     double *error);
 
+/** @brief Simple macro for declaring integrators (as all use the same args) */
 #define DECLARE_INTEGRATOR(name) \
     fish_system_t *name( \
         const fish_system_t *state, \

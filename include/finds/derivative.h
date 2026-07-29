@@ -1,12 +1,12 @@
-/*
- * \file differentiation.h
+/**
+ * @file derivative.h
  *
- * \brief Derivative calculation.
+ * @brief Derivative calculation.
  *
  * This file contains the core routine for computing the derivative of the
  * fish system.
  *
- * \author Mufaro Machaya <mufaro2@student.ubc.ca>
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
  *
  * License: MIT
  */
@@ -19,11 +19,13 @@
 #include "system.h"
 #include "util.h"
 
+/** @brief System derivative (translational and rotational derivatives). */
 typedef struct {
     double_3d_t *translational, *rotational;
     size_t size;
 } system_derivative_t;
 
+/** @brief Interaction computation methods list. */
 typedef enum {
     BRUTE_FORCE,
     BARNES_HUT,
@@ -34,11 +36,15 @@ typedef enum {
 
 extern const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT];
 
+/** @brief Derivative computation options struct */
 typedef struct {
     interaction_computation_methods_e method;
+    /* NOTE: I could union this, but I'm not going to just for ease of
+       memory management */
     double approximation_threshold, precision;
 } derivative_computation_opts_t;
 
+/** @brief Weight structure for computing weighted averages of derivatives. */
 typedef struct {
     double coeff;
     system_derivative_t *deriv;

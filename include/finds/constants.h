@@ -1,3 +1,12 @@
+/**
+ * @file constants.h
+ *
+ * @brief Various constants for the FINDS system.
+ *
+ * @author Mufaro Machaya
+ *
+ * License: MIT
+ */
 #ifndef CONSTANTS_HEADER
 #define CONSTANTS_HEADER
 

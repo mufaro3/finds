@@ -1,12 +1,12 @@
-/*
- * \file system.h
+/**
+ * @file system.h
  *
- * \brief Core particle system data structures and operations.
+ * @brief Core particle system data structures and operations.
  *
  * This file contains routines for creating, initializing, updating,
  * and destroying static systems of fish-particles.
  *
- * \author Mufaro Machaya <mufaro2@student.ubc.ca>
+ * @author Mufaro Machaya <mufaro2@student.ubc.ca>
  *
  * License: MIT
  */
@@ -22,6 +22,7 @@
 
 /* SYSTEM GENERATION OPTIONS */
 
+/** @brief Enum for distribution generation types. */
 typedef enum {
     DISTRIBUTION_CUBE,
     DISTRIBUTION_SPHERE,
@@ -33,12 +34,14 @@ typedef enum {
 
 extern const named_enum_t DISTRIBUTION_TYPE_TABLE[DISTRIBUTION_TYPE_COUNT];
 
+/** @brief Distribution generation options struct. */
 typedef struct {
     distribution_type_e type;
     union { double radius, side_length, size_random; };
     union { double spacing, abs_bound; };
 } distribution_options_t;
 
+/** @brief Enum for orientation generation types. */
 typedef enum {
     ORIENTATION_RANDOM,
     ORIENTATION_RADIAL_INWARD,
@@ -53,11 +56,13 @@ typedef enum {
 
 extern const named_enum_t ORIENTATION_TYPE_TABLE[ORIENTATION_TYPE_COUNT];
 
+/** @brief Orientation generation options struct. */
 typedef struct {
     orientation_type_e type;
     float angular_perturbation;
 } orientation_options_t;
 
+/** @brief Constant generation options struct. */
 typedef struct {
     /* length */
     bool random_length_selection;
@@ -70,11 +75,13 @@ typedef struct {
 
 /* FISH SYSTEM STRUCT */
 
+/** @brief Structure representing an individual swimmer. */
 typedef struct {
     double_3d_t position, orientation;
     double volumetric_flow_rate, length, sp_speed;
 } swimmer_t;
 
+/** @brief Struct for a system of swimmers (i.e., a vector of swimmers). */
 typedef struct {
     swimmer_t *swimmers;
     size_t size;
@@ -120,10 +127,12 @@ void fish_system_rotate(fish_system_t *system,
 
 /* FEATURE POSITIONS */
 
+/** @brief Structure of feature (source and sink) positions */
 typedef struct {
     double_3d_t source, sink;
 } swimmer_features_t;
 
+/** @brief Vector of feature positions */
 typedef struct {
     swimmer_features_t *swimmers;
     size_t size;

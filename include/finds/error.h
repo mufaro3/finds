@@ -50,4 +50,7 @@ typedef enum {
             goto jmpto;                         \
         }}
 
+#define WARN(msg) \
+    fprintf(stderr, "WARNING: %s\n", msg)
+
 #endif /* ERROR_HEADER */

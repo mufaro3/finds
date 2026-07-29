@@ -23,11 +23,54 @@
 #include <finds/error.h>
 #include <finds/datastream.h>
 
+#define VALIDATION_OUTPUT_FOLDER ROOT_OUTPUT_PATH "/validation"
+#define TEMP_OUTPUT_FILE VALIDATION_OUTPUT_FOLDER "/validation-circle-output.dat"
+
 #define LENGTH 1
 #define VOLUMETRIC_FLOW_RATE (4 * M_PI)
 #define SP_SPEED (VOLUMETRIC_FLOW_RATE / (4 * M_PI * LENGTH * LENGTH))
 #define BUFFER_SIZE 1024
 #define DOUBLE_BUFFER_SIZE (2 * BUFFER_SIZE)
+
+#define OUTPUT_MODE "png"
+
+/* for the comparison plots */
+
+#define ALPHA -18
+#define BETA  -18
+
+static const double SIN_ALPHA = sin(ALPHA);
+static const double COS_ALPHA = cos(ALPHA);
+
+static const double SIN_BETA = sin(BETA);
+static const double COS_BETA = cos(BETA);
+
+static const double NX23 = COS_ALPHA * COS_BETA;
+static const double NY23 = SIN_ALPHA * COS_BETA;
+static const double NZ23 = -SIN_BETA;
+
+static const double INITIAL_CONDITIONS[3][12] = {
+    { 0, 0, 0, 0, 1, 0, 1,   1,   0, 0, 1, 0 },
+    { 0, 1, 0, 0, 1, 0, 0.5, 1, 0, 0, 1, 0 },
+    { 0, 0, 0, 1, 0, 0, 1, 0.5, 0, NX23, NY23, NZ23 }
+};
+
+#define N_DC_METHODS 5
+static const derivative_computation_opts_t DC_METHODS[N_DC_METHODS] = {
+    { .method = BRUTE_FORCE },
+    { .method = BARNES_HUT, .approximation_threshold = 0.50 },
+    { .method = BARNES_HUT, .approximation_threshold = 1.00 },
+    { .method = FAST_MULTIPOLE_METHOD, .precision = 1E-3 },
+    { .method = FAST_MULTIPOLE_METHOD, .precision = 1E-6 }
+};
+
+static const char *SERIES_LABELS[N_DC_METHODS] = {
+    "Brute Force",
+    "Barnes-Hut, {/Symbol q}=0.50",
+    "Barnes-Hut, {/Symbol q}=1.00",
+    "FMM, {/Symbol e}=1E-3",
+    "FMM, {/Symbol e}=1E-6"
+};
 
 typedef struct {
     size_t num_frames, num_swimmers;
@@ -79,12 +122,11 @@ static error_e generate_coplanar_simulation(
     char output_filename[DOUBLE_BUFFER_SIZE];
 
     derivative_computation_opts_t dc_opts = {0};
-    dc_opts.method = FAST_MULTIPOLE_METHOD;
-    dc_opts.approximation_threshold = 1E-8;
+    dc_opts.method = BRUTE_FORCE;
 
     integration_opts_t int_opts = {0};
     int_opts.method = RUNGE_KUTTA_4;
-    int_opts.eval_time_step = 0.025;
+    int_opts.eval_time_step = 0.01;
     int_opts.end_time = 10;
     int_opts.absolute_error_tolerance = 1E-8;
     int_opts.relative_error_tolerance = 1E-6;
@@ -203,6 +245,8 @@ jmp_err:
 
 static error_e reproduce_2025_fig_8()
 {
+    puts("Reproducing Figure 2025-8");
+
     error_e errcode = ERR_OK;
 
     system_trajectory_t a, b, c, d;
@@ -221,13 +265,14 @@ static error_e reproduce_2025_fig_8()
     WRAP_CHECK(errcode, jmp_err, err_d);
 
     gnuplot_ctrl *fig = gnuplot_init();
-    gnuplot_cmd(fig, "set terminal pngcairo size 1200,800");
-    gnuplot_cmd(fig, "set output '" ROOT_OUTPUT_PATH "/validation-2025-8.png'");
+    gnuplot_setterm(fig, OUTPUT_MODE "cairo", 1200, 800);
+    gnuplot_cmd(fig, "set output '" VALIDATION_OUTPUT_FOLDER
+        "/validation-2025-8." OUTPUT_MODE "'");
     gnuplot_cmd(fig, "set multiplot layout 2,2 rowsfirst");
 
     /* top left */
-    gnuplot_cmd(fig, "set xrange [-40:40]");
-    gnuplot_cmd(fig, "set yrange [-10:4]");
+    gnuplot_cmd(fig, "set xrange [-10:10]");
+    gnuplot_cmd(fig, "set yrange [0:10]");
     gnuplot_cmd(fig, "set title '(a)'");
     WRAP_CHECK(errcode, jmp_err, plot_coplanar_trajectory(fig, &a));
 
@@ -257,27 +302,380 @@ jmp_err:
     return errcode;
 }
 
+static fish_system_t *generate_fish_circle(
+    const double radius, const size_t N, const double x)
+{
+    fish_system_t *restrict system = fish_system_allocate(N);
+    const double_3d_t orientation_aligned = D3(1, 0, 0);
+    for (size_t i = 0; i < N; ++i)
+    {
+        double theta = 2 * M_PI * ((double) i / N);
+        double y = radius * cos(theta);
+        double z = radius * sin(theta);
+
+        system->swimmers[i].position = D3(x, y, z);
+        system->swimmers[i].orientation = orientation_aligned;
+        system->swimmers[i].length = LENGTH;
+        system->swimmers[i].volumetric_flow_rate = VOLUMETRIC_FLOW_RATE;
+        system->swimmers[i].sp_speed = SP_SPEED;
+    }
+    return system;
+}
+
 static error_e reproduce_2024_fig_16()
 {
     error_e errcode = ERR_OK;
 
-    /* NOT IMPLEMENTED */
+    puts("Reproducing Figure 2024-16");
+
+    fish_system_t *initial_state = fish_system_combine_destroy(
+        generate_fish_circle(2.5, 6, 0),
+        generate_fish_circle(2.5, 6, 4));
+
+    char output_folder_name[BUFFER_SIZE];
+    char output_filename[DOUBLE_BUFFER_SIZE];
+
+    derivative_computation_opts_t dc_opts = {0};
+    dc_opts.method = BRUTE_FORCE;
+
+    integration_opts_t int_opts = {0};
+    int_opts.method = RUNGE_KUTTA_4;
+    int_opts.eval_time_step = 0.1;
+    int_opts.end_time = 20;
+    int_opts.print_time_progression = true;
+
+    errcode = perform_simulation(
+        initial_state, dc_opts, int_opts,
+        output_filename, output_folder_name,
+        BUFFER_SIZE, DOUBLE_BUFFER_SIZE, false);
+    if (errcode != ERR_OK)
+        goto jmp_initial_state;
+
+    datastream_t stream = {0};
+    errcode = datastream_open_file(&stream, output_filename);
+    if (errcode != ERR_OK)
+        goto jmp_datastream;
+
+    FILE *restrict tmp_output_fptr = fopen(TEMP_OUTPUT_FILE, "w");
+
+    for (size_t frame = 0; frame < stream.n_frames; ++frame)
+    {
+        fish_system_t *state = NULL;
+        double time;
+
+        datastream_read_frame(&stream, frame, &state, &time);
+        for (size_t i = 0; i < stream.n_particles; ++i)
+        {
+            swimmer_t swimmer = state->swimmers[i];
+            fprintf(tmp_output_fptr, "%lf %lf %lf%s",
+                swimmer.position.x,
+                swimmer.position.y,
+                swimmer.position.z,
+                i == stream.n_particles - 1 ? "\n" : "   ");
+        }
+        fish_system_destroy(&state);
+    }
+    fflush(tmp_output_fptr);
+
+    char rm_filepath_cmd[DOUBLE_BUFFER_SIZE];
+    snprintf(rm_filepath_cmd, DOUBLE_BUFFER_SIZE,
+        "rm -r %s", output_folder_name);
+    if (system(rm_filepath_cmd) != 0)
+        errcode = RAISE_ERROR(ERR_FAILURE, "could not delete output folder");
+
+    gnuplot_ctrl *fig = gnuplot_init();
+    gnuplot_setterm(fig, OUTPUT_MODE "cairo", 1200, 800);
+    gnuplot_cmd(fig, "set output '" VALIDATION_OUTPUT_FOLDER
+        "/validation-2024-16." OUTPUT_MODE "'");
+    gnuplot_cmd(fig, "set title '3-D swirl plot'");
+    gnuplot_cmd(fig, "unset key");
+    gnuplot_cmd(fig, "set view 60, 60, 1, 1.2");
+
+    gnuplot_set_axislabel(fig, "x", "x");
+    gnuplot_set_axislabel(fig, "y", "y");
+    gnuplot_set_axislabel(fig, "z", "z");
+
+    fprintf(fig->gnucmd, "splot ");
+    for (size_t i = 0; i < initial_state->size; ++i)
+    {
+        size_t x = 3 * i + 1;
+        size_t y = 3 * i + 2;
+        size_t z = 3 * i + 3;
+
+        fprintf(fig->gnucmd,
+            "'%s' using %zu:%zu:%zu with lines lw 2%s",
+            i == 0 ? TEMP_OUTPUT_FILE : "",
+            x, y, z,
+            i == initial_state->size - 1 ? "\n" : ", \\\n");
+    }
+
+    gnuplot_cmd(fig, "set output");
+    gnuplot_close(fig);
+
+    snprintf(rm_filepath_cmd, DOUBLE_BUFFER_SIZE,
+        "rm -r %s", TEMP_OUTPUT_FILE);
+    if (system(rm_filepath_cmd) != 0)
+        errcode = RAISE_ERROR(ERR_FAILURE, "could not delete temp output file");
+
+jmp_datastream:
+    datastream_close(&stream);
+
+jmp_initial_state:
+    fish_system_destroy(&initial_state);
 
     return errcode;
 }
+
+static size_t count_lines(FILE *fptr)
+{
+    size_t lines = 0;
+    int c;
+
+    rewind(fptr);
+
+    while ((c = fgetc(fptr)) != EOF)
+    {
+        if (c == '\n')
+            lines++;
+    }
+
+    rewind(fptr);
+
+    return lines;
+}
+
+fish_system_t *comparison_plot_load_initial_conditions(
+    const int initial_condition_index)
+{
+    error_e errcode = ERR_OK;
+
+    fish_system_t *initial_system = fish_system_allocate(2);
+    if (initial_system == NULL) {
+        errcode = RAISE_ERROR(ERR_ALLOC,
+            "could not allocate new fish system");
+        goto jmp_err;
+    }
+
+    const double *data = INITIAL_CONDITIONS[initial_condition_index];
+
+    initial_system->swimmers[0] = (swimmer_t) {
+        .position = (double_3d_t){ .data = { data[0], data[1], data[2] } },
+        .orientation = (double_3d_t){ .data = { data[3], data[4], data[5] } },
+        .volumetric_flow_rate = VOLUMETRIC_FLOW_RATE,
+        .length = LENGTH,
+        .sp_speed = SP_SPEED
+    };
+
+    initial_system->swimmers[1] = (swimmer_t) {
+        .position = (double_3d_t){ .data = { data[6], data[7], data[8] } },
+        .orientation = (double_3d_t){ .data = { data[9], data[10], data[11] }},
+        .volumetric_flow_rate = VOLUMETRIC_FLOW_RATE,
+        .length = LENGTH,
+        .sp_speed = SP_SPEED
+    };
+
+jmp_err:
+    if (errcode != ERR_OK)
+        return NULL;
+    return initial_system;
+}
+
+static error_e read_csv_line(
+    FILE *restrict fptr,
+    swimmer_t *restrict csv_a,
+    swimmer_t *restrict csv_b)
+{
+    char line[512];
+    if (fgets(line, sizeof(line), fptr) == NULL)
+        return RAISE_ERROR(ERR_FAILURE, "could not read line whatsoever");
+    const char *LINE_FMT = \
+        "%lf,%lf,%lf," /* x1,  y1,  z1  */
+        "%lf,%lf,%lf," /* nx1, ny1, nz1 */
+        "%lf,%lf,%lf," /* x2,  y2,  z2  */
+        "%lf,%lf,%lf"; /* nx2, ny2, nz2 */
+    int result = sscanf(line, LINE_FMT,
+        &csv_a->position.x,    &csv_a->position.y,    &csv_a->position.z,
+        &csv_a->orientation.x, &csv_a->orientation.y, &csv_a->orientation.z,
+        &csv_b->position.x,    &csv_b->position.y,    &csv_b->position.z,
+        &csv_b->orientation.x, &csv_b->orientation.y, &csv_b->orientation.z);
+    if (result != 12)
+        return RAISE_ERROR(ERR_FAILURE, "could not successfully scan line");
+    return ERR_OK;
+}
+
+inline static double calc_swimmer_err(
+    const swimmer_t csv,
+    const swimmer_t calculated)
+{
+    return sqrt(
+        pow(d3_norm(d3_sub(csv.position,    calculated.position)),    2) +
+        pow(d3_norm(d3_sub(csv.orientation, calculated.orientation)), 2));
+}
+
+static error_e plot_error_comparison_trajectory(
+    const gnuplot_ctrl *restrict fig,
+    FILE *restrict fptr,
+    fish_system_t *restrict initial_system,
+    const derivative_computation_opts_t dc_opts)
+{
+    error_e errcode = ERR_OK;
+
+    /* send filepointer back to the start of the file */
+    rewind(fptr);
+    size_t number_of_lines = count_lines(fptr);
+
+    integration_opts_t int_opts = {0};
+    int_opts.method = RUNGE_KUTTA_4;
+    int_opts.eval_time_step = 0.01;
+    int_opts.end_time = int_opts.eval_time_step * 1000;
+    int_opts.print_time_progression = true;
+
+    char output_folder_name[BUFFER_SIZE];
+    char output_filename[DOUBLE_BUFFER_SIZE];
+
+    errcode = perform_simulation(
+        initial_system, dc_opts, int_opts,
+        output_filename, output_folder_name,
+        BUFFER_SIZE, DOUBLE_BUFFER_SIZE, false);
+    if (errcode != ERR_OK)
+        return errcode;
+
+    datastream_t stream = {0};
+    errcode = datastream_open_file(&stream, output_filename);
+    if (errcode != ERR_OK)
+        goto jmp_datastream;
+
+    const size_t frames_to_read = MIN(stream.n_frames, number_of_lines);
+    if (stream.n_frames != number_of_lines)
+        WARN("number of frames does not equal the number of lines!");
+
+    for (size_t frame = 0; frame < frames_to_read; ++frame)
+    {
+        swimmer_t csv_a = {0};
+        swimmer_t csv_b = {0};
+        errcode = read_csv_line(fptr, &csv_a, &csv_b);
+        if (errcode != ERR_OK)
+            break;
+
+        fish_system_t *state = NULL;
+        double time;
+        errcode = datastream_read_frame(&stream, frame, &state, &time);
+        if (errcode != ERR_OK)
+            break;
+
+        double err_a = calc_swimmer_err(csv_a, state->swimmers[0]);
+        double err_b = calc_swimmer_err(csv_b, state->swimmers[1]);
+
+        /* add the errors in quadra */
+        double combined_err = sqrt( err_a * err_a + err_b * err_b );
+
+        fprintf(fig->gnucmd, "%lf %lf\n", time, combined_err);
+        fish_system_destroy(&state);
+    }
+    fprintf(fig->gnucmd, "e\n");
+    fflush(fig->gnucmd);
+
+    /* delete dataset */
+    char rm_filepath_cmd[DOUBLE_BUFFER_SIZE];
+    snprintf(rm_filepath_cmd, DOUBLE_BUFFER_SIZE,
+        "rm -r %s", output_folder_name);
+    if (system(rm_filepath_cmd) != 0)
+        errcode = RAISE_ERROR(ERR_FAILURE,
+            "could not delete output folder");
+
+jmp_datastream:
+    datastream_close(&stream);
+
+    return errcode;
+}
+
+static error_e produce_error_comparison_plot(
+    const gnuplot_ctrl *restrict fig,
+    const char *validation_dataset_filepath,
+    const int initial_condition_index)
+{
+    error_e errcode = ERR_OK;
+    printf("Generating Plot %d/3\n", initial_condition_index + 1);
+
+    fish_system_t *initial_system = \
+        comparison_plot_load_initial_conditions(initial_condition_index);
+    if (initial_system == NULL)
+        goto jmp_system;
+
+    FILE *fptr = fopen(validation_dataset_filepath, "r");
+    if (fptr == NULL) {
+        errcode = RAISE_ERROR(ERR_FAILURE, "could not open file");
+        goto jmp_fptr;
+    }
+
+    fprintf(fig->gnucmd, "plot ");
+    for (size_t meth_i = 0; meth_i < N_DC_METHODS; ++meth_i)
+        fprintf(fig->gnucmd, "'-' with lines title '%s'%s",
+            SERIES_LABELS[meth_i],
+            meth_i == N_DC_METHODS - 1 ? "\n" : ", ");
+
+    for (size_t meth_i = 0; meth_i < N_DC_METHODS; ++meth_i)
+    {
+        errcode = plot_error_comparison_trajectory(fig, fptr,
+            initial_system, DC_METHODS[meth_i]);
+        if (errcode != ERR_OK)
+            break;
+    }
+
+jmp_fptr:
+    fclose(fptr);
+
+jmp_system:
+    fish_system_destroy(&initial_system);
+
+    return errcode;
+}
+
+static error_e produce_error_comparison_plots()
+{
+    error_e errcode = ERR_OK;
+
+    puts("Producing Error Calculation Plot");
+
+    gnuplot_ctrl *fig = gnuplot_init();
+    gnuplot_setterm(fig, OUTPUT_MODE "cairo", 3 * 400, 600);
+    gnuplot_cmd(fig, "set output '" VALIDATION_OUTPUT_FOLDER
+        "/validation-comparison." OUTPUT_MODE "'");
+    gnuplot_cmd(fig,
+        "set multiplot layout 1,3 title 'Error vs. Time Validation Plots'");
+    gnuplot_set_axislabel(fig, "x", "Simulation Time (s)");
+    gnuplot_set_axislabel(fig, "y", "Combined Error (unitless)");
+    gnuplot_cmd(fig, "set key bottom right");
+
+    WRAP_CHECK(errcode, jmp_err,
+        produce_error_comparison_plot(fig, "validation-data/case1.csv", 0));
+    WRAP_CHECK(errcode, jmp_err,
+        produce_error_comparison_plot(fig, "validation-data/case2.csv", 1));
+    WRAP_CHECK(errcode, jmp_err,
+        produce_error_comparison_plot(fig, "validation-data/case3.csv", 2));
+
+    gnuplot_cmd(fig, "unset multiplot");
+    gnuplot_cmd(fig, "set output");
+    gnuplot_close(fig);
+
+jmp_err:
+    return errcode;
+}
+
+#define __WRAP_ERR(errcode, fn)                 \
+    errcode = fn;                               \
+    if (errcode != ERR_OK)                      \
+        return EXIT_FAILURE;
 
 int main(void)
 {
     error_e errcode;
 
-    mkdir_p(ROOT_OUTPUT_PATH, MODE_RW_USERONLY);
+    mkdir_p(VALIDATION_OUTPUT_FOLDER, MODE_RW_USERONLY);
 
-    errcode = reproduce_2025_fig_8();
-    if (errcode != ERR_OK)
-        return EXIT_FAILURE;
-    errcode = reproduce_2024_fig_16();
-    if (errcode != ERR_OK)
-        return EXIT_FAILURE;
+    __WRAP_ERR(errcode, reproduce_2025_fig_8());
+    __WRAP_ERR(errcode, reproduce_2024_fig_16());
+    __WRAP_ERR(errcode, produce_error_comparison_plots());
 
     return EXIT_SUCCESS;
 }

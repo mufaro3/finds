@@ -25,6 +25,8 @@
 #include <finds/util.h>
 #include <finds/evaluation.h>
 
+#define OUTPUT_MODE "png"
+
 #define FIGURE_WIDTH  1200
 #define FIGURE_HEIGHT 800
 
@@ -35,7 +37,7 @@
 #define FMM_MAX_LOG_N   8
 
 #define MIN_LOG_N 1
-#define MAX_LOG_N 5
+#define MAX_LOG_N 3
 
 #define N_METHODS 9
 
@@ -280,8 +282,9 @@ int main(void)
         goto jmp_times;
     }
 
-    gnuplot_setterm(fig_handle, "pngcairo", FIGURE_WIDTH, FIGURE_HEIGHT);
-    gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark.png'");
+    gnuplot_setterm(fig_handle, OUTPUT_MODE "cairo", FIGURE_WIDTH, FIGURE_HEIGHT);
+    gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark."
+        OUTPUT_MODE "'");
     gnuplot_cmd(fig_handle, "set logscale xy");
     gnuplot_cmd(fig_handle, "set key bottom right");
     gnuplot_set_axislabel(fig_handle, "x", "System Size {/Symbol N}");

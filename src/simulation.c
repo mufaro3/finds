@@ -130,7 +130,8 @@ error_e perform_simulation(
          return RAISE_ERROR(ERR_INVALID_ARG,
             "time step must be nonzero");
 
-    if (int_opts.absolute_error_tolerance < ABOUT_ZERO)
+    if (is_adaptive_method(int_opts.method) &&
+        int_opts.absolute_error_tolerance < ABOUT_ZERO)
         return RAISE_ERROR(ERR_INVALID_ARG,
             "absolute tolerance must be nonzero");
 

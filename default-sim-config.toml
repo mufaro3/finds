@@ -76,7 +76,7 @@ volumetric_flow_rate = 8.0
 # Brute force refers to the basic O(N^2) pairwise interaction computation
 # method. Barnes-Hut refers to the O(N log N) interaction computation method
 # based on clustering far-away groups. FMM is the Fast Multipole Method, which
-# clusters close and far groups in O(N) or O(N log N) time.
+# clusters close and far groups in O(N) time.
 interaction_method = "barnes-hut"
 
 # This is the Barnes-Hut approximation threshold (theta), used as the maximum
@@ -92,8 +92,8 @@ precision = 1E-6
 
 # This is the numerical integration scheme to be used in the simulation. Some
 # of the options are naive, meaning that there will be no internal error
-# estimation or adaptive time-stepping. Valid options are "euler", "RK4",
-# "RK23", "RK45", "RK54", "RK65", and "RK78".
+# estimation or adaptive time-stepping. Valid options are "euler", "RK2",
+# "RK4", "RK5", "RK6", "RK23", and "RK45".
 #
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error

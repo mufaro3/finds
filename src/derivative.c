@@ -77,12 +77,15 @@ static void feature_velocity_destroy(feature_velocity_t **feat_vel_ptr)
  *                              contribution.
  * @param[in]  system           The system to compute on.
  * @param[in]  feat_pos         The feature positions.
+ * @param[in]  regularize       Whether to regularize the computation.
  */
 static void calc_ext_contrib_brute_force(
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink,
     const fish_system_t *restrict system,
-    const feature_positions_t *restrict feat_pos)
+    const feature_positions_t *restrict feat_pos,
+    const double regularize,
+    const double eps)
 {
     size_t N = system->size;
 
@@ -101,7 +104,8 @@ static void calc_ext_contrib_brute_force(
                 feat_pos->swimmers[i],
                 feat_pos->swimmers[j],
                 &front_interaction,
-                &back_interaction);
+                &back_interaction,
+                regularize, eps);
 
             external_source[i] = d3_add(
                 external_source[i],
@@ -130,7 +134,9 @@ static void calc_ext_contrib_barnes_hut(
     double_3d_t *restrict external_sink,
     const fish_system_t *restrict system,
     const feature_positions_t *restrict feat_pos,
-    const double theta)
+    const double theta,
+    const bool regularize,
+    const double eps)
 {
     const size_t N = system->size;
     linear_octree_t *tree = linear_octree_build(system);
@@ -142,6 +148,8 @@ static void calc_ext_contrib_barnes_hut(
             system->swimmers[i].position,
             feat_pos->swimmers[i],
             theta,
+            regularize,
+            eps,
             &external_source[i],
             &external_sink[i]);
 
@@ -257,7 +265,7 @@ static void calc_ext_contrib_fmm(
 
         /* compute the interal interaction */
         double_3d_t internal_interaction = calculate_feature_interaction(
-            feat_pos->swimmers[i].source, feat_pos->swimmers[i].sink);
+            feat_pos->swimmers[i].source, feat_pos->swimmers[i].sink, 0);
 
         /* compute the correction for the sink and the source */
         double_3d_t source_correction = d3_mult(internal_interaction,  weight);
@@ -307,12 +315,14 @@ static feature_velocity_t *calculate_feature_velocities(
     switch (dc_opts.method) {
         case BRUTE_FORCE:
             calc_ext_contrib_brute_force(
-                external_source, external_sink, system, feat_pos);
+                external_source, external_sink, system, feat_pos,
+                dc_opts.regularize, dc_opts.regularization_epsilon);
             break;
         case BARNES_HUT:
             calc_ext_contrib_barnes_hut(
                 external_source, external_sink, system, feat_pos,
-                dc_opts.approximation_threshold);
+                dc_opts.approximation_threshold, dc_opts.regularize,
+                dc_opts.regularization_epsilon);
             break;
         case FAST_MULTIPOLE_METHOD:
             calc_ext_contrib_fmm(

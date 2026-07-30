@@ -13,6 +13,11 @@
 #ifndef DERIVATIVE_HEADER
 #define DERIVATIVE_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include "vector.h"
@@ -41,7 +46,8 @@ typedef struct {
     interaction_computation_methods_e method;
     /* NOTE: I could union this, but I'm not going to just for ease of
        memory management */
-    double approximation_threshold, precision;
+    double approximation_threshold, precision, regularization_epsilon;
+    bool regularize;
 } derivative_computation_opts_t;
 
 /** @brief Weight structure for computing weighted averages of derivatives. */
@@ -58,5 +64,9 @@ void derivative_destroy(system_derivative_t **derivative);
 void derivative_print(const system_derivative_t *derivative);
 system_derivative_t *derivative_average(
     const derivative_weight_t terms[], const size_t N, const size_t len);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* DERIVATIVE_HEADER */

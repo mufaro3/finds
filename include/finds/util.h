@@ -12,6 +12,11 @@
 #ifndef UTILITY_HEADER
 #define UTILITY_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -106,5 +111,9 @@ static inline int ne_lookup_enum(
             return enum_table[i].enum_value;
     return -1;
 }
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* UTILITY_HEADER */

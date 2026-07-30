@@ -71,7 +71,7 @@ analyze:
 	@$(DOCKER-SHELL) python3 scripts/process_data.py $(file)
 
 test:
-	@$(DOCKER-SHELL) ctest --test-dir build --output-on-failure
+	@$(DOCKER-SHELL) ctest --test-dir build --output-on-failure -V
 
 docs:
 	@$(DOCKER-SHELL) cmake --build build --target docs

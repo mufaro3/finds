@@ -10,11 +10,20 @@
 #ifndef CONSTANTS_HEADER
 #define CONSTANTS_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define ROOT_OUTPUT_PATH        "output"
 #define SIMULATIONS_OUTPUT_PATH "simulations"
 #define DATAFILE_NAME           "data.h5"
 
 #define SAFETY 0.9f
 #define MODE_RW_USERONLY 0755
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* CONSTANTS_HEADER */

@@ -214,10 +214,6 @@ error_e perform_simulation(
                     current_time_step, eval_error, tolerance,
                     integration_method_order(int_opts.method));
 
-                printf("time=%6lf dt=%6e norm=%6lf error=%6e tol=%6e\n",
-                    current_time, current_time_step, state_norm,
-                    eval_error, tolerance);
-
                 /* make sure we don't go over the user-supplied dt */
                 if (current_time_step > int_opts.eval_time_step)
                     current_time_step = int_opts.eval_time_step;

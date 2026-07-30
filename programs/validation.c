@@ -51,7 +51,7 @@ static const double NZ23 = -SIN_BETA;
 
 static const double INITIAL_CONDITIONS[3][12] = {
     { 0, 0, 0, 0, 1, 0, 1,   1,   0, 0, 1, 0 },
-    { 0, 1, 0, 0, 1, 0, 0.5, 1, 0, 0, 1, 0 },
+    { 0, 0, 0, 0, 1, 0, 0.5, 1, 0, 0, 1, 0 },
     { 0, 0, 0, 1, 0, 0, 1, 0.5, 0, NX23, NY23, NZ23 }
 };
 
@@ -648,7 +648,7 @@ static error_e produce_error_comparison_plots()
     gnuplot_cmd(fig, "set key bottom right");
 
     WRAP_CHECK(errcode, jmp_err,
-        produce_error_comparison_plot(fig, "validation-data/case1.csv", 0));
+       produce_error_comparison_plot(fig, "validation-data/case1.csv", 0));
     WRAP_CHECK(errcode, jmp_err,
         produce_error_comparison_plot(fig, "validation-data/case2.csv", 1));
     WRAP_CHECK(errcode, jmp_err,

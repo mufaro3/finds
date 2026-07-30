@@ -117,6 +117,28 @@ foreach(PROGRAM ${PROGRAM_SOURCES})
 endforeach()
 
 # ------------------------------------------------------------------------------
+# C Examples
+# ------------------------------------------------------------------------------
+
+file(GLOB EXAMPLE_SOURCES CONFIGURE_DEPENDS examples/c/*.c)
+
+foreach(EXAMPLE ${EXAMPLE_SOURCES})
+    get_filename_component(EXAMPLE_NAME ${EXAMPLE} NAME_WE)
+
+    add_executable(example_${EXAMPLE_NAME} ${EXAMPLE})
+
+    target_include_directories(example_${EXAMPLE_NAME} PRIVATE
+        ${PROGRESSBAR_ROOT}/include
+        ${TOMLC17_ROOT}/src
+        ${FMM3D_DIR}/c
+    )
+
+    target_link_libraries(example_${EXAMPLE_NAME} PRIVATE finds)
+
+    target_compile_options(example_${EXAMPLE_NAME} PRIVATE ${COMPILE_ARGS})
+endforeach()
+
+# ------------------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------------------
 

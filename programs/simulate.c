@@ -283,15 +283,21 @@ static void load_sim_config_file(
 
     switch (opts->dc_opts.method)
     {
-        case BRUTE_FORCE:
-            /* we don't need anything from brute force */
-            break;
         case BARNES_HUT:
             toml_datum_t datum_approximation_threshold = conf_read_value(
                 &result, conf_filepath,
                 "differentiation.approximation_threshold", TOML_FP64);
             opts->dc_opts.approximation_threshold = \
                 datum_approximation_threshold.u.fp64;
+            __attribute__ ((fallthrough));
+        case BRUTE_FORCE:
+            toml_datum_t datum_regularize = conf_read_value(&result,
+                conf_filepath, "differentiation.regularize", TOML_BOOLEAN);
+            opts->dc_opts.regularize = datum_regularize.u.boolean;
+
+            toml_datum_t datum_epsilon = conf_read_value(&result, conf_filepath,
+                "differentiation.epsilon", TOML_FP64);
+            opts->dc_opts.regularization_epsilon = datum_epsilon.u.fp64;
             break;
         case FAST_MULTIPOLE_METHOD:
             toml_datum_t datum_precision = conf_read_value(&result,

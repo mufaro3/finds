@@ -12,6 +12,11 @@
 #ifndef ERROR_HEADER
 #define ERROR_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <errno.h>
 
 /** @brief Enum for error types. */
@@ -64,5 +69,9 @@ typedef enum {
 
 #define WARN(msg) \
     fprintf(stderr, "WARNING: %s\n", msg)
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* ERROR_HEADER */

@@ -13,11 +13,11 @@
 
 # The distribution type essentially defines the shape/geometry of the fish
 # system. Valid options are "cube", "sphere", "ball", and "random".
-distribution_type = "random"
+distribution_type = "sphere"
 
 # The radius of the sphere or ball comprised of swimmers. Set this only if
 # 'distribution_type' is set to 'sphere' or 'ball'.
-radius = 20.0
+radius = 30.0
 
 # The side length of the cubic lattice comprised of swimmers. Set this only if
 # 'distribution_type' is set to 'cube'.
@@ -50,7 +50,7 @@ orientation_type = "swirl-inward"
 # along the polar and azimuthal angles (not including the roll-axis as each
 # swimmer is symmetric along that axis). Set this to 0 to disable random
 # angular perturbation.
-angular_perturbation = 0.0
+angular_perturbation = 0.1
 
 # This sets the length of the fish. To set a uniform length (so all fish
 # having the same length), then set this to some singular value, i.e.,
@@ -60,12 +60,12 @@ angular_perturbation = 0.0
 # such as
 #   length = [1, 10]
 # in both cases, zero is not a valid length.
-length = [1.0, 10.0]
+length = [1.0, 2.0]
 
 # This sets the volumetric flow rate of the fish. In the same fashion as with
 # the length of the fish, you can set a uniform volumetric flow by defining it
 # as a single value and as a uniform distribution by defining it as a range.
-volumetric_flow_rate = 8.0
+volumetric_flow_rate = [12.0, 15.0]
 
 [differentiation]
 
@@ -83,10 +83,17 @@ interaction_method = "barnes-hut"
 # ratio between the side-length of an octant and the distance to that octant
 # from a swimmer for which to cluster the octant. Requires that
 # "interaction_method" is set to "barnes-hut".
-approximation_threshold = 0.5
+approximation_threshold = 1.0
 
 # Relative tolerance for the Fast-Multipole Method
 precision = 1E-6
+
+# Whether or not to use regularization (only valid for Brute-Force and
+# Barnes-Hut).
+regularize = true
+
+# The regularization epsilon (if regularization is enabled).
+epsilon = 0.5
 
 [integration]
 
@@ -98,7 +105,7 @@ precision = 1E-6
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error
 # computation for adaptive time-stepping.
-integration_method = "RK4"
+integration_method = "RK45"
 
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are

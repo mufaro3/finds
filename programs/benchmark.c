@@ -221,9 +221,8 @@ int main(void)
 
         for (size_t meth_i = 0; meth_i < N_METHODS; ++meth_i)
         {
-            if (!method_runs_at_size(methods[meth_i], logN)) {
+            if (!method_runs_at_size(methods[meth_i], logN))
                 continue;
-            }
 
             printf("  Method %zu\n", meth_i);
 
@@ -282,7 +281,8 @@ int main(void)
         goto jmp_times;
     }
 
-    gnuplot_setterm(fig_handle, OUTPUT_MODE "cairo", FIGURE_WIDTH, FIGURE_HEIGHT);
+    gnuplot_setterm(fig_handle, OUTPUT_MODE "cairo",
+        FIGURE_WIDTH, FIGURE_HEIGHT);
     gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark."
         OUTPUT_MODE "'");
     gnuplot_cmd(fig_handle, "set logscale xy");

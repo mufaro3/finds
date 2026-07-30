@@ -13,6 +13,11 @@
 #ifndef BARNES_HUT_HEADER
 #define BARNES_HUT_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "system.h"
 #include "vector.h"
@@ -58,6 +63,13 @@ void linear_octree_compute_vel_contrib(
     const double_3d_t position_i,
     const swimmer_features_t features_i,
     const double approx_ratio,
+    const bool regularize,
+    const double epsilon,
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink);
+
+#ifdef __cplusplus
+} /* extern "C" */
 #endif
+
+#endif /* BARNES_HUT_HEADER */

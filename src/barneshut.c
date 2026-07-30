@@ -602,6 +602,8 @@ static void linear_octree_compute_velocity_contribution(
     const linear_octree_t *restrict tree,
     const swimmer_features_t swimmer_i_feat_pos,
     const uint64_t current_node_index,
+    const bool regularize,
+    const double eps,
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink)
 {
@@ -618,7 +620,8 @@ static void linear_octree_compute_velocity_contribution(
         swimmer_i_feat_pos,
         current_node_feat_pos,
         &front_interaction,
-        &back_interaction);
+        &back_interaction,
+        regularize, eps);
 
     /* obtain the average volumetric flow rate for this node */
     const double avg_vol_flow_rate = \
@@ -654,6 +657,8 @@ static void linear_octree_compute_vel_contrib_recurse(
     const double_3d_t swimmer_i_pos,
     const swimmer_features_t swimmer_i_feat_pos,
     const double approx_ratio,
+    const bool regularize,
+    const double eps,
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink)
 {
@@ -677,7 +682,7 @@ static void linear_octree_compute_vel_contrib_recurse(
 
         /* compute the velocity contribution directly */
         linear_octree_compute_velocity_contribution(
-            tree, swimmer_i_feat_pos, current_node_index,
+            tree, swimmer_i_feat_pos, current_node_index, regularize, eps,
             external_source, external_sink);
 
         return;
@@ -692,7 +697,7 @@ static void linear_octree_compute_vel_contrib_recurse(
     /* if its sufficiently far away, then compute the contribution */
     if (ratio < approx_ratio) {
         linear_octree_compute_velocity_contribution(
-            tree, swimmer_i_feat_pos, current_node_index,
+            tree, swimmer_i_feat_pos, current_node_index, regularize, eps,
             external_source, external_sink);
         return;
     }
@@ -712,7 +717,7 @@ static void linear_octree_compute_vel_contrib_recurse(
         if (child_node_index != OCTREE_NO_CHILD)
             linear_octree_compute_vel_contrib_recurse(
                 tree, child_node_index, swimmer_i_pos, swimmer_i_feat_pos,
-                approx_ratio, external_source, external_sink);
+                approx_ratio, regularize, eps, external_source, external_sink);
     }
 }
 
@@ -731,6 +736,8 @@ void linear_octree_compute_vel_contrib(
     const double_3d_t position_i,
     const swimmer_features_t features_i,
     const double approx_ratio,
+    const bool regularize,
+    const double eps,
     double_3d_t *restrict external_source,
     double_3d_t *restrict external_sink)
 {
@@ -745,5 +752,5 @@ void linear_octree_compute_vel_contrib(
     /* begin computing the velocity contribution */
     linear_octree_compute_vel_contrib_recurse(
         tree, 0, position_i, features_i,
-        approx_ratio, external_source, external_sink);
+        approx_ratio, regularize, eps, external_source, external_sink);
 }

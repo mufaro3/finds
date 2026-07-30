@@ -11,6 +11,11 @@
 #ifndef FINDS_HEADER
 #define FINDS_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "barneshut.h"
 #include "constants.h"
 #include "datastream.h"
@@ -24,5 +29,9 @@
 #include "system.h"
 #include "util.h"
 #include "vector.h"
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* FINDS_HEADER */

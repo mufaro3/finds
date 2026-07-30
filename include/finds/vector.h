@@ -14,6 +14,11 @@
 #ifndef VECTOR_HEADER
 #define VECTOR_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -369,5 +374,9 @@ static inline void d3_copy(double_3d_t *dest, const double_3d_t src)
     dest->y = src.y;
     dest->z = src.z;
 }
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif

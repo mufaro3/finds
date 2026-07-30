@@ -14,6 +14,11 @@
 #ifndef INTEGRATION_HEADER
 #define INTEGRATION_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdbool.h>
 #include "system.h"
 #include "derivative.h"
@@ -119,5 +124,9 @@ is_adaptive_method(integration_method_e method)
         default: return false;
     }
 }
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif

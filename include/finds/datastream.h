@@ -13,6 +13,11 @@
 #ifndef IO_HEADER
 #define IO_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <hdf5.h>
 #include <stdbool.h>
 #include "system.h"
@@ -56,5 +61,9 @@ error_e datastream_write_system(
     datastream_t *stream,
     const fish_system_t *system,
     const double time);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* IO_HEADER */

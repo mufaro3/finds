@@ -13,6 +13,11 @@
 #ifndef FISH_SYSTEM_HEADER
 #define FISH_SYSTEM_HEADER
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -149,5 +154,9 @@ feature_positions_t *calculate_feature_positions(const fish_system_t *system);
 void feature_positions_print(const feature_positions_t *feat_pos);
 feature_positions_t *feature_positions_allocate(const size_t N);
 void feature_positions_destroy(feature_positions_t **feat_pos);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* FISH_SYSTEM_HEADER */

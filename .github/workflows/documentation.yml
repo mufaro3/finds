@@ -17,7 +17,7 @@ jobs:
           submodules: recursive
 
       - name: Build Docker image
-        run: make build
+        run: mkdir -p build && make build
 
       - name: Build documentation
         run: make docs

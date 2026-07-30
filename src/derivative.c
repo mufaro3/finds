@@ -77,7 +77,8 @@ static void feature_velocity_destroy(feature_velocity_t **feat_vel_ptr)
  *                              contribution.
  * @param[in]  system           The system to compute on.
  * @param[in]  feat_pos         The feature positions.
- * @param[in]  regularize       Whether to regularize the computation.
+ * @param[in]  regularize       Whether or not to use regularized interaction.
+ * @param[in]  eps              Regularization Epsilon
  */
 static void calc_ext_contrib_brute_force(
     double_3d_t *restrict external_source,
@@ -128,6 +129,8 @@ static void calc_ext_contrib_brute_force(
  * @param[in]  system           The system to compute on.
  * @param[in]  feat_pos         The feature positions.
  * @param[in]  theta            The maximum approximation ratio for Barnes-Hut.
+ * @param[in]  regularize       Whether or not to use regularized interaction.
+ * @param[in]  eps              Regularization Epsilon
  */
 static void calc_ext_contrib_barnes_hut(
     double_3d_t *restrict external_source,
@@ -166,9 +169,7 @@ static void calc_ext_contrib_barnes_hut(
  *                              contribution.
  * @param[in]  system           The system to compute on.
  * @param[in]  feat_pos         The feature positions.
- * @param[in]  theta            The maximum approximation ratio for FMM.
- * @param[in]  order            The number of terms to include in the
- *                              multipole expansion.
+ * @param[in]  precision        The FMM precision.
  */
 static void calc_ext_contrib_fmm(
     double_3d_t *restrict external_source,

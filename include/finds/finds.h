@@ -1,12 +1,5 @@
 /**
  * @file finds.h
- * @mainpage FINDS
- *
- * This project implements:
- * - Brute force N-body
- * - Barnes-Hut
- * - Fast Multipole Method
- * - Multiple Runge-Kutta integrators
  */
 #ifndef FINDS_HEADER
 #define FINDS_HEADER

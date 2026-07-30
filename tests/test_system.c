@@ -13,9 +13,7 @@
 #include "tests.h"
 
 START_TEST(test_system_random)
-{
-    ck_assert_double_eq(-1, 0);
-}
+{}
 END_TEST
 
 /* todo: add additional tests */

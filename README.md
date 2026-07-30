@@ -7,16 +7,16 @@ schools, birds flying in groups, drones/bugs flying in swarms, and so on.
 This fundamentally follows the N-body problem, as each fish-like particle
 (which I have equivalently called "fish automatons," "autofish," "fish-
 particles," and even just "particles" in various places) affects each other
-fish-like particle in the simulation. At a group size of $N=3$, an analytical
+fish-like particle in the simulation. At a group size of N=3, an analytical
 solution is no longer possible, and numerical calculation is needed. As the
-group size $N$ increases, the computational complexity in performing these
-numerical calculations grows as a function of $N^2$.
+group size N increases, the computational complexity in performing these
+numerical calculations grows as a function of N^2.
 
 As such, the fundamental goal of 'Fish' was to simplify the calculations
 to reduce the effect of this bottleneck on Floryan's research through the
 implementation of approximation algorithms and speed tricks commonly used
 in Particle dynamics, starting with the Barnes-Hut approximation, which
-decreases the computational complexity to $O(N \log N)$.
+decreases the computational complexity to O(N log N).
 
 Long term, the goal for the project is to try and reach computational parity
 with modern particle dynamics codes used in Astrophysics (and the like), such
@@ -38,7 +38,7 @@ purely on windows regardless due to containerization.
 
 1. Download prerequisites (docker and make)
 
-```shell
+```bash
 sudo apt update
 sudo apt install git make
 sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-doc \
@@ -68,13 +68,13 @@ sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin \
 
 2. Clone the Repository
 
-```shell
+```bash
 git clone --recurse-submodules https://github.com/mufaro3/finds.git
 ```
 
 3. `cd` into the repository and build the container and the documentation
 
-```shell
+```bash
 cd finds
 make build
 make docs

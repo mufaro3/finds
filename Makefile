@@ -74,7 +74,8 @@ test:
 	@$(DOCKER-SHELL) ctest --test-dir build --output-on-failure -V
 
 docs:
-	@$(DOCKER-SHELL) cmake --build build --target docs
+	@$(DOCKER-SHELL) cmake --build build --target docs_pdf
+	@$(DOCKER-SHELL) mv build/latex/refman.pdf build/finds.pdf
 
 # paper
 paper:

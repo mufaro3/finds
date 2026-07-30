@@ -595,6 +595,8 @@ void linear_octree_destroy(linear_octree_t **octree_ptr)
  * @param[in]  tree                The linear octree.
  * @param[in]  swimmer_i_feat_pos  The feature positions for swimmer i.
  * @param[in]  current_node_index  The index of the cluster for swimmer j.
+ * @param[in]  regularize       Whether or not to use regularized interaction.
+ * @param[in]  eps              Regularization Epsilon
  * @param[out] external_source     The output vector for the source contrib.
  * @param[out] external_sink       The output vector for the sink contribution.
  */
@@ -648,6 +650,8 @@ static void linear_octree_compute_velocity_contribution(
  * @param[in]  swimmer_i_pos       The position of swimmer i.
  * @param[in]  swimmer_i_feat_pos  The feature positions of swimmer i.
  * @param[in]  approx_ratio        The Barnes-Hut Approximation Ratio.
+ * @param[in]  regularize       Whether or not to use regularized interaction.
+ * @param[in]  eps              Regularization Epsilon
  * @param[out] external_source     The output vec. for external source contrib.
  * @param[out] external_sink       The output vec. for external sink contrib.
  */
@@ -728,6 +732,8 @@ static void linear_octree_compute_vel_contrib_recurse(
  * @param[in]  position_i       The position of swimmer i.
  * @param[in]  features_i       The feature positions of swimmer i.
  * @param[in]  approx_ratio     The Barnes-Hut approximation ratio.
+ * @param[in]  regularize       Whether or not to use regularized interaction.
+ * @param[in]  eps              Regularization Epsilon
  * @param[out] external_source  The output vec. for external source contrib.
  * @param[out] external_sink    The output vec. for external sink contrib.
  */

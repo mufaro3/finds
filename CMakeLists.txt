@@ -162,17 +162,21 @@ find_package(LATEX)
 
 if(DOXYGEN_FOUND)
 
-    set(DOXYGEN_GENERATE_HTML YES)
-    set(DOXYGEN_GENERATE_LATEX YES)
-
-    doxygen_add_docs(docs include src)
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE}
+                ${CMAKE_SOURCE_DIR}/documentation-static/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating Doxygen documentation"
+        VERBATIM
+    )
 
     if(LATEX_FOUND)
-        add_custom_command(
-            TARGET docs POST_BUILD
+        add_custom_target(docs_pdf
             COMMAND ${CMAKE_MAKE_PROGRAM}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/latex
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/latex
+            DEPENDS docs
             COMMENT "Building Doxygen PDF documentation"
+            VERBATIM
         )
     endif()
 

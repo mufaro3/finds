@@ -39,10 +39,6 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# install FMM3D
-COPY lib/FMM3D workspace/lib/FMM3D
-RUN cd workspace/lib/FMM3D && make lib
-
 ARG USER_UID=1000
 ARG USER_GID=1000
 
@@ -61,6 +57,10 @@ RUN if getent group ${USER_GID}; then \
                 --shell /bin/bash \
                 dev; \
     fi
+
+# install FMM3D
+COPY lib/FMM3D workspace/lib/FMM3D
+RUN cd workspace/lib/FMM3D && make lib
 
 WORKDIR /workspace
 

@@ -16,6 +16,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Clean build directory
+        run: rm -rf build && mkdir build
+
       - name: Build Docker Image
         run: make build
 

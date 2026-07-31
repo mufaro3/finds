@@ -17,7 +17,6 @@ services:
 
   jupyter:
     <<: *dev
-    build: .
     ports:
       - "8888:8888"
     command: >

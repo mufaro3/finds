@@ -39,17 +39,33 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY lib/FMM3D /workspace/lib/FMM3D
+# install FMM3D
+COPY lib/FMM3D workspace/lib/FMM3D
+RUN cd workspace/lib/FMM3D && make lib
 
-RUN cd /workspace/lib/FMM3D && \
-    make lib
+ARG USER_UID=1000
+ARG USER_GID=1000
 
-USER 1000
+RUN if getent group ${USER_GID}; then \
+        group_name=$(getent group ${USER_GID} | cut -d: -f1); \
+        groupmod -n dev ${group_name}; \
+    else \
+        groupadd --gid ${USER_GID} dev; \
+    fi \
+    && if id -u ${USER_UID} >/dev/null 2>&1; then \
+        usermod -l dev -d /home/dev -m $(id -un ${USER_UID}); \
+    else \
+        useradd --uid ${USER_UID} \
+                --gid dev \
+                --create-home \
+                --shell /bin/bash \
+                dev; \
+    fi
 
 WORKDIR /workspace
 
+# install requirements
 COPY requirements.txt .
-
 RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
 CMD ["/bin/bash"]

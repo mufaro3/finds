@@ -1,3 +1,6 @@
+export DOCKER_UID := $(shell id -u)
+export DOCKER_GID := $(shell id -g)
+
 COMPOSE=docker compose
 SERVICE=dev
 DOCKER-SHELL=$(COMPOSE) run --rm $(SERVICE)
@@ -39,7 +42,9 @@ help:
 # Docker
 
 update-docker:
-	@$(COMPOSE) build
+	$(COMPOSE) build \
+		--build-arg USER_UID=$(DOCKER_UID) \
+		--build-arg USER_GID=$(DOCKER_GID)
 
 configure:
 	@$(DOCKER-SHELL) cmake -B build
@@ -50,7 +55,8 @@ compile:
 build: update-docker configure compile
 
 clean:
-	@$(DOCKER-SHELL) rm -rf build output paper/output
+	@$(COMPOSE) down
+	@$rm -rf build output paper/output
 
 shell:
 	@$(DOCKER-SHELL)

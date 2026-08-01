@@ -72,7 +72,7 @@
 \usepackage[T1]{fontenc}
 
 % Use the Palatino font
-\usepackage[sc]{mathpazo}
+%\usepackage[sc]{mathpazo}
 
 % Increase line spacing slightly
 \linespread{1.05}

@@ -8,7 +8,7 @@
 \runninghead{FINDS: The Fish INteraction and Dynamics Simulator}
 
 \usepackage{times}
-
+\usepackage{physics}
 \usepackage{lipsum}
 \setcounter{secnumdepth}{0}
 \setcounter{page}{1}
@@ -50,10 +50,10 @@
     of the pairwise interactions for each member of the school. As such, FINDS
     contains implementations of Brute Force computation, the Barnes-Hut
     algorithm, and the Fast Multipole Method. Second, FINDS contains custom
-    routines for numerically integrating these systems using embedded
-    Runge-Kutta schemes for adaptive time-stepping. Third, FINDS contains a
-    small library of post-processing modules available to end users to
-    stream-line the analysis of their generated data.
+    routines for numerically integrating these systems using adaptive and
+    non-adaptive Runge-Kutta schemes for adaptive time-stepping. Third,
+    FINDS contains a small library of post-processing modules written in Python
+    for stream-lining the analysis of generated data.
   \end{abstract}
 }
 
@@ -63,31 +63,179 @@
 
 \section{Introduction}
 
-\lipsum[1]
+Synchronous mass movement is a common patten throughout nature, observed
+most commonly in the movement of smaller animals or prey animals such as birds,
+fish, bugs, oxen, deer, etc. due to the multitude of benefits that members of
+such groups gain, such as increased protection from predators, increased
+energy efficiency due to the motion of others (such as vortical wake), etc.
+\textit{finish later!!!!!!}
+
+\section{Literature Review and Similar Work}
 
 \section{Mathematical Model of Swimmers}
 
 FINDS is developed around the far-field source/sink dipole model designed by
 Mabrouk and Floryan for modelling how passive hydrodynamic interactions at far
-distances effects the evolution of a greater school \cite{mabrouk2024,mabrouk2025}.
-Under this model, each fish $i$ is defined as a dipole consisting of a fluid
-source at the head of the fish $\mathbf{x}_{f,i}$, and a fluid sink at the
-tail $\mathbf{x}_{b,i}$, separated by the length of the fish $\ell_i$. The
+distances effects the evolution of a greater school
+\cite{mabrouk2024,mabrouk2025}.
+Under this model, each fish $i$ is defined as a dipole consisting of a
+fluid source at the head of the fish $\vu{x}_{f,i}$, and a fluid sink at the
+tail $\vu{x}_{b,i}$, separated by the length of the fish $\ell_i$. The
 source and the sink of each fish are defined to have the same volumetric flow
-rate, $\sigma_i$, to ensure the conservation of fluid by making the sources and
-sinks identical up to a point.
+rate, $\sigma_i$, to ensure the conservation of fluid by making the sinks
+consume exactly the same amount of fluid as the sources. For simplicity, the
+source and sink (or ``front'' and ``back'') of each fish are called its
+``features.''
 
-\section{Literature Review and Similar Work}
+Each fish is defined as an eight-dimensional vector consisting of four
+variables: $\va{x}_{c,i}$, the three-dimensional center-of-mass position vector,
+$\vu{n}_{i}$, the three-dimensional orientation unit vector, $\ell_i$, and
+$\sigma_i$. Together, the collection of each of these fish vectors at a given
+time forms the state vector $\va{X}$.
 
-\lipsum[1]
+In particular, $\va{x}_{c,i}$ and $\vu{n}_{i}$ are dynamic and $\ell_i$ and
+$\sigma_i$ are constant for each fish $i$. This formulism leaves the
+translational and rotational dynamics for each fish as the first-order
+differential equations concerning $\va{x}_{c,i}$ and $\vu{n}_{i}$ respectively.
+With this, the derivatives of each are defined as
+\begin{align}\label{eq-dynamics}
+  \dv{\va{x}_{c,i}}{t} &= \frac{1}{2}\left(\dv{\va{x}_{f,i}}{t} +
+                          \dv{\va{x}_{b,i}}{t}\right) \\
+  \dv{\vu{n}_{i}}{t}   &= \frac{\Delta \va{v}_{i} +
+                          2 \lambda_i \vu{n}_i}{\ell_i}
+\end{align}
 
-\section{Numerical Methods}
+\noindent
+where
 
-\lipsum[1]
+\begin{equation}\label{eq-lagrange-multiplier}
+  \lambda_i = \frac{\Delta \va{v}_i \vdot \vu{n}}{2}
+\end{equation}
 
-\section{Software Architecture}
+\noindent
+is a Lagrange multiplier to ensure that $\ell_i$ is kept constant, and
 
-\lipsum[1]
+\begin{equation}\label{eq-velocity-diff}
+  \Delta \va{v}_i = \dv{\va{x}_{f,i}}{t} - \dv{\va{x}_{b,i}}{t}.
+\end{equation}
+
+With this, the translational and rotational dynamics for each fish are variably
+dependent on the translational derivatives of the source and sink for each fish,
+and this reduces the problem of modelling fish to an analogous problem of simple
+Laplacian particle dynamics based on treating the sources and sinks as
+individual particles with charge $\sigma_i$. Under this lens, the
+potential function resulting from a particle is the charge multiplied by
+Green's function for the three-dimensional Laplace equation,
+
+\begin{equation}\label{eq-greens}
+  \Phi_i(r) = \sigma_i G(r) = -\frac{\sigma_i}{4\pi r}.
+\end{equation}
+
+However, as this model is designed for far-field interactions, it becomes
+unphysical for small distances, as infinitely small distances produce
+infinitely large potential. To solve this problem, Mabrouk and Floryan
+reformulated this potential with a regularization parameter $\varepsilon$
+defined as
+
+\begin{equation}\label{eq-greens-regularized}
+  \Phi_{i,\varepsilon}(r) = \Phi_{i}(r) \erf(r/\varepsilon).
+\end{equation}
+
+From the potential functions, the velocity field resulting from any source or
+sink is defined as the gradient of the potential function, and for simplicity,
+the displacement-dependent vector $\va{k}$ can be defined to represent the
+gradient of the Laplacian interaction kernel $1/r$,
+
+\begin{align}\label{eqs-interaction}
+  \va{k}(\va{r}) &= \grad (-\frac{1}{r}) = \frac{\va{r}}{r^3} \\
+  \va{k}_{\varepsilon}(\va{r}) &= \grad\left(-\frac{\erf(r/\varepsilon)}{r}\right) =
+  \va{k}(\va{r}) \xi_{\varepsilon}(r)
+\end{align}
+
+\noindent
+where $\xi_{i,\varepsilon}(r)$ is the regularization coefficient
+
+\begin{equation}\label{eq-regularization}
+  \xi_{\varepsilon}(r) = \erf(r/\epsilon) -
+  \frac{2r}{\varepsilon \sqrt{\pi}} \exp(-\frac{r^2}{\varepsilon^2}).
+\end{equation}
+
+\noindent
+The velocity fields are therefore
+
+\begin{align}\label{eqs-velocity-field}
+  \va{u}_{i}(\va{r}) &= \frac{\sigma_i}{4\pi} \va{k}(\va{r}) \\
+  \va{u}_{i,\varepsilon}(\va{r}) &= \frac{\sigma_i}{4\pi}
+  \va{k}_{\varepsilon}(\va{r})
+\end{align}
+
+\noindent
+for the unregularized and regularized velocity fields respectively.
+
+With the velocity fields well-defined, the velocity of a given source or sink
+$\alpha$ can be defined generally as
+
+\begin{equation}\label{eq-feature-velocity}
+  \dv{\va{x}_{\alpha,i}}{t} = U_i \vu{n}_i +
+  \sum_{i \neq j}^N \frac{\sigma_j}{4\pi} \va{K}_{\alpha,ij}.
+\end{equation}
+
+\noindent
+where the first term is the \textit{internal} velocity contribution and the
+second term is the \textit{external} velocity contribution. In detail,
+
+\begin{equation}\label{eq-internal-velocity-contrib}
+  U_i = \frac{\sigma_i}{4\pi \ell_i^2}
+\end{equation}
+
+\noindent
+is the self-propelled speed resulting from the interaction between any
+source-sink pair of a dipole, and the second term represents the sum of the
+velocity contribution to a source or sink from a dipole, where
+$\va{K}_{\alpha,ij}$ represents the composite interaction vector between feature
+$\alpha$ of fish $i$ with both the source $f$ and the sink $b$ of fish $j$,
+
+\begin{equation}\label{eq-composite-interaction}
+  \va{K}_{\alpha,ij} = \va{k}(\va{r}_{\alpha f}) - \va{k}(\va{r}_{\alpha b}).
+\end{equation}
+
+\noindent
+where $\va{r}_{\alpha \beta}$ is the displacement between feature $\alpha$ of
+fish $i$ and feature $\beta$ of fish $j$. In the case of regularization, the
+interaction function $\va{k}$ is simply replaced with $\va{k}_\varepsilon$.
+
+\section{Derivative Computation}
+
+As stated previously, the modelling of fish is an $N$-body problem where the
+algorithmic complexity of computing a derivative is, through Brute-Force
+calculations, of order $\mathcal{O}(N^2)$. To reduce this computation time,
+two tree-based approximation algorithms are implemented: the Barnes-Hut
+algorithm and the Fast Multipole Method, of orders $\mathcal{O}(N \log N)$ and
+$\mathcal{O}(N)$ respectively.
+
+Brute force computation and the Barnes-Hut approximation are implemented
+directly into the FINDS code-base, and as such, the user has the ability to
+switch between unregularized and regularized calculations with ease. However,
+the Fast-Multipole Method is computed externally using Greengard et al.'s Fast
+Multipole Method library FMM3D, which will only compute the standard Laplacian
+gradient $\va{u}_i$, so the Fast-Multipole Method cannot be used with
+regularization. Additionally, all three methods are CPU-parallelized using
+OpenMP.
+
+\subsection{Barnes-Hut Approximation}
+
+The Barnes-Hut approximation is implemented in FINDS using linear octrees. As
+described by Barnes and Hut, the approximation method follows that 
+
+\subsection{Fast Multipole Method}
+
+\section{Numerical Integration}
+
+FINDS implements multiple 
+
+\section{System Creation}
+
+\section{Database Management}
 
 \section{Validation}
 
@@ -97,13 +245,7 @@ sinks identical up to a point.
 
 \lipsum[1]
 
-\section{Results}
-
-\lipsum[1]
-
-\section{Discussion}
-
-\lipsum[1]
+\section{Examples}
 
 \section{Limitations}
 
@@ -115,19 +257,18 @@ sinks identical up to a point.
 
 \section{Acknowledgements}
 
-In the development of FINDS, Alvin Ng's \texttt{grav\_sim} was used extensively
+In the development of FINDS, Alvin Ng's \verb|grav_sim| was used extensively
 as a reference for implementing a fast $N$-body simulator in C, particularly
-in the implementation of the Barnes-Hut algorithm. In addition, the direct
-advice of Alvin Ng was instrumental to the implementation of linear octrees
-and parallelization.
+in implementing of the Barnes-Hut algorithm. In addition, the direct advice of
+Alvin Ng was instrumental to the implementation of linear octrees and
+parallelization.
 
-Furthermore, generative artificial intelligence (OpenAI's ChatGPT-5.5 and
-Google's Gemini 3.3) were used heavily for initial code generation before
-being thoroughly tested and validated to ensure correctness. Artificial
-intelligence was not used in developing the content of this report, including
-the abstract, sections, and figures.
-
-\section{Bibliography}
+Furthermore, generative artificial intelligence (Anthropic's Sonnet 5 Claude,
+OpenAI's ChatGPT-5.5 and Google's Gemini 3.3) were used heavily for initial
+code generation before being thoroughly tested and validated to ensure
+correctness. Artificial intelligence was not used in developing the content of
+this report whatsoever, including the abstract, section text, figures, and
+captions.
 
 \printbibliography
 

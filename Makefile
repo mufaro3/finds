@@ -3,7 +3,7 @@ export DOCKER_GID := $(shell id -g)
 
 COMPOSE=docker compose
 SERVICE=dev
-DOCKER-SHELL=$(COMPOSE) run --rm $(SERVICE)
+DOCKER-SHELL=$(COMPOSE) run --user $(DOCKER_UID):$(DOCKER_GID) --rm $(SERVICE)
 
 .PHONY: help update-docker build configure compile clean run shell docs test profile clinfo paper
 

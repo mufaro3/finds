@@ -625,10 +625,11 @@ static void linear_octree_compute_velocity_contribution(
         &back_interaction,
         regularize, eps);
 
-    /* obtain the average volumetric flow rate for this node */
+    /* For approximate calculations, we use the total volumetric flow rate
+       rather than the approximate volumetric flow rate as we want to consider
+       the contribution from multiple nodes */
     const double avg_vol_flow_rate = \
-        tree->volumetric_flow_rate_sums[current_node_index] / \
-        tree->num_particles[current_node_index];
+        tree->volumetric_flow_rate_sums[current_node_index];
 
     /* compute the weight as the volumetric flow rate divided by 4 pi */
     const double weight = avg_vol_flow_rate / (4.0 * M_PI);

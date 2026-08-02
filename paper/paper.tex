@@ -13,6 +13,8 @@
 \setcounter{secnumdepth}{0}
 \setcounter{page}{1}
 
+\renewcommand{\O}{\mathcal{O}}
+
 \title{FINDS: An N-Body Simulator for Computing the Evolution of Large Schools}
 
 \author{
@@ -95,9 +97,9 @@ time forms the state vector $\va{X}$.
 
 In particular, $\va{x}_{c,i}$ and $\vu{n}_{i}$ are dynamic and $\ell_i$ and
 $\sigma_i$ are constant for each fish $i$. This formulism leaves the
-translational and rotational dynamics for each fish as the first-order
-differential equations concerning $\va{x}_{c,i}$ and $\vu{n}_{i}$ respectively.
-With this, the derivatives of each are defined as
+translational and rotational dynamics for each fish as the system of two
+coupled first-order differential equations concerning $\va{x}_{c,i}$ and
+$\vu{n}_{i}$ respectively. With this, the derivatives of each are defined as
 \begin{align}\label{eq-dynamics}
   \dv{\va{x}_{c,i}}{t} &= \frac{1}{2}\left(\dv{\va{x}_{f,i}}{t} +
                           \dv{\va{x}_{b,i}}{t}\right) \\
@@ -109,7 +111,7 @@ With this, the derivatives of each are defined as
 where
 
 \begin{equation}\label{eq-lagrange-multiplier}
-  \lambda_i = \frac{\Delta \va{v}_i \vdot \vu{n}}{2}
+  \lambda_i = \frac{\Delta \va{v}_i \vdot \vu{n}_i}{2}
 \end{equation}
 
 \noindent
@@ -148,7 +150,8 @@ gradient of the Laplacian interaction kernel $1/r$,
 
 \begin{align}\label{eqs-interaction}
   \va{k}(\va{r}) &= \grad (-\frac{1}{r}) = \frac{\va{r}}{r^3} \\
-  \va{k}_{\varepsilon}(\va{r}) &= \grad\left(-\frac{\erf(r/\varepsilon)}{r}\right) =
+  \va{k}_{\varepsilon}(\va{r}) &=
+  \grad\left(-\frac{\erf(r/\varepsilon)}{r}\right) =
   \va{k}(\va{r}) \xi_{\varepsilon}(r)
 \end{align}
 
@@ -164,9 +167,9 @@ where $\xi_{i,\varepsilon}(r)$ is the regularization coefficient
 The velocity fields are therefore
 
 \begin{align}\label{eqs-velocity-field}
-  \va{u}_{i}(\va{r}) &= \frac{\sigma_i}{4\pi} \va{k}(\va{r}) \\
-  \va{u}_{i,\varepsilon}(\va{r}) &= \frac{\sigma_i}{4\pi}
-  \va{k}_{\varepsilon}(\va{r})
+  \va{u}_{i}(\va{r}) = \grad \Phi_i &= \frac{\sigma_i}{4\pi} \va{k}(\va{r}) \\
+  \va{u}_{i,\varepsilon}(\va{r}) = \grad \Phi_{i,\varepsilon} =
+  \frac{\sigma_i}{4\pi} \va{k}_{\varepsilon}(\va{r})
 \end{align}
 
 \noindent
@@ -181,7 +184,7 @@ $\alpha$ can be defined generally as
 \end{equation}
 
 \noindent
-where the first term is the \textit{internal} velocity contribution and the
+ where the first term is the \textit{internal} velocity contribution and the
 second term is the \textit{external} velocity contribution. In detail,
 
 \begin{equation}\label{eq-internal-velocity-contrib}
@@ -208,10 +211,10 @@ interaction function $\va{k}$ is simply replaced with $\va{k}_\varepsilon$.
 
 As stated previously, the modelling of fish is an $N$-body problem where the
 algorithmic complexity of computing a derivative is, through Brute-Force
-calculations, of order $\mathcal{O}(N^2)$. To reduce this computation time,
+calculations, of order $\O(N^2)$. To reduce this computation time,
 two tree-based approximation algorithms are implemented: the Barnes-Hut
-algorithm and the Fast Multipole Method, of orders $\mathcal{O}(N \log N)$ and
-$\mathcal{O}(N)$ respectively.
+algorithm and the Fast Multipole Method, of orders $\O(N \log N)$ and
+$\O(N)$ respectively.
 
 Brute force computation and the Barnes-Hut approximation are implemented
 directly into the FINDS code-base, and as such, the user has the ability to
@@ -224,14 +227,16 @@ OpenMP.
 
 \subsection{Barnes-Hut Approximation}
 
-The Barnes-Hut approximation is implemented in FINDS using linear octrees. As
-described by Barnes and Hut, the approximation method follows that 
+As described by Barnes and Hut, the Barnes-Hut algorithm computes 3-dimensional
+pairwise interactions in $\O(N \log N)$ time by constructing a space-partitioning
+octree that clusters swimmers that are sufficiently far away from each test
+swimmer. 
 
 \subsection{Fast Multipole Method}
 
 \section{Numerical Integration}
 
-FINDS implements multiple 
+To solve the differential equation
 
 \section{System Creation}
 
@@ -239,7 +244,7 @@ FINDS implements multiple
 
 \section{Validation}
 
-\lipsum[1]
+FINDS was validated
 
 \section{Performance Evaluation}
 

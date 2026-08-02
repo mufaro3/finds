@@ -67,7 +67,7 @@ jupyter:
 # Project
 
 validate:
-	@$(DOCKER-SHELL) xvfb-run ./build/validation
+	@$(DOCKER-SHELL) ./build/validation
 
 run:
 	@$(DOCKER-SHELL) ./build/simulate

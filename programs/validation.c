@@ -72,6 +72,7 @@ static const char *SERIES_LABELS[N_DC_METHODS] = {
     "FMM, {/Symbol e}=1E-6"
 };
 
+/** @brief Swimmer trajectory object for simplifying the coplanar cases */
 typedef struct {
     size_t num_frames, num_swimmers;
     swimmer_t **data;

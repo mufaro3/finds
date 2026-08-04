@@ -100,12 +100,12 @@ epsilon = 0.5
 # This is the numerical integration scheme to be used in the simulation. Some
 # of the options are naive, meaning that there will be no internal error
 # estimation or adaptive time-stepping. Valid options are "euler", "RK2",
-# "RK4", "RK5", "RK6", "RK23", and "RK45".
+# "RK4", "RK5", "RK6", "RK32", and "RK54".
 #
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error
 # computation for adaptive time-stepping.
-integration_method = "RK45"
+integration_method = "RK54"
 
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are

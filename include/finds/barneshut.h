@@ -42,15 +42,68 @@ typedef struct {
 
     /* clustering */
     size_t *num_particles;
-    double_3d_t *positions_sums;
-    double_3d_t *orientations_sums;
-    double *length_sums;
+    double_3d_t *weighted_positions_sums;
+    double_3d_t *weighted_orientations_sums;
+    double *weighted_length_sums;
+    /* volumetric flow rate is used as the weight */
     double *volumetric_flow_rate_sums;
 
     /* average values */
     double_3d_t *source_position_avg;
     double_3d_t *sink_position_avg;
 } linear_octree_t;
+
+/**
+ * @brief Computes the weighted average of the position at this node.
+ * @param[in] tree       The linear octree.
+ * @param[in] node_index The node index.
+ */
+static inline double_3d_t linear_octree_node_position(
+    const linear_octree_t *restrict tree,
+    const size_t node_index)
+{
+    return d3_div(tree->weighted_positions_sums[node_index] /
+        tree->volumetric_flow_rate_sums[node_index]);
+}
+
+/**
+ * @brief Computes the weighted average of the orientation at this node.
+ * @param[in] tree       The linear octree.
+ * @param[in] node_index The node index.
+ */
+static inline double_3d_t linear_octree_node_orientation(
+    const linear_octree_t *restrict tree,
+    const size_t node_index)
+{
+    return d3_div(tree->weighted_orientations_sums[node_index] /
+        tree->volumetric_flow_rate_sums[node_index]);
+}
+
+/**
+ * @brief Computes the weighted average of the length at this node.
+ * @param[in] tree       The linear octree.
+ * @param[in] node_index The node index.
+ */
+static inline double linear_octree_node_length(
+    const linear_octree_t *restrict tree,
+    const size_t node_index)
+{
+    return tree->weighted_length_sums[node_index] / \
+        tree->volumetric_flow_rate_sums[node_index];
+}
+
+/**
+ * @brief Computes the average of the volumetric flow rate at this node.
+ * @param[in] tree       The linear octree.
+ * @param[in] node_index The node index.
+ */
+static inline double linear_octree_node_volumetric_flow_rate(
+    const linear_octree_t *restrict tree,
+    const size_t node_index)
+{
+    return tree->volumetric_flow_rate_sums[node_index] / \
+        tree->num_particles[node_index]
+}
 
 bool linear_octree_check_nan(
     const linear_octree_t *restrict tree,

@@ -4,3 +4,4 @@ output
 paper/output
 .Trash-1000
 notebooks/.ipynb_checkpoints
+scripts/processingmodules/__pycache__/

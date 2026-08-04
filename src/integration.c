@@ -24,8 +24,8 @@ const named_enum_t INTEGRATION_METHODS_TABLE[INTEGRATION_METHODS_COUNT] = {
     { RUNGE_KUTTA_6,  "RK6"   },
 
     /* adaptive */
-    { RUNGE_KUTTA_23, "RK23"  },
-    { RUNGE_KUTTA_45, "RK45"  }
+    { RUNGE_KUTTA_32, "RK32"  },
+    { RUNGE_KUTTA_54, "RK54"  }
 };
 
 /**
@@ -462,7 +462,7 @@ jmp_err:
 }
 
 /**
- * @brief 2nd-order Runge-Kutta (Bogacki-Shampine) with 3rd order error estimation.
+ * @brief 3rd-order Runge-Kutta (Bogacki-Shampine) with 2nd order error estimation.
  *
  * @param[in]  state     The system state for this time.
  * @param[in]  time_step The time-step to advance to.
@@ -470,7 +470,7 @@ jmp_err:
  *
  * @return The advanced state y(t + delta t).
  */
-fish_system_t *step_rk23(
+fish_system_t *step_rk32(
     const fish_system_t *state,
     const double time_step,
     const derivative_computation_opts_t dc_opts,
@@ -542,7 +542,7 @@ jmp_err:
 }
 
 /**
- * @brief 4nd-order Runge-Kutta (Dormand-Prince) with 5th order error estimation.
+ * @brief 5th-order Runge-Kutta (Dormand-Prince) with 4th order error estimation.
  *
  * @param[in]  state     The system state for this time.
  * @param[in]  time_step The time-step to advance to.
@@ -550,7 +550,7 @@ jmp_err:
  *
  * @return The advanced state y(t + delta t).
  */
-fish_system_t *step_rk45(
+fish_system_t *step_rk54(
     const fish_system_t *state,
     const double time_step,
     const derivative_computation_opts_t dc_opts,

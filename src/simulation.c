@@ -86,7 +86,7 @@ static double adapt_step_size(
 {
     if (error < ABOUT_ZERO)
         error = ABOUT_ZERO;
-    double factor = SAFETY * pow(tolerance / error, 1.0 / (order + 1));
+    double factor = SAFETY * pow(tolerance / error, 1.0 / (order));
     /* note to self: do NOT introduce a CLAMP here, it WILL cause
        an infinite loop */
     return time_step * factor;

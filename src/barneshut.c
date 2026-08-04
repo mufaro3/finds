@@ -208,8 +208,8 @@ static double_3d_t calculate_child_octant_center_position(
 /**
  * @brief Simple macro for adding vector data to a cluster sum.
  */
-#define VECTOR_CLUSTER_APPEND(vector_sum_ptr, new_vector) \
-    vector_sum_ptr = d3_add(vector_sum_ptr, new_vector)
+#define VECTOR_CLUSTER_APPEND(vector_sum_ptr, new_vector, volumetric_flow_rate) \
+    vector_sum_ptr = d3_add(vector_sum_ptr, d3_mult(new_vector, volumetric_flow_rate))
 
 /**
  * @brief Recursively builds a linear octree.
@@ -257,22 +257,22 @@ static uint64_t builder_construct_tree_recursive(
         /* append this swimmer's data to this node's cluster */
         VECTOR_CLUSTER_APPEND(
             tree->positions_sums[new_node_index],
-            swimmer->position);
+            swimmer->position,
+            swimmer->volumetric_flow_rate);
         VECTOR_CLUSTER_APPEND(
             tree->orientations_sums[new_node_index],
-            swimmer->orientation);
+            swimmer->orientation,
+            swimmer->volumetric_flow_rate);
         tree->volumetric_flow_rate_sums[new_node_index] +=  \
             swimmer->volumetric_flow_rate;
-        tree->length_sums[new_node_index] += swimmer->length;
+        tree->length_sums[new_node_index] += \
+            swimmer->length * swimmer->volumetric_flow_rate;
     }
 
     /* compute the position and orientation averages */
-    const double_3d_t pos_avg = \
-        d3_div(tree->positions_sums[new_node_index], range_width);
-    const double_3d_t ori_avg = \
-        d3_div(tree->orientations_sums[new_node_index], range_width);
-    const double length_avg = \
-        tree->length_sums[new_node_index] / range_width;
+    const double_3d_t pos_avg = linear_octree_node_position(tree, new_node_index);
+    const double_3d_t ori_avg = linear_octree_node_orientation(tree, new_node_index);
+    const double length_avg   = linear_octree_node_length(tree, new_node_index);
 
     /* compute the average source and sink positions for this node */
     calculate_swimmer_features(
@@ -382,24 +382,24 @@ static void linear_octree_print_node(
         tree->side_lengths[node_index]);
     d3_print(tree->centers[node_index]);
 
+    double_3d_t pos_avg = linear_octree_node_position(tree, node_index);
+    double_3d_t src_avg = tree->source_position_avg[node_index];
+    double_3d_t sink_avg = tree->sink_position_avg[node_index];
+    double sigma = linear_octree_node_volumetric_flow_rate(tree, node_index);
+
     printf(" pos_avg=");
     if (tree->num_particles[node_index] > 0) {
-        double_3d_t pos_avg = d3_div(
-            tree->positions_sums[node_index],
-            tree->num_particles[node_index]);
         d3_print(pos_avg);
-    } else {
-        printf("(empty)");
     }
 
+    else
+        printf("(empty)");
+
     printf(" src_avg=");
-    d3_print(tree->source_position_avg[node_index]);
+    d3_print(src_avg);
     printf(" sink_avg=");
-    d3_print(tree->sink_position_avg[node_index]);
-    printf(" flow_avg=%.6g",
-        tree->volumetric_flow_rate_sums[node_index] /
-        tree->num_particles[node_index]);
-    printf("\n");
+    d3_print(sink_avg);
+    printf(" flow_avg=%.6g\n", sigma);
 
     if (tree->is_leaf[node_index])
         return;
@@ -673,8 +673,7 @@ static void linear_octree_compute_vel_contrib_recurse(
 
     /* obtain the position for this node */
     double_3d_t current_node_position_avg = \
-        d3_div(tree->positions_sums[current_node_index],
-            tree->num_particles[current_node_index]);
+        linear_octree_node_position(tree, current_node_index);
 
     /* if this is a leaf then compute the interaction automatically */
     if (tree->is_leaf[current_node_index])

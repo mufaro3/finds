@@ -43,7 +43,7 @@
 %	REQUIRED PACKAGES AND MISC CONFIGURATIONS
 
 \usepackage{graphicx}
-\graphicspath{{images/}}
+\graphicspath{{figures/}}
 
 % Force footnotes to the bottom of the page and to the left margin
 \usepackage[bottom, hang]{footmisc}

@@ -32,8 +32,8 @@ typedef enum {
     RUNGE_KUTTA_6,
 
     /* Embedded Runge-Kutta Methods */
-    RUNGE_KUTTA_23, /* Bogacki-Shampine */
-    RUNGE_KUTTA_45,
+    RUNGE_KUTTA_32, /* Bogacki-Shampine */
+    RUNGE_KUTTA_54, /* Dormand-Prince */
 
     INTEGRATION_METHODS_COUNT
 } integration_method_e;
@@ -73,8 +73,8 @@ DECLARE_INTEGRATOR(step_rk5);
 DECLARE_INTEGRATOR(step_rk6);
 
 /* adaptive integrators */
-DECLARE_INTEGRATOR(step_rk23);
-DECLARE_INTEGRATOR(step_rk45);
+DECLARE_INTEGRATOR(step_rk32);
+DECLARE_INTEGRATOR(step_rk54);
 
 static inline integration_step_fn
 integrator_from_method(integration_method_e method)
@@ -86,8 +86,8 @@ integrator_from_method(integration_method_e method)
         case RUNGE_KUTTA_5: return step_rk5;
         case RUNGE_KUTTA_6: return step_rk6;
 
-        case RUNGE_KUTTA_23: return step_rk23;
-        case RUNGE_KUTTA_45: return step_rk45;
+        case RUNGE_KUTTA_32: return step_rk32;
+        case RUNGE_KUTTA_54: return step_rk54;
         default: return NULL;
     }
 }
@@ -102,8 +102,8 @@ integration_method_order(integration_method_e method)
         case RUNGE_KUTTA_5: return 5;
         case RUNGE_KUTTA_6: return 6;
 
-        case RUNGE_KUTTA_23: return 2;
-        case RUNGE_KUTTA_45: return 4;
+        case RUNGE_KUTTA_32: return 3;
+        case RUNGE_KUTTA_54: return 5;
         default: return -1;
     }
 }
@@ -119,8 +119,8 @@ is_adaptive_method(integration_method_e method)
         case RUNGE_KUTTA_6: return false;
 
         /* adaptive integrators */
-        case RUNGE_KUTTA_23: return true;
-        case RUNGE_KUTTA_45: return true;
+        case RUNGE_KUTTA_32: return true;
+        case RUNGE_KUTTA_54: return true;
         default: return false;
     }
 }

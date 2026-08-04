@@ -95,14 +95,24 @@ $\vu{n}_{i}$, the three-dimensional orientation unit vector, $\ell_i$, and
 $\sigma_i$. Together, the collection of each of these fish vectors at a given
 time forms the state vector $\va{X}$.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\linewidth]{swimmer-model.jpg}
+    \caption{The model for a given swimmer visualized. Taken from Mabrouk and
+      Floryan 2024.}
+    \label{fig-swimmer-model}
+\end{figure}
+
 In particular, $\va{x}_{c,i}$ and $\vu{n}_{i}$ are dynamic and $\ell_i$ and
 $\sigma_i$ are constant for each fish $i$. This formulism leaves the
 translational and rotational dynamics for each fish as the system of two
 coupled first-order differential equations concerning $\va{x}_{c,i}$ and
 $\vu{n}_{i}$ respectively. With this, the derivatives of each are defined as
-\begin{align}\label{eq-dynamics}
+\begin{align}
+  \label{eq-translational-dynamics}
   \dv{\va{x}_{c,i}}{t} &= \frac{1}{2}\left(\dv{\va{x}_{f,i}}{t} +
-                          \dv{\va{x}_{b,i}}{t}\right) \\
+  \dv{\va{x}_{b,i}}{t}\right) \\
+  \label{eq-rotational-dynamics}
   \dv{\vu{n}_{i}}{t}   &= \frac{\Delta \va{v}_{i} +
                           2 \lambda_i \vu{n}_i}{\ell_i}
 \end{align}
@@ -156,7 +166,7 @@ gradient of the Laplacian interaction kernel $1/r$,
 \end{align}
 
 \noindent
-where $\xi_{i,\varepsilon}(r)$ is the regularization coefficient
+where $\xi_{\varepsilon}(r)$ is the regularization coefficient
 
 \begin{equation}\label{eq-regularization}
   \xi_{\varepsilon}(r) = \erf(r/\epsilon) -
@@ -168,7 +178,7 @@ The velocity fields are therefore
 
 \begin{align}\label{eqs-velocity-field}
   \va{u}_{i}(\va{r}) = \grad \Phi_i &= \frac{\sigma_i}{4\pi} \va{k}(\va{r}) \\
-  \va{u}_{i,\varepsilon}(\va{r}) = \grad \Phi_{i,\varepsilon} =
+  \va{u}_{i,\varepsilon}(\va{r}) = \grad \Phi_{i,\varepsilon} &=
   \frac{\sigma_i}{4\pi} \va{k}_{\varepsilon}(\va{r})
 \end{align}
 
@@ -207,6 +217,8 @@ where $\va{r}_{\alpha \beta}$ is the displacement between feature $\alpha$ of
 fish $i$ and feature $\beta$ of fish $j$. In the case of regularization, the
 interaction function $\va{k}$ is simply replaced with $\va{k}_\varepsilon$.
 
+\textbf{TODO INCLUDE MISSING FIGURE SOURCE SINK INTERACTION}
+
 \section{Derivative Computation}
 
 As stated previously, the modelling of fish is an $N$-body problem where the
@@ -225,22 +237,269 @@ gradient $\va{u}_i$, so the Fast-Multipole Method cannot be used with
 regularization. Additionally, all three methods are CPU-parallelized using
 OpenMP.
 
-\subsection{Barnes-Hut Approximation}
+\subsection{The Barnes-Hut Approximation}
 
 As described by Barnes and Hut, the Barnes-Hut algorithm computes 3-dimensional
-pairwise interactions in $\O(N \log N)$ time by constructing a space-partitioning
-octree that clusters swimmers that are sufficiently far away from each test
-swimmer. 
+pairwise interactions in $\O(N \log N)$ time by constructing a
+space-partitioning octree that clusters swimmers that are sufficiently far
+away from each test swimmer.
 
-\subsection{Fast Multipole Method}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\linewidth]{validation-octree-3d.pdf}
+    \includegraphics[width=0.75\linewidth]{validation-octree-2d.pdf}
+    \caption{Top: An example octree constructed in three-dimensional space to
+      partition five points, constructed with an arbitrary insertion order.
+      Bottom: The same octree, represented two-dimensionally with the child
+      octant indices.
+    }
+    \label{fig-octree}
+\end{figure}
+
+\subsubsection{Linear Octree Construction}
+
+FINDS implements a linear octree, or aligned arrays for each node
+parameter where each array index corresponds to a node in the tree. In
+particular, each node stores information on both the node itself and the data
+stored within this node. With regard to the node overall, it stores stores its
+center position, $\va{x}_i$, the side length of the node, $s_i$, and indices to
+its child nodes. With regard to the data stored within this node, the node
+stores the number of swimmers that are being averaged out in this node $n_{i}$,
+the total volumetric flow rate,
+\begin{equation}\label{eq-total-vol-flow-rate}
+  \zeta_j = \sum_{j=0}^{n_i} \sigma_j
+\end{equation}
+and weighted sums for the  position, orientation,
+and length. Each sum is weighted by the volumetric flow rate (which can be
+analogously thought of as the charge or mass in Coulombic or gravitational
+$N$-body dynamics), so that the average position, orientation, and length is
+produced by dividing by the total volumetric flow rate,
+\begin{align}\label{eq-octree-avg-values}
+  \overline{\va{x}_{c,i}} &= \zeta_j^{-1}
+  \sum_{j=0}^{n_i} \va{x}_{c,j} \sigma_j \\
+  \overline{\vu{n}_{i}} &= \zeta_j^{-1} \sum_{j=0}^{n_i} \vu{n}_{j} \sigma_j \\
+  \overline{\ell_{i}} &= \zeta_j^{-1} \sum_{j=0}^{n_i} \ell_j \sigma_j
+\end{align}
+where $i$ in this context refers to the node index within the octree lists and
+$j$ refers to the index of each swimmer stored within this node.
+
+This architecture was chosen due to its traversal efficiency when sorted
+according to a space-filling curve, as this would keep physically close nodes
+close together in memory, which maximizes cache locality.
+
+\textbf{FIGURE MISSING ADD LINEAR OCTREE FIGURE}
+
+Construction of the Linear Octree begins by taking a system of swimmers $\va{X}$
+and computing vectors containing minimum and maximum values along each dimension
+for the system, or
+\begin{align}\label{eq-linear-octree-root-vals}
+  \va{x}_{min} &= \langle \min \mathbf{x}, \min \mathbf{y},
+  \min \mathbf{z} \rangle \\
+  \va{x}_{max} &= \langle \max \mathbf{x}, \max \mathbf{y},
+  \max \mathbf{z} \rangle
+\end{align}
+where $\mathbf{x}$ contains all of the $x$-values for the position of every
+swimmer in the system, $\mathbf{y}$, the $y$-values, and $\mathbf{z}$, the
+$z$-values. Then, the center position of the root is defined as
+\begin{equation}\label{eq-linear-octree-root-center-pos}
+  \va{x}_{0} = \frac{\va{x}_{min} + \va{x}_{max}}{2}
+\end{equation}
+and the side length for the root node is computed as the maximum component of
+their difference, or
+\begin{equation}\label{eq-linear-octree-root-side-len}
+  s_0 = \max (\va{x}_{max} - \va{x}_{min}).
+\end{equation}
+
+Next, each of the swimmers in the system need to be mapped to a space-filling
+curve to know what order to insert the nodes such that physically close
+swimmers are inserted in order. To accomplish this task, the 3-D position of
+each swimmer is mapped to a Morton curve localized to a relative origin point
+for the tree chosen as minimum position for the root node's bounding cube, or
+\begin{equation}\label{eq-linear-octree-rel-origin}
+  \va{x}_{\O} = \va{x}_0 - \frac{s_0}{2} \va{1}_3.
+\end{equation}
+Then, the position of each swimmer is truncated to an integer and a Morton
+number corresponding to this position is produced by interleaving the binary
+coordinate values using bit-shifting operations. Note that this operation
+implicitly assumes that the three numbers going in are each a maximum of 21
+bits such that the output Morton number is 64-bit, and this integer-sizing has
+significant consequences which will be discussed in the limitations section.
+
+Then, a position-local array of swimmer indices is produced by first building
+an in-order list of indices $(0, 1, \dots, N)$ corresponding to the indices
+for each swimmer in $\va{X}$, then arranging it according to the quick-sorted
+order of the corresponding Morton numbers for each swimmer position. Then, the
+linear octree is constructed recursively by defining each node region with the
+center position $\va{x}_j$, side length $s_j$, tree depth $d_j$, and the
+corresponding index range of the swimmer array encompassing all of the swimmers
+that fall within this node. For example, for the root node, the center position
+is $\va{x}_0$, the side length is $s_0$, and the range is of enclosed swimmers
+is $[0,N]$. Then, for each swimmer contained within this range, the
+center-of-mass position $\va{x}_{c,j}$, orientation $\vu{n}_j$, length $\ell_j$,
+and volumetric flow rate $\sigma_j$ are added accordingly to the corresponding
+weighted sums as stated previously, and then the weighted average source and
+sink positions are computed for this node based on the weighted average
+position, orientation, and length.
+
+Next, the recursion is continued to child nodes, if any. If the range of
+swimmers that falls within this node is one or no swimmers, then the recursion
+ends here. If there are two or more swimmers within this octant, then this node
+cannot be a leaf, and this node is then subdivided into eight child octants.
+Each child octant is denoted by an index $o$ from 0 to 7, and for each child
+octant, the range of node indices which should fall within the child octant
+is computed based on performing bit-shift operations on the associated Morton
+indices. This range is half-open, so if the start and end are equal, then no
+swimmers are located within the child node, and a new child node will only be
+added to the tree recursively if there are any swimmers located within the node.
+Otherwise, the child node is skipped.
+
+In the case that a new child node is added, its side length $s_{j,o}$ is
+the side length of the current node divided by two,
+\begin{equation}\label{eq-child-octant-side-len}
+  s_{j,o} = s_j / 2,
+\end{equation}
+and its center position is computed based on its index, $o$, as
+\begin{equation}\label{eq-child-octant-center}
+  \va{x}_{j,o} = \va{x}_j + \frac{s_j}{4}
+  \begin{pmatrix}
+    f(o \text{ \& } 1) \\
+    f(o \text{ \& } 2) \\
+    f(o \text{ \& } 4)
+  \end{pmatrix}
+\end{equation}
+where
+\begin{equation}
+  f(x) = \begin{cases}
+     1 &\text{ if } x=1 \\
+    -1 &\text{ if } x=0
+  \end{cases}.
+\end{equation}
+
+The binary representation of $o$ can also be interpreted as a relative ordering
+on each axis between the center position of the parent node and the child
+octant. In order, the bits correspond with the $z$, $y$, and $x$-axes
+respectively, and $1$ and $0$ correspond with the center position of the child
+octant along a given dimension being greater than and less than or equal to that
+of the parent node for that dimension. Then, for each dimension, if the child
+position is less than or equal to the parent, then the child's center position
+is offset by $-s_j/4$. Otherwise, the child's center position is offset by
+$s_j/4$ along that axis. For example, the index $o=5$ has binary representation
+$101$, and this corresponds with $+s_j/4$ on the $z$-axis, $-s_j/4$ on the
+$y$-axis, and $+s_j/4$ on the $x$-axis.
+
+\subsubsection{Barnes-Hut Velocity Computation}
+
+Once constructed, the velocity contribution is computed in $\O(N \log N)$ time
+by performing a depth-first tree traversal on the linear octree. We can notate
+the test swimmer to compute the velocity for as $a$, the tree index for a given
+node as $i$, the weighted average (or composite) swimmer for index $i$ as $b_i$,
+and the Barnes-Hut minimum approximation ratio supplied by the user as $\theta$.
+
+Beginning from the root node, if the current node is a leaf ($n_i = 1$) and the
+position for swimmer $b_i$ is not approximately equal to the position of swimmer
+$a$ (within a precision of $10^{-15}$ to account for floating-point errors)
+then the velocity contributions are computed immediately via equations
+\ref{eq-feature-velocity} and \ref{eq-composite-interaction}, and the recursion
+is ended.
+
+Otherwise, the size-to-distance ratio $\phi_i$ is computed for this node as
+\begin{equation}\label{eq-size-to-distance}
+  \phi_i = \frac{s_i}{d_{ab_i}}
+\end{equation}
+where $d$ is the distance from swimmer $a$ to average swimmer $b_i$,
+\begin{equation}\label{eq-bh-distance}
+d_{ab_i} = \norm{\va{x}_{c,a} - \overline{\va{x}_{c,b_i}}}.
+\end{equation}
+Then, if $\phi_i < \theta$, then the composite swimmer $b_i$ is said to be
+\textit{close} to swimmer $a$, and the velocity contributions are computed
+immediately via equations \ref{eq-feature-velocity} and
+\ref{eq-composite-interaction} and the recursion ends. If
+$\phi_i \ge \theta$, then composite swimmer $b_i$ is said to be \textit{far}
+from swimmer $a$, and we recurse into each of the child nodes of node $i$.
+
+\subsection{The Fast Multipole Method (FMM)}
+
+As described by Greengard and Rokhlin, the fast multipole method similarly uses
+tree construction to compute the velocity field as the gradient of the potential
+field approximated via a multipole expansion of order $p(\epsilon)$ where
+$\epsilon$ (not to be confused with $\varepsilon$ defined above) is the
+user-defined floating-point precision for the calculation. As stated previously,
+the implementation of the fast multipole method is not a part of FINDS. Rather,
+the library FMM3D by Greengard et al. is used to compute the Laplacian gradient,
+\begin{equation}\label{eq-fmm3d-evaluation}
+  \va{u}(\va{x}) \approx \grad \left( \sum_{j=1}^N
+  \frac{\sigma_j}{4\pi \norm{\va{x} - \va{x}_j}} \right)
+\end{equation}
+for each source/sink using the function \verb|lfmm3d_t_c_g|. In essence, this
+computation is based on treating the source and sink for each dipole as
+independent particles rather than members of a dipole, so to compute only the
+external interaction, each source/sink has to have its velocity corrected for
+double-counting the interaction with its pair. However, this is negligible
+compared to the overall calculation, as this is computed in $\O(1)$ time for
+each swimmer or $\O(N)$ time overall.
 
 \section{Numerical Integration}
 
-To solve the differential equation
+As stated above, equations \ref{eq-translational-dynamics} and
+\ref{eq-rotational-dynamics} form a system of coupled first-order ordinary
+differential equations, and as such, these can be integrated using convential
+first-order integration schemes like Runge-Kutta methods. As such, FINDS
+implements a variety of variable-order adaptive and non-adaptive methods of
+various order (as seen in table \ref{tbl-integrators}).
 
-\section{System Creation}
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lll}
+    \textbf{Method}         & \textbf{Order} & \textbf{Adaptive?} \\ \hline
+    Forward Euler           & 1              & No                 \\
+    RK2                     & 2              & No                 \\
+    RK4                     & 4              & No                 \\
+    RK5                     & 5              & No                 \\
+    RK6                     & 6              & No                 \\
+    Bogacki-Shampine RK3(2) & 3              & Yes, 2nd Order     \\
+    Dormand-Prince RK5(4)   & 5              & Yes, 4th Order
+  \end{tabular}
+  \caption{List of the numerical integrators implemented in FINDS. If it is
+    adaptive, the error computation order is also included.}
+  \label{tbl-integrators}
+\end{table}
+
+Given a user-defined evaluation time step $\Delta t$ and an end time $T$, the
+goal of the integration module is to return the associated system states at the
+times $\{ 0, \Delta t, 2 \Delta t, \dots, T_f \}$ where $T_f = T$ for adaptive
+integrators and $T_f = \text{floor}(T / \Delta t)$ for non-adaptive integrators.
+
+To do so, the simulation integrates over the time domain of $t \in [0,T_f]$.
+Non-adaptive integrators will hold the computation time-step $\delta t_i$
+(where, in this context, $i$ is the time-step index) constant as the evaluation
+time-step, $\delta t_i \equiv \Delta t$, and adaptive integrators will compute,
+for every time-state $\va{X}_i$ and $\delta t_i$, the advanced state
+$\va{X}_{i+1}$ and a new computation time-step $\delta t_{i+1}$, computed as
+\begin{equation}\label{eq-adapted-time-step}
+  \delta t_{i+1} = \delta t_i \left( \frac{\xi_i}{E_i} \right)^{\frac{1}{p}}
+\end{equation}
+where $\xi_i$ is the tolerance, computed as
+\begin{equation}\label{eq-adapted-tolerance}
+  \xi_i = \gamma + \mu \max(\norm{\va{X}_{i+1}}, \norm{\va{X}_i})
+\end{equation}
+where $\gamma$ and $\mu$ are the user-specified absolute and relative tolerance
+respectively, and $E_i$ is the error of time-step $i$, computed as
+\begin{equation}\label{eq-error}
+  E_i = \norm{\va{X}_{p,i+1} - \va{X}_{q,i+1}}
+\end{equation}
+where $p$ is the computation order and $q$ is the error order (for example, for
+RK5(4), $p=5$ and $q=4$) and $\va{X}_{p,i}$ refers to the $p$-th order solution
+for step $i$.
 
 \section{Database Management}
+
+The evaluation times $\{0, \Delta t, 2 \Delta t, \dots, T_f \}$ and their
+corresponding system states $\{ \va{X}_1, \va{X}_2, \dots \va{X}_{T_f} \}$
+are written out to an HDF5 file in the following format:
+
+\section{Initial System Creation}
+
+\section{Running Simulations from Configuration Files}
 
 \section{Validation}
 
@@ -254,7 +513,13 @@ FINDS was validated
 
 \section{Limitations}
 
-\lipsum[1]
+Barnes-Hut is using a monopole representation for dipole interactions, and this
+is slightly incorrect (but mostly fine)
+
+Morton numbers are only 64-bit, so position dimension values can only be 21 bit,
+and think what the max double that can be represented in 21 bit is
+
+FMM has incredibly high overhead
 
 \section{Future Work}
 

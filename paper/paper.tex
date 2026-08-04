@@ -464,15 +464,18 @@ various order (as seen in table \ref{tbl-integrators}).
   \label{tbl-integrators}
 \end{table}
 
-Given a user-defined evaluation time step $\Delta t$ and an end time $T$, the
-goal of the integration module is to return the associated system states at the
-times $\{ 0, \Delta t, 2 \Delta t, \dots, T_f \}$ where $T_f = T$ for adaptive
-integrators and $T_f = \text{floor}(T / \Delta t)$ for non-adaptive integrators.
+Given a user-defined evaluation time step $\Delta t$ and an end time $t_{f0}$,
+the goal of the integration module is to return the associated system states at
+the times $\{ 0, \Delta t, 2 \Delta t, \dots, T \Delta t \}$ where
+\begin{equation}\label{eq-number-of-time-steps}
+  T = \text{floor}(t_{f0} / \Delta t)
+\end{equation}
+is the number of time-steps in the simulation.
 
 To do so, the simulation integrates over the time domain of $t \in [0,T_f]$.
 Non-adaptive integrators will hold the computation time-step $\delta t_i$
 (where, in this context, $i$ is the time-step index) constant as the evaluation
-time-step, $\delta t_i \equiv \Delta t$, and adaptive integrators will compute,
+time-step ($\delta t_i = \Delta t$), and adaptive integrators will compute,
 for every time-state $\va{X}_i$ and $\delta t_i$, the advanced state
 $\va{X}_{i+1}$ and a new computation time-step $\delta t_{i+1}$, computed as
 \begin{equation}\label{eq-adapted-time-step}
@@ -495,19 +498,54 @@ for step $i$.
 
 The evaluation times $\{0, \Delta t, 2 \Delta t, \dots, T_f \}$ and their
 corresponding system states $\{ \va{X}_1, \va{X}_2, \dots \va{X}_{T_f} \}$
-are written out to an HDF5 file in the following format:
+are written out to an HDF5 file using the format specified in table
+\ref{tbl-hdf5-database}. HDF5 format was chosen over unstructured formats like
+raw binary due to its simplicity and portability and over common plaintext
+formats due to its efficiency and compactness.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llc}
+\textbf{Path}           & \textbf{Dimensions}   & \textbf{Rank} \\ \hline
+/time                   & $T$                   & 1             \\
+/volumetric\_flow\_rate & $T \times N$          & 2             \\
+/length                 & $T \times N$          & 2             \\
+/position               & $T \times N \times 3$ & 3             \\
+/orientation            & $T \times N \times 3$ & 3
+\end{tabular}
+\caption{The HDF5 layout for the FINDS databases. As defined above, $T$ is the
+  number of time-steps for a given simulation and $N$ is the number of swimmers
+  in the system of fish. The four bottom rows represents all of the unique data
+  for an evolution trajectory of a system, or $\va{X}(t)$.
+}
+\label{tbl-hdf5-database}
+\end{table}
+
+This is achieved using FINDS' internal ``datastream'' object, which serves as
+a wrapper around the HDF5 API. The intent of this simplistic layout is for FINDS
+databases to be easily read using any valid HDF5 parser across any language
+after performing a simulation, and this is employed within FINDS to allow users
+to perform calculations quickly in C with FINDS, store their calculations
+results efficiently with HDF5, then open the data for analysis in C (using the
+datastream module), Python, and more (see ``Validation'' and
+``Post-processing in Python'').
 
 \section{Initial System Creation}
 
-\section{Running Simulations from Configuration Files}
+\section{Simulation Configuration Files}
+
+For simple simulations (i.e., those that do not require specific, complex
+starting systems as would need to be created manually as described under
+``Initial System Creation''), the \texttt{simulate} program can be used for
+performing simulations from TOML configuration files.
+
+\section{Post-Processing in Python}
 
 \section{Validation}
 
 FINDS was validated
 
 \section{Performance Evaluation}
-
-\lipsum[1]
 
 \section{Examples}
 

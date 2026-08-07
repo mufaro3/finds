@@ -141,13 +141,19 @@ static void calc_ext_contrib_barnes_hut(
     const bool regularize,
     const double eps)
 {
+    if (fish_system_has_nan(system)) {
+        puts("contains NaN\n");
+        fish_system_print(system);
+        abort();
+    }
+
     const size_t N = system->size;
     linear_octree_t *tree = linear_octree_build(system);
 
     #pragma omp parallel for
     for (size_t i = 0; i < N; ++i)
         linear_octree_compute_vel_contrib(
-            tree,
+            tree, i,
             system->swimmers[i].position,
             feat_pos->swimmers[i],
             theta,
@@ -492,4 +498,24 @@ system_derivative_t *derivative_average(
     }
 
     return dest;
+}
+
+/**
+ * @brief Determines whether a system derivative contains a NaN or Inf value
+ *        (for debugging).
+ * @param[in] derivative The system derivative.
+ * @return Whether the system derivative contains a non-finite value.
+ */
+bool derivative_has_nan(const system_derivative_t *derivative)
+{
+    for (size_t i = 0; i < derivative->size; ++i)
+    {
+        const double_3d_t trans = derivative->translational[i];
+        const double_3d_t rot = derivative->rotational[i];
+
+        if (d3_has_nan(trans) || d3_has_nan(rot))
+            return true;
+    }
+
+    return false;
 }

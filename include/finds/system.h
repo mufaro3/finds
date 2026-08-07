@@ -111,6 +111,7 @@ void fish_system_normalize_orientation(fish_system_t *system);
 
 /* FISH SYSTEM JANITORIAL FUNCTIONS */
 
+bool fish_system_has_nan(const fish_system_t *system);
 fish_system_t *fish_system_generate_random(const size_t N, const bool print_debug);
 fish_system_t *fish_system_copy(const fish_system_t *system);
 fish_system_t *fish_system_allocate(const size_t N);

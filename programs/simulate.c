@@ -125,6 +125,7 @@ static inline toml_datum_t conf_read_value(
             "missing or invalid variable %s (hint: ensure that "
             "the variable type is correct!)", identifier);
         conf_load_err(conf_filepath, errbuf);
+        abort();
     }
     return datum;
 }

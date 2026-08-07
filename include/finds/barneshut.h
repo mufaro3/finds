@@ -41,6 +41,7 @@ typedef struct {
     bool *is_leaf;
 
     /* clustering */
+    size_t *swimmer_index;
     size_t *num_particles;
     double_3d_t *weighted_positions_sums;
     double_3d_t *weighted_orientations_sums;
@@ -62,7 +63,7 @@ static inline double_3d_t linear_octree_node_position(
     const linear_octree_t *restrict tree,
     const size_t node_index)
 {
-    return d3_div(tree->weighted_positions_sums[node_index] /
+    return d3_div(tree->weighted_positions_sums[node_index],
         tree->volumetric_flow_rate_sums[node_index]);
 }
 
@@ -75,7 +76,7 @@ static inline double_3d_t linear_octree_node_orientation(
     const linear_octree_t *restrict tree,
     const size_t node_index)
 {
-    return d3_div(tree->weighted_orientations_sums[node_index] /
+    return d3_div(tree->weighted_orientations_sums[node_index],
         tree->volumetric_flow_rate_sums[node_index]);
 }
 
@@ -102,7 +103,7 @@ static inline double linear_octree_node_volumetric_flow_rate(
     const size_t node_index)
 {
     return tree->volumetric_flow_rate_sums[node_index] / \
-        tree->num_particles[node_index]
+        tree->num_particles[node_index];
 }
 
 bool linear_octree_check_nan(
@@ -113,7 +114,8 @@ linear_octree_t *linear_octree_build(const fish_system_t *restrict system);
 void linear_octree_destroy(linear_octree_t **octree_ptr);
 void linear_octree_compute_vel_contrib(
     const linear_octree_t *restrict tree,
-    const double_3d_t position_i,
+    const size_t swimmer_i_index,
+    const double_3d_t swimmer_i_pos,
     const swimmer_features_t features_i,
     const double approx_ratio,
     const bool regularize,

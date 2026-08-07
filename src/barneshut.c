@@ -118,17 +118,18 @@ static void linear_octree_realloc(
     linear_octree_t *restrict tree,
     const size_t new_capacity)
 {
-    LINEAR_OCTREE_REALLOC(tree->centers,                   new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->side_lengths,              new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->child_indices,             new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->is_leaf,                   new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->num_particles,             new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->positions_sums,            new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->orientations_sums,         new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->length_sums,               new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->volumetric_flow_rate_sums, new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->source_position_avg,       new_capacity);
-    LINEAR_OCTREE_REALLOC(tree->sink_position_avg,         new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->centers,                    new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->side_lengths,               new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->child_indices,              new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->is_leaf,                    new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->swimmer_index,              new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->num_particles,              new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->weighted_positions_sums,    new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->weighted_orientations_sums, new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->weighted_length_sums,       new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->volumetric_flow_rate_sums,  new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->source_position_avg,        new_capacity);
+    LINEAR_OCTREE_REALLOC(tree->sink_position_avg,          new_capacity);
 }
 
 /**
@@ -174,12 +175,13 @@ static uint64_t builder_create_node(
         tree->child_indices[new_node_index][child_index] = OCTREE_NO_CHILD;
 
     /* default parameters for new nodes */
-    tree->is_leaf[new_node_index]                   = true;
-    tree->num_particles[new_node_index]             = 0;
-    tree->positions_sums[new_node_index]            = D3_ZERO;
-    tree->orientations_sums[new_node_index]         = D3_ZERO;
-    tree->length_sums[new_node_index]               = 0.0;
-    tree->volumetric_flow_rate_sums[new_node_index] = 0.0;
+    tree->is_leaf[new_node_index]                    = true;
+    tree->swimmer_index[new_node_index]              = SIZE_MAX;
+    tree->num_particles[new_node_index]              = 0;
+    tree->weighted_positions_sums[new_node_index]    = D3_ZERO;
+    tree->weighted_orientations_sums[new_node_index] = D3_ZERO;
+    tree->weighted_length_sums[new_node_index]       = 0.0;
+    tree->volumetric_flow_rate_sums[new_node_index]  = 0.0;
 
     return new_node_index;
 }
@@ -208,8 +210,9 @@ static double_3d_t calculate_child_octant_center_position(
 /**
  * @brief Simple macro for adding vector data to a cluster sum.
  */
-#define VECTOR_CLUSTER_APPEND(vector_sum_ptr, new_vector, volumetric_flow_rate) \
-    vector_sum_ptr = d3_add(vector_sum_ptr, d3_mult(new_vector, volumetric_flow_rate))
+
+#define VECTOR_CLUSTER_APPEND(sum, vec, w) \
+    ((sum) = d3_add((sum), d3_mult((vec), (w))))
 
 /**
  * @brief Recursively builds a linear octree.
@@ -227,9 +230,9 @@ static double_3d_t calculate_child_octant_center_position(
  * @return The index of the new created node.
  */
 static uint64_t builder_construct_tree_recursive(
-    linear_octree_builder_t *restrict builder,
-    const fish_system_t *restrict system,
-    const morton_key_t *restrict morton_index_map_sorted,
+    linear_octree_builder_t *builder,
+    const fish_system_t *system,
+    const morton_key_t *morton_index_map_sorted,
     const size_t index_range_begin,
     const size_t index_range_end,
     const double_3d_t center_position,
@@ -256,16 +259,16 @@ static uint64_t builder_construct_tree_recursive(
 
         /* append this swimmer's data to this node's cluster */
         VECTOR_CLUSTER_APPEND(
-            tree->positions_sums[new_node_index],
+            tree->weighted_positions_sums[new_node_index],
             swimmer->position,
             swimmer->volumetric_flow_rate);
         VECTOR_CLUSTER_APPEND(
-            tree->orientations_sums[new_node_index],
+            tree->weighted_orientations_sums[new_node_index],
             swimmer->orientation,
             swimmer->volumetric_flow_rate);
         tree->volumetric_flow_rate_sums[new_node_index] +=  \
             swimmer->volumetric_flow_rate;
-        tree->length_sums[new_node_index] += \
+        tree->weighted_length_sums[new_node_index] += \
             swimmer->length * swimmer->volumetric_flow_rate;
     }
 
@@ -285,10 +288,16 @@ static uint64_t builder_construct_tree_recursive(
        node as a leaf and don't subdivide any further */
     const bool no_points_in_child_octants = range_width <= 1;
     const bool hit_depth_limit = depth >= MORTON_BITS;
-    if (no_points_in_child_octants || hit_depth_limit)
+    if (no_points_in_child_octants || hit_depth_limit) {
+        if (range_width == 1)
+            tree->swimmer_index[new_node_index] = \
+                morton_index_map_sorted[index_range_begin].assoc_node_index;
+
         return new_node_index;
+    }
 
     tree->is_leaf[new_node_index] = false;
+    tree->swimmer_index[new_node_index] = SIZE_MAX;
 
     /* bit shift for obtaining the bits at this depth */
     const uint8_t depth_shift = 3 * (MORTON_BITS - 1 - depth);
@@ -382,24 +391,55 @@ static void linear_octree_print_node(
         tree->side_lengths[node_index]);
     d3_print(tree->centers[node_index]);
 
+    double_3d_t pos_sum = tree->weighted_positions_sums[node_index];
+    double_3d_t ori_sum = tree->weighted_orientations_sums[node_index];
+
     double_3d_t pos_avg = linear_octree_node_position(tree, node_index);
+    double_3d_t ori_avg = linear_octree_node_orientation(tree, node_index);
+
     double_3d_t src_avg = tree->source_position_avg[node_index];
     double_3d_t sink_avg = tree->sink_position_avg[node_index];
-    double sigma = linear_octree_node_volumetric_flow_rate(tree, node_index);
+
+    double length_sum = tree->weighted_length_sums[node_index];
+    double length_avg = linear_octree_node_length(tree, node_index);
+
+    double sigma_sum = tree->volumetric_flow_rate_sums[node_index];
+    double sigma_avg = linear_octree_node_volumetric_flow_rate(tree, node_index);
+
+    printf(" pos_sum=");
+    d3_print(pos_sum);
 
     printf(" pos_avg=");
-    if (tree->num_particles[node_index] > 0) {
+    if (tree->num_particles[node_index] > 0)
         d3_print(pos_avg);
-    }
+    else
+        printf("(empty)");
 
+    printf(" ori_sum=");
+    d3_print(ori_sum);
+
+    printf(" ori_avg=");
+    if (tree->num_particles[node_index] > 0)
+        d3_print(ori_avg);
+    else
+        printf("(empty)");
+
+    printf(" len_sum=%.6g", length_sum);
+
+    printf(" len_avg=");
+    if (tree->num_particles[node_index] > 0)
+        printf("%.6g", length_avg);
     else
         printf("(empty)");
 
     printf(" src_avg=");
     d3_print(src_avg);
+
     printf(" sink_avg=");
     d3_print(sink_avg);
-    printf(" flow_avg=%.6g\n", sigma);
+
+    printf(" flow_sum=%.6g", sigma_sum);
+    printf(" flow_avg=%.6g\n", sigma_avg);
 
     if (tree->is_leaf[node_index])
         return;
@@ -449,16 +489,20 @@ bool linear_octree_check_nan(
             if (verbose) printf("NaN: node %zu side_lengths\n", i);
             found_any = true;
         }
-        if (d3_has_nan(tree->positions_sums[i])) {
-            if (verbose) printf("NaN: node %zu positions_sums\n", i);
+        if (d3_has_nan(tree->weighted_positions_sums[i])) {
+            if (verbose) printf("NaN: node %zu weighted_positions_sums\n", i);
             found_any = true;
         }
-        if (d3_has_nan(tree->orientations_sums[i])) {
-            if (verbose) printf("NaN: node %zu orientations_sums\n", i);
+        if (d3_has_nan(tree->weighted_orientations_sums[i])) {
+            if (verbose) printf("NaN: node %zu weighted_orientations_sums\n", i);
             found_any = true;
         }
         if (isnan(tree->volumetric_flow_rate_sums[i])) {
             if (verbose) printf("NaN: node %zu volumetric_flow_rate_sums\n", i);
+            found_any = true;
+        }
+        if (isnan(tree->weighted_length_sums[i])) {
+            if (verbose) printf("NaN: node %zu weighted_length_sums\n", i);
             found_any = true;
         }
         if (d3_has_nan(tree->source_position_avg[i])) {
@@ -578,9 +622,9 @@ void linear_octree_destroy(linear_octree_t **octree_ptr)
     free(tree->child_indices);
     free(tree->is_leaf);
     free(tree->num_particles);
-    free(tree->positions_sums);
-    free(tree->orientations_sums);
-    free(tree->length_sums);
+    free(tree->weighted_positions_sums);
+    free(tree->weighted_orientations_sums);
+    free(tree->weighted_length_sums);
     free(tree->volumetric_flow_rate_sums);
     free(tree->source_position_avg);
     free(tree->sink_position_avg);
@@ -648,6 +692,7 @@ static void linear_octree_compute_velocity_contribution(
  *        swimmer (swimmer i) from all other swimmers in the system.
  * @param[in]  tree                The linear octree.
  * @param[in]  current_node_index  The index of this node.
+ * @param[in]  swimmer_i_index     The swimmer index for swimmer i.
  * @param[in]  swimmer_i_pos       The position of swimmer i.
  * @param[in]  swimmer_i_feat_pos  The feature positions of swimmer i.
  * @param[in]  approx_ratio        The Barnes-Hut Approximation Ratio.
@@ -659,6 +704,7 @@ static void linear_octree_compute_velocity_contribution(
 static void linear_octree_compute_vel_contrib_recurse(
     const linear_octree_t *restrict tree,
     const uint64_t current_node_index,
+    const size_t swimmer_i_index,
     const double_3d_t swimmer_i_pos,
     const swimmer_features_t swimmer_i_feat_pos,
     const double approx_ratio,
@@ -671,16 +717,12 @@ static void linear_octree_compute_vel_contrib_recurse(
     if (tree->num_particles[current_node_index] == 0)
         return;
 
-    /* obtain the position for this node */
-    double_3d_t current_node_position_avg = \
-        linear_octree_node_position(tree, current_node_index);
-
     /* if this is a leaf then compute the interaction automatically */
     if (tree->is_leaf[current_node_index])
     {
         /* if this is a self-comparison, then we skip this node entirely */
-        bool current_node_is_swimmer_i = \
-            d3_is_close(swimmer_i_pos, current_node_position_avg);
+        size_t swimmer_j_index = tree->swimmer_index[current_node_index];
+        bool current_node_is_swimmer_i = swimmer_i_index == swimmer_j_index;
         if (current_node_is_swimmer_i)
             return;
 
@@ -720,8 +762,10 @@ static void linear_octree_compute_vel_contrib_recurse(
            contribution from it */
         if (child_node_index != OCTREE_NO_CHILD)
             linear_octree_compute_vel_contrib_recurse(
-                tree, child_node_index, swimmer_i_pos, swimmer_i_feat_pos,
-                approx_ratio, regularize, eps, external_source, external_sink);
+                tree, child_node_index, swimmer_i_index,
+                swimmer_i_pos, swimmer_i_feat_pos,
+                approx_ratio, regularize, eps,
+                external_source, external_sink);
     }
 }
 
@@ -729,7 +773,8 @@ static void linear_octree_compute_vel_contrib_recurse(
  * @brief Computes the velocity contribution on a swimmer by all of the
  *        non-self swimmers in the system.
  * @param[in]  tree             The linear octree.
- * @param[in]  position_i       The position of swimmer i.
+ * @param[in]  swimmer_i_index  The swimmer index for swimmer i.
+ * @param[in]  swimmer_i_pos       The position of swimmer i.
  * @param[in]  features_i       The feature positions of swimmer i.
  * @param[in]  approx_ratio     The Barnes-Hut approximation ratio.
  * @param[in]  regularize       Whether or not to use regularized interaction.
@@ -739,7 +784,8 @@ static void linear_octree_compute_vel_contrib_recurse(
  */
 void linear_octree_compute_vel_contrib(
     const linear_octree_t *restrict tree,
-    const double_3d_t position_i,
+    const size_t swimmer_i_index,
+    const double_3d_t swimmer_i_pos,
     const swimmer_features_t features_i,
     const double approx_ratio,
     const bool regularize,
@@ -757,6 +803,7 @@ void linear_octree_compute_vel_contrib(
 
     /* begin computing the velocity contribution */
     linear_octree_compute_vel_contrib_recurse(
-        tree, 0, position_i, features_i,
-        approx_ratio, regularize, eps, external_source, external_sink);
+        tree, 0, swimmer_i_index, swimmer_i_pos, features_i,
+        approx_ratio, regularize, eps,
+        external_source, external_sink);
 }

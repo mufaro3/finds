@@ -11,6 +11,7 @@
  *
  * License: MIT
  */
+#include <finds/system.h>
 #include <finds/derivative.h>
 #include <finds/integration.h>
 #include <finds/error.h>
@@ -40,6 +41,12 @@ static fish_system_t *euler_advance(
     const system_derivative_t *derivative,
     const double time_step)
 {
+    if (derivative_has_nan(derivative)) {
+        fish_system_print(state);
+        derivative_print(derivative);
+        abort();
+    }
+
     fish_system_t *advanced_state = fish_system_copy(state);
     for (size_t i = 0; i < state->size; ++i)
     {

@@ -754,6 +754,32 @@ fish_system_t *fish_system_generate_random(
 }
 
 /**
+ * @brief Determines whether a system constains a NaN value (for debugging).
+ * @param[in] system The system.
+ * @return Whether the system contains NaN.
+ */
+bool fish_system_has_nan(const fish_system_t *system)
+{
+    for (size_t i = 0; i < system->size; ++i)
+    {
+        const swimmer_t *swimmer = &system->swimmers[i];
+
+        if (d3_has_nan(swimmer->position))
+            return true;
+
+        if (d3_has_nan(swimmer->orientation))
+            return true;
+
+        if (isnan(swimmer->volumetric_flow_rate) ||
+            isnan(swimmer->length) ||
+            isnan(swimmer->sp_speed))
+            return true;
+    }
+
+    return false;
+}
+
+/**
  * @brief Allocates all of the arrays for a fish system to size N.
  *
  * @param[in] N  The size of the fish system.

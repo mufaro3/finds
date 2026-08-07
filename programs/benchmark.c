@@ -25,10 +25,19 @@
 #include <finds/util.h>
 #include <finds/evaluation.h>
 
-#define OUTPUT_MODE "png"
+#define PDF
 
+#ifdef PDF
+#define OUTPUT_MODE "pdf"
+#define FIGURE_WIDTH  8
+#define FIGURE_HEIGHT 6
+#define FONT "Nimbus Roman,15"
+#else
+#define OUTPUT_MODE "png"
 #define FIGURE_WIDTH  1200
 #define FIGURE_HEIGHT 800
+#define FONT "Nimbus Roman,12"
+#endif
 
 #define SERIES_LABEL_SIZE 200
 
@@ -37,7 +46,7 @@
 #define FMM_MAX_LOG_N   8
 
 #define MIN_LOG_N 1
-#define MAX_LOG_N 3
+#define MAX_LOG_N 6
 
 #define N_METHODS 9
 
@@ -146,7 +155,7 @@ int main(void)
     int exit_code = EXIT_SUCCESS;
     mkdir_p(ROOT_OUTPUT_PATH, MODE_RW_USERONLY);
 
-    const size_t N_SYS = MAX_LOG_N - MIN_LOG_N;
+    const size_t N_SYS = MAX_LOG_N - MIN_LOG_N + 1;
 
     double *nvalues = calloc(N_SYS, sizeof(double));
     if (nvalues == NULL)
@@ -283,13 +292,21 @@ int main(void)
 
     gnuplot_setterm(fig_handle, OUTPUT_MODE "cairo",
         FIGURE_WIDTH, FIGURE_HEIGHT);
+    char setcmd[100];
+    snprintf(setcmd, sizeof(setcmd),
+        "set terminal %scairo size %d,%d font '%s'",
+        OUTPUT_MODE, FIGURE_WIDTH, FIGURE_HEIGHT, FONT);
+    gnuplot_cmd(fig_handle, setcmd);
     gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark."
         OUTPUT_MODE "'");
     gnuplot_cmd(fig_handle, "set logscale xy");
+    gnuplot_cmd(fig_handle, "set format x '10^{%T}'");
+    gnuplot_cmd(fig_handle, "set format y '10^{%T}'");
     gnuplot_cmd(fig_handle, "set key bottom right");
-    gnuplot_set_axislabel(fig_handle, "x", "System Size {/Symbol N}");
+    gnuplot_set_axislabel(fig_handle, "x", "Number of Swimmers");
     gnuplot_set_axislabel(fig_handle, "y", "Runtime (s)");
-    gnuplot_cmd(fig_handle, "set title 'Derivative computation scaling'");
+    gnuplot_cmd(fig_handle,
+        "set title 'Derivative Runtime vs. Number of Swimmers'");
     gnuplot_setstyle(fig_handle, "linespoints");
 
     /* plot data */

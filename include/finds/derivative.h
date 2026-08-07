@@ -60,6 +60,7 @@ system_derivative_t *compute_system_derivative(
     const fish_system_t *system,
     const derivative_computation_opts_t dc_opts);
 
+bool derivative_has_nan(const system_derivative_t *derivative);
 void derivative_destroy(system_derivative_t **derivative);
 void derivative_print(const system_derivative_t *derivative);
 system_derivative_t *derivative_average(

@@ -120,7 +120,7 @@ endforeach()
 # C Examples
 # ------------------------------------------------------------------------------
 
-file(GLOB EXAMPLE_SOURCES CONFIGURE_DEPENDS examples/c/*.c)
+file(GLOB EXAMPLE_SOURCES CONFIGURE_DEPENDS examples/*.c)
 
 foreach(EXAMPLE ${EXAMPLE_SOURCES})
     get_filename_component(EXAMPLE_NAME ${EXAMPLE} NAME_WE)

@@ -30,7 +30,7 @@
 \settoggle{unnumberedsections}{false}
 
 % Set the class option toggle if the class option was used in the template
-\DeclareOption{unnumberedsections}{\settoggle{unnumberedsections}{true}}
+\DeclareOption{unnumberedsections}{\settoggle{unnumberedsections}{false}}
 
 % Pass through any extra options specified to the base class
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}

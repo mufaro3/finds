@@ -13,13 +13,15 @@ from processingmodules.DensityAnimationGenerator import \
     DensityAnimationGenerator
 from processingmodules.MeanRadialDistancePlot import MeanRadialDistancePlot
 from processingmodules.ProcessingModule import ProcessingModule
+from processingmodules.SnapshotGenerator import SnapshotGenerator
 
 DEFAULT_MODULES_LIST=[
     AnimationGenerator(),
     DensityAnimationGenerator(),
     CrossSectionGenerator(),
     MeanRadialDistancePlot(),
-    TrajectoryPlot()
+    TrajectoryPlot(),
+    SnapshotGenerator()
 ]
 
 SYSTEM_DTYPE = np.dtype([
@@ -109,4 +111,4 @@ if __name__ == '__main__':
     # Process into the same directory as the input file
     output_dir = data_file.parent
 
-    process_data(output_dir, data_file)
+    process_data(output_dir, data_file, use_pdf=True)

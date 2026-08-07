@@ -10,7 +10,6 @@
 \usepackage{times}
 \usepackage{physics}
 \usepackage{lipsum}
-\setcounter{secnumdepth}{0}
 \setcounter{page}{1}
 
 \renewcommand{\O}{\mathcal{O}}
@@ -70,9 +69,12 @@ most commonly in the movement of smaller animals or prey animals such as birds,
 fish, bugs, oxen, deer, etc. due to the multitude of benefits that members of
 such groups gain, such as increased protection from predators, increased
 energy efficiency due to the motion of others (such as vortical wake), etc.
-\textit{finish later!!!!!!}
 
-\section{Literature Review and Similar Work}
+\textbf{TODO FINISH THIS}
+
+\section{Literature Review/Past Work}
+
+\textbf{TODO FINISH THIS}
 
 \section{Mathematical Model of Swimmers}
 
@@ -154,15 +156,11 @@ defined as
 \end{equation}
 
 From the potential functions, the velocity field resulting from any source or
-sink is defined as the gradient of the potential function, and for simplicity,
-the displacement-dependent vector $\va{k}$ can be defined to represent the
-gradient of the Laplacian interaction kernel $1/r$,
+sink is defined as the gradient of the potential function
 
-\begin{align}\label{eqs-interaction}
-  \va{k}(\va{r}) &= \grad (-\frac{1}{r}) = \frac{\va{r}}{r^3} \\
-  \va{k}_{\varepsilon}(\va{r}) &=
-  \grad\left(-\frac{\erf(r/\varepsilon)}{r}\right) =
-  \va{k}(\va{r}) \xi_{\varepsilon}(r)
+\begin{align}\label{eqs-velocity-field}
+  \va{u}_{i}(\va{r}) = \grad \Phi_i &= \frac{\sigma_i}{4\pi} \frac{\va{r}}{r^3} \\
+  \va{u}_{i,\varepsilon}(\va{r}) = \grad \Phi_{i,\varepsilon} &= \va{u}_{i}(\va{r}) \xi_{\varepsilon}(r)
 \end{align}
 
 \noindent
@@ -173,24 +171,13 @@ where $\xi_{\varepsilon}(r)$ is the regularization coefficient
   \frac{2r}{\varepsilon \sqrt{\pi}} \exp(-\frac{r^2}{\varepsilon^2}).
 \end{equation}
 
-\noindent
-The velocity fields are therefore
-
-\begin{align}\label{eqs-velocity-field}
-  \va{u}_{i}(\va{r}) = \grad \Phi_i &= \frac{\sigma_i}{4\pi} \va{k}(\va{r}) \\
-  \va{u}_{i,\varepsilon}(\va{r}) = \grad \Phi_{i,\varepsilon} &=
-  \frac{\sigma_i}{4\pi} \va{k}_{\varepsilon}(\va{r})
-\end{align}
-
-\noindent
-for the unregularized and regularized velocity fields respectively.
-
 With the velocity fields well-defined, the velocity of a given source or sink
 $\alpha$ can be defined generally as
 
 \begin{equation}\label{eq-feature-velocity}
   \dv{\va{x}_{\alpha,i}}{t} = U_i \vu{n}_i +
-  \sum_{i \neq j}^N \frac{\sigma_j}{4\pi} \va{K}_{\alpha,ij}.
+  \sum_{i \neq j}^N \left[ \bigg. \va{u}_j(\va{r}_{\alpha f}) -
+    \va{u}_j(\va{r}_{\alpha b}) \right].
 \end{equation}
 
 \noindent
@@ -205,21 +192,14 @@ second term is the \textit{external} velocity contribution. In detail,
 is the self-propelled speed resulting from the interaction between any
 source-sink pair of a dipole, and the second term represents the sum of the
 velocity contribution to a source or sink from a dipole, where
-$\va{K}_{\alpha,ij}$ represents the composite interaction vector between feature
-$\alpha$ of fish $i$ with both the source $f$ and the sink $b$ of fish $j$,
-
-\begin{equation}\label{eq-composite-interaction}
-  \va{K}_{\alpha,ij} = \va{k}(\va{r}_{\alpha f}) - \va{k}(\va{r}_{\alpha b}).
+\begin{equation}\label{eq-}
+  \va{r}_{\alpha \beta} = \va{x}_{\alpha,i} - \va{x}_{\beta,j}
 \end{equation}
+is the displacement between feature $\alpha$ of fish $i$ and feature $\beta$
+of fish $j$. In the case of regularization, $\va{u}_j$ is simply replaced with
+$\va{u}_{j,\varepsilon}$.
 
-\noindent
-where $\va{r}_{\alpha \beta}$ is the displacement between feature $\alpha$ of
-fish $i$ and feature $\beta$ of fish $j$. In the case of regularization, the
-interaction function $\va{k}$ is simply replaced with $\va{k}_\varepsilon$.
-
-\textbf{TODO INCLUDE MISSING FIGURE SOURCE SINK INTERACTION}
-
-\section{Derivative Computation}
+\section{Derivative Computation} \label{section-derivative-computation}
 
 As stated previously, the modelling of fish is an $N$-body problem where the
 algorithmic complexity of computing a derivative is, through Brute-Force
@@ -237,7 +217,25 @@ gradient $\va{u}_i$, so the Fast-Multipole Method cannot be used with
 regularization. Additionally, all three methods are CPU-parallelized using
 OpenMP.
 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\textbf{Method} & \textbf{Complexity} & \textbf{Parameter} \\ \hline
+Brute Force     & $\O(N^2)$           & None               \\
+Barnes-Hut      & $\O(N \log N)$      & $\theta$           \\
+FMM             & $\O(N)$             & $\epsilon$
+\end{tabular}
+\caption{A table summarizing of each of the derivative computation methods.
+  $\theta$ is similarly referred to as the ``approximation ratio'' and
+  $\epsilon$ is the numerical precision, and both parameters determine the
+  precision with which each derivative is calculated (with lower values
+  producing more precise measurements).
+}
+\label{tbl-derivative-methods}
+\end{table}
+
 \subsection{The Barnes-Hut Approximation}
+\label{subsection-barnes-hut}
 
 As described by Barnes and Hut, the Barnes-Hut algorithm computes 3-dimensional
 pairwise interactions in $\O(N \log N)$ time by constructing a
@@ -249,14 +247,14 @@ away from each test swimmer.
     \includegraphics[width=0.75\linewidth]{validation-octree-3d.pdf}
     \includegraphics[width=0.75\linewidth]{validation-octree-2d.pdf}
     \caption{Top: An example octree constructed in three-dimensional space to
-      partition five points, constructed with an arbitrary insertion order.
-      Bottom: The same octree, represented two-dimensionally with the child
-      octant indices.
+      partition twenty points, constructed with an arbitrary insertion order.
+      Bottom: The same octree, represented two-dimensionally.
     }
     \label{fig-octree}
 \end{figure}
 
 \subsubsection{Linear Octree Construction}
+\label{subsubsection-linear-octree}
 
 FINDS implements a linear octree, or aligned arrays for each node
 parameter where each array index corresponds to a node in the tree. In
@@ -281,13 +279,10 @@ produced by dividing by the total volumetric flow rate,
   \overline{\ell_{i}} &= \zeta_j^{-1} \sum_{j=0}^{n_i} \ell_j \sigma_j
 \end{align}
 where $i$ in this context refers to the node index within the octree lists and
-$j$ refers to the index of each swimmer stored within this node.
-
-This architecture was chosen due to its traversal efficiency when sorted
-according to a space-filling curve, as this would keep physically close nodes
-close together in memory, which maximizes cache locality.
-
-\textbf{FIGURE MISSING ADD LINEAR OCTREE FIGURE}
+$j$ refers to the index of each swimmer stored within this node. This
+architecture was chosen due to its traversal efficiency when sorted according
+to a space-filling curve, as this would keep physically close nodes close
+together in memory, which maximizes cache locality.
 
 Construction of the Linear Octree begins by taking a system of swimmers $\va{X}$
 and computing vectors containing minimum and maximum values along each dimension
@@ -318,12 +313,14 @@ for the tree chosen as minimum position for the root node's bounding cube, or
 \begin{equation}\label{eq-linear-octree-rel-origin}
   \va{x}_{\O} = \va{x}_0 - \frac{s_0}{2} \va{1}_3.
 \end{equation}
-Then, the position of each swimmer is truncated to an integer and a Morton
-number corresponding to this position is produced by interleaving the binary
-coordinate values using bit-shifting operations. Note that this operation
-implicitly assumes that the three numbers going in are each a maximum of 21
-bits such that the output Morton number is 64-bit, and this integer-sizing has
-significant consequences which will be discussed in the limitations section.
+This is done to ensure that the position of every swimmer can be described using
+only positive numbers. Then, the position of each swimmer is truncated to an
+integer and a Morton number corresponding to this position is produced by
+interleaving the binary coordinate values using bit-shifting operations. Note
+that this operation implicitly assumes that the three numbers going in are each
+a maximum of 21 bits such that the output Morton number is 64-bit, and this
+integer-sizing has significant consequences which will be discussed in the
+limitations section.
 
 Then, a position-local array of swimmer indices is produced by first building
 an in-order list of indices $(0, 1, \dots, N)$ corresponding to the indices
@@ -388,6 +385,7 @@ $101$, and this corresponds with $+s_j/4$ on the $z$-axis, $-s_j/4$ on the
 $y$-axis, and $+s_j/4$ on the $x$-axis.
 
 \subsubsection{Barnes-Hut Velocity Computation}
+\label{subsubsection-barnes-hut-velocity-comp}
 
 Once constructed, the velocity contribution is computed in $\O(N \log N)$ time
 by performing a depth-first tree traversal on the linear octree. We can notate
@@ -398,9 +396,8 @@ and the Barnes-Hut minimum approximation ratio supplied by the user as $\theta$.
 Beginning from the root node, if the current node is a leaf ($n_i = 1$) and the
 position for swimmer $b_i$ is not approximately equal to the position of swimmer
 $a$ (within a precision of $10^{-15}$ to account for floating-point errors)
-then the velocity contributions are computed immediately via equations
-\ref{eq-feature-velocity} and \ref{eq-composite-interaction}, and the recursion
-is ended.
+then the velocity contributions are computed immediately via equation
+\ref{eq-feature-velocity}, and the recursion is ended.
 
 Otherwise, the size-to-distance ratio $\phi_i$ is computed for this node as
 \begin{equation}\label{eq-size-to-distance}
@@ -412,12 +409,12 @@ d_{ab_i} = \norm{\va{x}_{c,a} - \overline{\va{x}_{c,b_i}}}.
 \end{equation}
 Then, if $\phi_i < \theta$, then the composite swimmer $b_i$ is said to be
 \textit{close} to swimmer $a$, and the velocity contributions are computed
-immediately via equations \ref{eq-feature-velocity} and
-\ref{eq-composite-interaction} and the recursion ends. If
+immediately via equation \ref{eq-feature-velocity} and the recursion ends. If
 $\phi_i \ge \theta$, then composite swimmer $b_i$ is said to be \textit{far}
 from swimmer $a$, and we recurse into each of the child nodes of node $i$.
 
 \subsection{The Fast Multipole Method (FMM)}
+\label{subsection-fmm}
 
 As described by Greengard and Rokhlin, the fast multipole method similarly uses
 tree construction to compute the velocity field as the gradient of the potential
@@ -438,7 +435,27 @@ double-counting the interaction with its pair. However, this is negligible
 compared to the overall calculation, as this is computed in $\O(1)$ time for
 each swimmer or $\O(N)$ time overall.
 
+\subsection{Derivative Calculation Performance Evaluation}
+\label{subsection-benchmark}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\linewidth]{benchmark.pdf}
+    \caption{A runtime comparison plot for each derivative computation method.}
+    \label{fig-benchmark}
+\end{figure}
+
+As shown through table \ref{tbl-derivative-methods}, the three derivative
+calculation methods employed in FINDS each have a distinct runtime complexity
+as a function of $N$, and therefore, have specific ranges of $N$ for which they
+are the most effective due to their individual scaling orders and
+proportionality constants. These relationships can be seen in figure
+\ref{fig-benchmark}.
+
+\textbf{TODO FINISH THIS}
+
 \section{Numerical Integration}
+\label{section-integration}
 
 As stated above, equations \ref{eq-translational-dynamics} and
 \ref{eq-rotational-dynamics} form a system of coupled first-order ordinary
@@ -479,11 +496,12 @@ time-step ($\delta t_i = \Delta t$), and adaptive integrators will compute,
 for every time-state $\va{X}_i$ and $\delta t_i$, the advanced state
 $\va{X}_{i+1}$ and a new computation time-step $\delta t_{i+1}$, computed as
 \begin{equation}\label{eq-adapted-time-step}
-  \delta t_{i+1} = \delta t_i \left( \frac{\xi_i}{E_i} \right)^{\frac{1}{p}}
+  \delta t_{i+1} = \delta t_i \eta \left( \frac{\xi_i}{E_i} \right)^{\frac{1}{p}}
 \end{equation}
-where $\xi_i$ is the tolerance, computed as
+where $\eta=0.9$ is a safety parameter and $\xi_i$ is the
+tolerance, computed as
 \begin{equation}\label{eq-adapted-tolerance}
-  \xi_i = \gamma + \mu \max(\norm{\va{X}_{i+1}}, \norm{\va{X}_i})
+  \xi_i = \gamma + \mu \max\left(\norm{\va{X}_{i+1}}, \norm{\va{X}_i}\right)
 \end{equation}
 where $\gamma$ and $\mu$ are the user-specified absolute and relative tolerance
 respectively, and $E_i$ is the error of time-step $i$, computed as
@@ -495,6 +513,7 @@ RK5(4), $p=5$ and $q=4$) and $\va{X}_{p,i}$ refers to the $p$-th order solution
 for step $i$.
 
 \section{Database Management}
+\label{section-database-management}
 
 The evaluation times $\{0, \Delta t, 2 \Delta t, \dots, T_f \}$ and their
 corresponding system states $\{ \va{X}_1, \va{X}_2, \dots \va{X}_{T_f} \}$
@@ -527,43 +546,362 @@ databases to be easily read using any valid HDF5 parser across any language
 after performing a simulation, and this is employed within FINDS to allow users
 to perform calculations quickly in C with FINDS, store their calculations
 results efficiently with HDF5, then open the data for analysis in C (using the
-datastream module), Python, and more (see ``Validation'' and
-``Post-processing in Python'').
+datastream module), Python, and more (see section
+\ref{section-post-processing}).
 
 \section{Initial System Creation}
+\label{section-initial-system-creation}
+
+The goal of FINDS is to evolve an initial fish system state $\va{X}_0$ to
+produce a trajectory, $\va{X}(t)$. Altough the numerical calculation, data
+storage, and post-processing routines as described above are certainly important
+for studying school behavior, the precise creation of specific starting states
+$\va{X}_0$ is undoubtedly the most important task for producing effective
+simulations. As such, FINDS offers a small but powerful suite of options for
+producing various (mostly symmetric) initial systems.
+
+To begin, the most precise construction of a FINDS system must be done directly.
+FINDS system objects are fundamentally just variable-size lists of vectors, so
+end users desiring systems that are highly asymmetrical or specific by directly
+writing the data describing each swimmer, i.e., $\va{x}_{c,i}, \vu{n}_i,$
+$\sigma_i,$ and $\ell_i$ for every swimmer $i$.
+
+For systems that are slightly more symmetric or general (such as requiring
+simple 3-D geometries like cubes, balls, or spheres), FINDS contains a
+streamlined process for generating them through initial conditions,
+transformations, and combinations.
+
+\subsection{Initial Conditions}
+\label{subsection-initial-conditions}
+
+The initial conditions that describe a system are best understood under three
+main categories: the distribution options, which determines $\va{x}_{c,i}$, the
+orientation options, which determines $\vu{n}_i$, and the constant options,
+which determines $\sigma_i$ and $\ell_i$.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\textbf{Type} & \textbf{Parameters}  & \textbf{Description} \\ \hline
+Cube          & Side Length, Spacing & Cubic Lattice        \\
+Sphere        & Radius, Spacing      & Fibonacci Sphere     \\
+Ball          & Radius, Spacing      & Ball Lattice         \\
+Random        & $N$, Absolute Bound  & Random Distribution 
+\end{tabular}
+\caption{The distribution options in FINDS and their associated parameters.
+  Note that the ``random'' distribution produces $N$ random points within a
+  cube centered at the origin that goes from $-L$ to $L$ on every dimension
+  where $L$ is the absolute bound.
+}
+\label{tbl-distribution-options}
+\end{table}
+
+Next, the orientation options determines how the orientation of each fish are
+determined, and this is generated after the distribution as many of the
+orientations are dependent on the position of each swimmer. After generating
+the starting orientations based on the position of the swimmer as outlined in
+table \ref{tbl-orientation-options}, orientations can also be randomly
+perturbed by some maximum angle $\phi$ defined by the user to introduce some
+random instability in the system. This perturbation is done by randomly
+selecting a roll $\phi_x \in [-\phi, \phi]$, pitch $\phi_y \in [-\phi, \phi]$,
+and yaw $\phi_z \in [-\phi, \phi]$, then rotates the orientations using the
+3-dimensional rotation matrix $R_\phi = R_z(\phi_z) R_y(\phi_y) R_x(\phi_x)$.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+\textbf{Name}  & \textbf{Equation} \\ \hline
+Radial Inward  & $-\va{r}_i$ \\
+Radial Outward & $\va{r}_i$ \\
+Swirl Inward   & \(\frac{-(\sin \theta_i + \cos \theta_i) \vu{x} +
+  (\cos \theta_i - \sin \theta_i) \vu{y} }{\sqrt{2}} \) \\
+Swirl Outward  & $-\sin \theta_i \vu{x} + \cos \theta_i \vu{y}$ \\
+Saddle         & $-\sin \theta_i \vu{x} - \cos \theta_i \vu{y}$ \\
+Aligned        & $\vu{x}$
+\end{tabular}
+\caption{The orientation options. Each equation describes the un-normalized
+  orientation of each swimmer, which is later normalized
+  $\theta_i = \atan2(y_i/x_i)$ and $\va{r}_i$
+  is the position of swimmer $i$, $\va{r}_i = \langle x_i, y_i, z_i \rangle$.
+}
+\label{tbl-orientation-options}
+\end{table}
+
+Lastly, there are the constant generation options for the length and volumetric
+flow rate for each swimmer. This is essentially just whether these constants are
+set as one uniform value for all swimmers. The user has the ability to select
+a minimum and maximum value for each or a singular value to apply to all of the
+swimmers.
+
+\subsection{Transformations and Combinations}
+\label{subsection-transformations-and-combinations}
+
+To create more interesting systems (such as witnessing the interaction between
+groups of pre-defined system geometries), users can perform transformations and
+combinations on systems produced using the aforementioned initial conditions. A
+simple analogy to this is like thinking of using the above initial conditions
+to produce individual schools of fish, and the overall system $\va{X}$ describes
+all of the swimmers in the simulation (so potentially multiple schools).
+
+Two transformations are available in FINDS for systems: rotation and
+translation. Given a system, users can rotate a system given a roll $\phi_x$,
+pitch $\phi_y$, and yaw $\phi_z$ using the 3-dimensional rotation matrix
+$R_\phi = R_z(\phi_z) R_y(\phi_y) R_x(\phi_x)$, and users can translate a
+system using a translation vector $\Delta \va{r} = \langle \Delta x, \Delta y$
+$\Delta z \rangle$.
+
+With these transformations, fish systems can also be copied and combined to
+produce greater systems. For example, a system of two colliding ball-shaped
+schools was produced in the ``collision'' example (see section
+\ref{section-examples}). To setup this initial system: first, a ball of an
+arbitrary radius $r$ and spacing is produced with an aligned orientation, and
+this can be denoted $\va{X}_a$. Then, this is copied to produced a second school
+$\va{X}_b$, and then $\va{X}_a$ is translated by $1.5r \vu{x}$ and $\va{X}_b$ is
+translated by $-1.5r \vu{x}$. Lastly, $\va{X}_b$ is rotated by $\phi_z = \pi$,
+and the two systems are combined into one overall initial system $\va{X}_0$, and
+this is what is used for computations.
 
 \section{Simulation Configuration Files}
+\label{section-simulation-config-files}
 
 For simple simulations (i.e., those that do not require specific, complex
 starting systems as would need to be created manually as described under
-``Initial System Creation''), the \texttt{simulate} program can be used for
-performing simulations from TOML configuration files.
+section \ref{section-initial-system-creation}), the \texttt{simulate} program
+can be used for performing simulations from TOML configuration files. However,
+these files don't allow for the creation of complex compound systems using any
+transformations or combinations. These files simplify the process of performing
+simulations and storing or sharing the initial conditions of a simulation.
+These files are split into four sections: ``system,'' which describes the
+initial system generation options as described above, ``differentiation,''
+which describes the derivative computation method, ``integration,'' which
+describes the integration method, and ``debug,'' which describes the debug
+printing options (i.e., logging).
 
 \section{Post-Processing in Python}
+\label{section-post-processing}
+
+After running a simulation with FINDS, the simulation will output a data file
+under \texttt{output/simulations/sim-.../data.h5} (where \texttt{...} is the
+date and time of when the simulation was run). As stated in section
+\ref{section-database-management}, users can directly read their HDF5 database
+in the language of their choosing if they so wish, but alternatively, to
+simplify the post-processing of simluation data files, FINDS includes a simple
+framework for performing post-processing data analysis in Python. This is done
+using the \texttt{process\_data.py} script. This script works as the central
+module for post-processing by controlling and executing ``Processing Modules,''
+or objects defined with an initialization function to executed before reading
+the dataset, an update function to be executed on each frame of the dataset,
+and a closing function to be executed after reading the dataset. For example,
+the \texttt{AnimationGenerator} module uses its initialization function for
+initializing the MatPlotLib animation, its update function for drawing a frame
+to the animation, and its closing function for saving the figure. The full list
+of these modules can be seen in table \ref{tbl-post-processing-modules}.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{p{0.3\linewidth}p{0.6\linewidth}}
+    \textbf{Name} & \textbf{Purpose} \\ \hline
+    Animation Generator &
+    Generates an MP3 animation of the system evolution. \\
+
+    Cross Section Generator &
+    Plots the $xy, z=0$ plane at $t=0$ if any swimmers exist on it to PNG or
+    PDF. \\
+
+    Density Animation Generator &
+    Generates an MP3 animation of the radial density distribution from the
+    center-of-mass over time. \\
+
+    Mean Radial Distance Generator &
+    Plots the mean and standard deviation in the radial distance from the
+    center-of-mass as a function of time to PNG or PDF. \\
+
+    Snapshot Generator &
+    Plots the first, middle, and last frames of the simulation (from
+    AnimationGenerator) to PNG or PDF. \\
+
+    Trajectory Plotter &
+    Plots the trajectories of each swimmer in the system in 3-D space to PNG
+    or PDF.
+  \end{tabular}
+  \caption{A list of the default Python post-processing modules available in
+    FINDS.}
+  \label{tbl-post-processing-modules}
+\end{table}
 
 \section{Validation}
+\label{section-validation}
 
-FINDS was validated
+FINDS' derivative calculation and integration methods were validated for
+correctness through both unit testing and comparison with prior implementations
+of the source/sink dipole model for swimmers. Unit tests were primarily used
+for simple, easily-testable functions like data I/O, and the overall simulation
+behavior was validated visually and numerically against simulations produced
+using previous Python and MATLAB implementations of the dipole model.
 
-\section{Performance Evaluation}
+In particular, FINDS was validated in two dimensions by reproducing figure 8 of
+Mabrouk and Floryan 2025, which contains four scenarios of the trajectory
+evolution for two coplanar ($z=0$) swimmers based on the distances from their
+centers of mass on the $x$ and $y$ axes and the angle between their orientations
+$\Delta \theta$, and this can be observed in figure \ref{fig-validation-2025-8}.
+Visually, these plots match, and as such, numerical validation (by directly
+computing the difference between the expected calculation and the observed
+calculation from FINDS) alongside validation for a greater $N$ and
+three-dimensional system is needed, and this is done using the validation
+observed in figure \ref{fig-validation-numerical}. This numerical computation
+is produced by calculating an error score between the expected state $\va{X}_t$
+and the produced state $\va{X}_t'$ for each time $t$ as
+\begin{equation}\label{eq-validation-err}
+  E_t = \sqrt{\sum_{i=1}^{N} \left( \norm{\va{x}_{c,i} - \va{x}_{c,i}'}^2 +
+    \norm{\va{n}_i - \va{n}_i'}^2 \right)}
+\end{equation}
+where $\va{x}_{c,i}$ and $\va{x}_{c,i}'$ are the expected and computed center
+of mass position and $\va{n}_i$ and $\va{n}_i'$ are the expected and computed
+orientation for each swimmer $i$ at time $t$.
+
+As can be seen in this
+figure, the error for the three coplanar cases is entirely zero, showing that
+for two-dimensional, two-swimmer simulations, the results of FINDS are entirely
+identical to that of previous implementations.
+
+\textbf{TODO FINISH THIS AND REMAKE FIGURES}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figures/mabrouk-floryan-2025-8.jpg}
+  \includegraphics[width=0.9\linewidth]{figures/validation/validation-2025-8.png}
+  \caption{The coplanar, two-swimmer trajectory plots shown in figure 8 of
+    Mabrouk and Floryan 2025 (top) and its reproduction with FINDS (bottom).
+    Note that the two simulations need not exactly match in time as the observed
+    behavior in each case is stable, thus only a few repetitions are necessary
+    to observe similar behavior. Additionally, figure (a) matches the correct
+    behavior, as the original figure was simply conveying the growing separation
+    between the two swimmers over time.}
+  \label{fig-validation-2025-8}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\linewidth]{figures/validation/validation-comparison.png}
+  \caption{The numerical validation comparison plots of the error in the
+    simulation versus the time, where the first three plots are 2-dimensional,
+    2-swimmer coplanar comparisons.}
+  \label{fig-validation-numerical}
+\end{figure}
 
 \section{Examples}
+\label{section-examples}
+
+FINDS comes with three basic examples of performing simulations directly using
+the C API: \texttt{collision.c}, which collides two schools of fish as
+described in section \ref{subsection-initial-conditions},
+\texttt{imploding\_sphere.c}, which produces a Fibonacci sphere with a radial
+inward orientation which simulates an implosion, and
+\texttt{rotating\_sphere.c}, which produces a ball that swirls outward and
+expands. To demonstrate the usage of FINDS in detail, we will describe, in full,
+the example of the imploding sphere.
+
+First, the initial state $\va{X}_0$ is generated with a radius $r$ and a
+spacing $r/2$. Each swimmer was given a uniform length and volumetric flow rate
+$\ell = 1$ and $\sigma = 4\pi$ such that the self-propelled speed for each
+swimmer becomes $U = 1$. This initial generated system can be seen in figure
+\ref{fig-implosion-example-system}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/implosion-example/initial-system.pdf}
+    \caption{The initial system generated for the implosion example.}
+    \label{fig-implosion-example-system}
+\end{figure}
+
+Then, the derivative computation method is set as the Barnes-Hut approximation
+with $\theta = 1$ using regularization at $\varepsilon = 10^{-6}$, and the
+integration computation method is set as non-adaptive fourth-order Runge-Kutta
+with an evaluation time-step of $\Delta t = 1$ seconds and an end time of
+$T_f = 100$ seconds.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.75\linewidth]{figures/implosion-example/mean-radial-distance.pdf}
+  \caption{The mean and standard devaiation of radial distance as a
+    function of time for the implosion example.}
+  \label{fig-implosion-radial-distance}
+\end{figure}
+
+After running the simulation and processing the produced dataset using the
+modules described in section \ref{section-post-processing}, the mean radial
+distance plot reflects the movement of swimmers twoards the origin before being
+violently ejected, and this can be observed in figure
+\ref{fig-implosion-radial-distance}.
 
 \section{Limitations}
+\label{section-limitations}
 
-Barnes-Hut is using a monopole representation for dipole interactions, and this
-is slightly incorrect (but mostly fine)
+FINDS has several critical limitations, and it is key to understand these
+limitations when performing simulations. The first key limitation lies in our
+implementation of the Barnes-Hut approximation as described in section
+\ref{subsection-barnes-hut}. The Barnes-Hut approximation implements a monopole
+representation rather than a dipole representation, and this approximation
+introduces a small amount of error (assuming short fish lengths and far-field
+interactions only). A potential solution to this problem would be to switch to a
+higher-order (dipole) implementation of the Barnes-Hut approximation, but we
+have chosen to forego this as the main cases where the monopole expansion's
+error is non-negligible is in close-field interactions (where the far-field
+model is already incorrect unless heavily regularized) and for very large fish
+lengths (which is patently unrealistic).
 
-Morton numbers are only 64-bit, so position dimension values can only be 21 bit,
-and think what the max double that can be represented in 21 bit is
-
-FMM has incredibly high overhead
+Additionally, each Morton number is stored as a 64-bit unsigned integer. These
+numbers are intended to simultaneously encode the $x$, $y$, and $z$ positions
+as unsigned integers, thus each dimension must be able to be stored in only 21
+bits. As the maximum unsigned integer that can be represented in 21 bits is
+$2^{21}-1$ or approximately 2.1 million. As a consequence, two fish whose
+centers-of-mass are equal in integral values (i.e., when the float precision is
+ignored) are considered to be at exactly the same location during Octree
+construction, and the maximum distance that any fish can be in FINDS (without
+losing data or corrupting the simulation) is $2^{21}-1$ \textit{on each axis}.
+However, these two issues are largely negligible for simulations in FINDS.
+First, FINDS is intended for far-field interactions, so two fish having the
+exact same integral position is incredibly unlikely unless this was directly
+intended by the user, and even in such a case, any two fish with equal Morton
+numbers simply have a random insertion order with little to no effect on the
+velocity calculation. Second, it is highly unlikely for fish positions to
+evolve past the aforementioned limit over the course of most simulations as
+far-field interactions produce typically small velocity fields.
 
 \section{Future Work}
+\label{section-future-work}
 
-\lipsum[1]
+The most pertinent future addition to FINDS would be the creation of bindings
+in other languages such as Python or Julia such that users can generate
+simulations and perform simulations in a much more streamlined and flexible
+way. The next major change would be implementing in a path-independence that no
+longer requires users to clone the FINDS repository and develop their
+simulations only within this directory. Transitioning FINDS to a
+path-independent system that links as a library located on the system-level
+(such as a PIP module for the Python API or a C library linked globally) that
+reads and writes to either the same directory where the script invoking FINDS
+is run from or a separate directory defined by the user would allow simulations
+to be localized to simple scripts or Jupyter notebooks while still taking
+advantage of the immense speed of the underlying C code.
+
+Another major potential inclusion into FINDS would be the implementation of a
+vortex-based dipole model (like that of Kanso et al.) rather than a
+Coulombic-based dipole model to widen the range of simulation options for users
+as-needed and to allow for the rigorous comparison of the two models at large
+$N$.
+
+Additionally, small alternative improvements could be made in various places
+throughout the FINDS codebase. An option to utilize a normal distribution
+centered around the middle of a specified range for randomly-selected constants
+$\ell$ and $\sigma$ (as described in section
+\ref{subsection-initial-conditions}) instead of the default uniform distribution
+may be a preferable option for some users due to being considerably more
+realistic. Furthermore, as stated in section \ref{section-limitations}, a
+dipole-order implementation of the Barnes-Hut approximation could be
+implemented.
 
 \section{Acknowledgements}
+\label{section-acknowledgements}
 
 In the development of FINDS, Alvin Ng's \verb|grav_sim| was used extensively
 as a reference for implementing a fast $N$-body simulator in C, particularly
@@ -579,7 +917,5 @@ this report whatsoever, including the abstract, section text, figures, and
 captions.
 
 \printbibliography
-
-\section*{Appendix}
 
 \end{document}

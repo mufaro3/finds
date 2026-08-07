@@ -32,7 +32,7 @@ spacing = 5.0
 # 'distribution_type' is set to 'random' (the number of swimmers for the
 # arranged distributions is calculated based on radius/side length and
 # spacing).
-num_swimmers = 100
+num_swimmers = 4
 
 # The absolute bound for which swimmers can be generated. I.e., if this value
 # is set to X, then each swimmer will have a randomly-generated position with
@@ -105,7 +105,7 @@ epsilon = 0.5
 # Eulerian integration is first-order and naive. Each embedded Runge-Kutta
 # method in form RKAB uses A-order derivative computation and B-order error
 # computation for adaptive time-stepping.
-integration_method = "RK54"
+integration_method = "RK6"
 
 # This is the evaluation time-step for the simulation, i.e., the system
 # snapshots that are saved during integration will only be times that are

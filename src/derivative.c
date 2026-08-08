@@ -21,6 +21,10 @@
 #include <finds/interaction.h>
 #include <finds/barneshut.h>
 
+#ifdef SINGLETHREADED
+    #define omp_get_thread_num() 0
+#endif
+
 /** @brief Lookup table for the interaction computation methods */
 const named_enum_t INTER_COMP_METHODS_TABLE[INTER_COMP_METHODS_COUNT] = {
     { BRUTE_FORCE, "brute-force" },
@@ -90,7 +94,9 @@ static void calc_ext_contrib_brute_force(
 {
     size_t N = system->size;
 
+#ifndef SINGLETHREADED
     #pragma omp parallel for
+#endif
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
             if (i == j)
@@ -150,7 +156,9 @@ static void calc_ext_contrib_barnes_hut(
     const size_t N = system->size;
     linear_octree_t *tree = linear_octree_build(system);
 
+#ifndef SINGLETHREADED
     #pragma omp parallel for
+#endif
     for (size_t i = 0; i < N; ++i)
         linear_octree_compute_vel_contrib(
             tree, i,
@@ -263,7 +271,9 @@ static void calc_ext_contrib_fmm(
 
     /* Remove intra-swimmer interaction to match the brute-force code
        Note: this comes with an additional O(N) cost */
+#ifndef SINGLETHREADED
     #pragma omp parallel for
+#endif
     for (size_t i = 0; i < N; ++i)
     {
         /* calculate the weight */

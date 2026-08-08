@@ -12,16 +12,20 @@
 \usepackage{lipsum}
 \setcounter{page}{1}
 
+\newcommand{\email}[1]{\href{#1}{#1}}
+
 \renewcommand{\O}{\mathcal{O}}
 
-\title{FINDS: An N-Body Simulator for Computing the Evolution of Large Schools}
+\title{FINDS: An N-Body Simulator for Computing the Far-Field Passive
+  Hydrodynamic Evolution of Large Schools of Fish}
 
 \author{
-  Mufaro Machaya\textsuperscript{1},
-  Mohamed Niged Mabrouk\textsuperscript{2}, and
+  Mufaro Machaya\textsuperscript{1}
+  \thanks{Corresponding author: \email{mufaro2@student.ubc.ca}},
+  Mohamed Niged Mabrouk\textsuperscript{2}
+  \thanks{\email{mmabrouk@uh.edu}}, and
   Daniel Floryan\textsuperscript{2}
-  \thanks{Corresponding author:
-    \href{mailto:dfloryan@uh.edu}{dfloryan@uh.edu}} \\
+  \thanks{\email{dfloryan@uh.edu}} \\
 }
 
 \date{
@@ -67,21 +71,58 @@
 Synchronous mass movement is a common patten throughout nature, observed
 most commonly in the movement of smaller animals or prey animals such as birds,
 fish, bugs, oxen, deer, etc. due to the multitude of benefits that members of
-such groups gain, such as increased protection from predators, increased
-energy efficiency due to the motion of others (such as vortical wake), etc.
+such groups gain \cite{parrish_hamner_prewitt_1997, vicsek_zafeiris_2012}.
+As summarized by Mabrouk and Floryan 2024 and 2025, members of
+schools of fish gain major advantages in individual fitness due to various
+effects resulting from existing in a group rather than as an individual,
+including (but not limited to) stronger shielding from predators, improved
+navigation, eased access to reproduction, and most importantly, a greater energy
+efficiency during travel \cite{mabrouk_floryan_2024, mabrouk_floryan_2025}. As
+such, scientists and engineers developing analogous technologies like drones are
+keenly interested in understanding this behavior so that it can be replicated in
+swarming robots for purposes such as agriculture, infrastructure development and
+maintenance, and military operations \cite{dorigo_theraulaz_trianni_2020}.
 
-\textbf{TODO FINISH THIS}
+In the case of schools of fish, prior models have largely focused on behavioral
+causes of group cohesion, but these models typically fail to explain the effect
+of passive hydrodynamics in maintaining the flow of these systems
+\cite{boids_reynolds_1987, couzin_2005}. For this reason, models of swimmers as
+dipoles in free space have been developed to model this passive hydrodynamic
+interaction, such as Mabrouk and Floryan's source/sink-dipole Tchieu et al.'s
+vortex-dipole models
+\cite{mabrouk_floryan_2024, mabrouk_floryan_2025, tchieu_et_al_2012}.
 
-\section{Literature Review/Past Work}
+However, the larger issue with modeling groups of interacting swimmers is
+computational rather than theoretical, because models containing
+non-heirarchical interactions where every member of the system affects every
+other member (i.e., models that are not simply ``following the leader'' with
+a central member or a set of central members that determine the entirety of the
+group's motion) form an $N$-body problem. In particular, dipole models compute
+interactions from each of the poles of each swimmer to each of the poles of each
+other swimmer individually, and thus, a simulation of $N$ swimmers becomes
+analogous to a particle simulation problem for $2N$ particles with $4N^2$
+interactions on every differential time-step. This severely limits the size of
+schools that can be studied computationally, and as such, most if not all of the
+past research utilizing dipole models of swimmers has focused on systems at or
+below 100,000 swimmers.
 
-\textbf{TODO FINISH THIS}
+Given that real schools of fish have been estimated to contain upwards of 250
+million swimmers, an approximation method to reduce the computational complexity
+of this simulation from $\O(N^2)$ to $\O(N \log N)$ or $\O(N)$ is necessary to
+explore group cohesion due to passive hydrodynamics in massive systems
+\cite{yong_2009}. Luckily, the problem of reducing the computational complexity
+of $N$-body particle simulations has been thoroughly studied across the
+fields of molecular dynamics, computational electromagnetics, gravitational
+astrophysics, and more \cite{grama_2011}, and this has yielded algorithms
+such as the Barnes-Hut algorithm and the fast multipole method that simplify
+calculations by distinguishing between close and far particles and using
+clustered approximations for far-field interactions
+\cite{grama_2011, barnes_hut_1986, greengard_rokhlin_1987}.
 
 \section{Mathematical Model of Swimmers}
 
-FINDS is developed around the far-field source/sink dipole model designed by
-Mabrouk and Floryan for modelling how passive hydrodynamic interactions at far
-distances effects the evolution of a greater school
-\cite{mabrouk2024,mabrouk2025}.
+FINDS is developed around the Mabrouk and Floryan's source/sink dipole model
+for far-field interactions \cite{mabrouk_floryan_2024, mabrouk_floryan_2025}.
 Under this model, each fish $i$ is defined as a dipole consisting of a
 fluid source at the head of the fish $\vu{x}_{f,i}$, and a fluid sink at the
 tail $\vu{x}_{b,i}$, separated by the length of the fish $\ell_i$. The
@@ -101,7 +142,7 @@ time forms the state vector $\va{X}$.
     \centering
     \includegraphics[width=0.75\linewidth]{swimmer-model.jpg}
     \caption{The model for a given swimmer visualized. Taken from Mabrouk and
-      Floryan 2024.}
+      Floryan 2024 \cite{mabrouk_floryan_2024}.}
     \label{fig-swimmer-model}
 \end{figure}
 
@@ -140,7 +181,6 @@ Laplacian particle dynamics based on treating the sources and sinks as
 individual particles with charge $\sigma_i$. Under this lens, the
 potential function resulting from a particle is the charge multiplied by
 Green's function for the three-dimensional Laplace equation,
-
 \begin{equation}\label{eq-greens}
   \Phi_i(r) = \sigma_i G(r) = -\frac{\sigma_i}{4\pi r}.
 \end{equation}
@@ -148,24 +188,21 @@ Green's function for the three-dimensional Laplace equation,
 However, as this model is designed for far-field interactions, it becomes
 unphysical for small distances, as infinitely small distances produce
 infinitely large potential. To solve this problem, Mabrouk and Floryan
-reformulated this potential with a regularization parameter $\varepsilon$
-defined as
-
+reformulated this potential with a regularization parameter
+$\varepsilon$\footnotemark, defined as
 \begin{equation}\label{eq-greens-regularized}
   \Phi_{i,\varepsilon}(r) = \Phi_{i}(r) \erf(r/\varepsilon).
 \end{equation}
 
+\footnotetext{Mabrouk and Floryan, personal communication, July 2026.}
+
 From the potential functions, the velocity field resulting from any source or
 sink is defined as the gradient of the potential function
-
 \begin{align}\label{eqs-velocity-field}
   \va{u}_{i}(\va{r}) = \grad \Phi_i &= \frac{\sigma_i}{4\pi} \frac{\va{r}}{r^3} \\
   \va{u}_{i,\varepsilon}(\va{r}) = \grad \Phi_{i,\varepsilon} &= \va{u}_{i}(\va{r}) \xi_{\varepsilon}(r)
 \end{align}
-
-\noindent
 where $\xi_{\varepsilon}(r)$ is the regularization coefficient
-
 \begin{equation}\label{eq-regularization}
   \xi_{\varepsilon}(r) = \erf(r/\epsilon) -
   \frac{2r}{\varepsilon \sqrt{\pi}} \exp(-\frac{r^2}{\varepsilon^2}).
@@ -173,22 +210,16 @@ where $\xi_{\varepsilon}(r)$ is the regularization coefficient
 
 With the velocity fields well-defined, the velocity of a given source or sink
 $\alpha$ can be defined generally as
-
 \begin{equation}\label{eq-feature-velocity}
   \dv{\va{x}_{\alpha,i}}{t} = U_i \vu{n}_i +
   \sum_{i \neq j}^N \left[ \bigg. \va{u}_j(\va{r}_{\alpha f}) -
     \va{u}_j(\va{r}_{\alpha b}) \right].
 \end{equation}
-
-\noindent
  where the first term is the \textit{internal} velocity contribution and the
 second term is the \textit{external} velocity contribution. In detail,
-
 \begin{equation}\label{eq-internal-velocity-contrib}
   U_i = \frac{\sigma_i}{4\pi \ell_i^2}
 \end{equation}
-
-\noindent
 is the self-propelled speed resulting from the interaction between any
 source-sink pair of a dipole, and the second term represents the sum of the
 velocity contribution to a source or sink from a dipole, where
@@ -206,7 +237,7 @@ algorithmic complexity of computing a derivative is, through Brute-Force
 calculations, of order $\O(N^2)$. To reduce this computation time,
 two tree-based approximation algorithms are implemented: the Barnes-Hut
 algorithm and the Fast Multipole Method, of orders $\O(N \log N)$ and
-$\O(N)$ respectively.
+$\O(N)$ respectively \cite{barnes_hut_1986, greengard_rokhlin_1987}.
 
 Brute force computation and the Barnes-Hut approximation are implemented
 directly into the FINDS code-base, and as such, the user has the ability to
@@ -214,8 +245,8 @@ switch between unregularized and regularized calculations with ease. However,
 the Fast-Multipole Method is computed externally using Greengard et al.'s Fast
 Multipole Method library FMM3D, which will only compute the standard Laplacian
 gradient $\va{u}_i$, so the Fast-Multipole Method cannot be used with
-regularization. Additionally, all three methods are CPU-parallelized using
-OpenMP.
+regularization \cite{fmm3d_2026}. Additionally, all three methods are
+optionally CPU-parallelized using OpenMP \cite{openmp_2024}.
 
 \begin{table}[htbp]
 \centering
@@ -240,7 +271,7 @@ FMM             & $\O(N)$             & $\epsilon$
 As described by Barnes and Hut, the Barnes-Hut algorithm computes 3-dimensional
 pairwise interactions in $\O(N \log N)$ time by constructing a
 space-partitioning octree that clusters swimmers that are sufficiently far
-away from each test swimmer.
+away from each test swimmer \cite{barnes_hut_1986}.
 
 \begin{figure}[htbp]
     \centering
@@ -259,19 +290,19 @@ away from each test swimmer.
 FINDS implements a linear octree, or aligned arrays for each node
 parameter where each array index corresponds to a node in the tree. In
 particular, each node stores information on both the node itself and the data
-stored within this node. With regard to the node overall, it stores stores its
-center position, $\va{x}_i$, the side length of the node, $s_i$, and indices to
-its child nodes. With regard to the data stored within this node, the node
-stores the number of swimmers that are being averaged out in this node $n_{i}$,
-the total volumetric flow rate,
+stored within this node \cite{yin_et_al_1991, vinambrea_et_al_2026}. With
+regard to the node overall, it stores stores its center position, $\va{x}_i$,
+the side length of the node, $s_i$, and indices to its child nodes. With regard
+to the data stored within this node, the node stores the number of swimmers that
+are being averaged out in this node $n_{i}$, the total volumetric flow rate,
 \begin{equation}\label{eq-total-vol-flow-rate}
   \zeta_j = \sum_{j=0}^{n_i} \sigma_j
 \end{equation}
-and weighted sums for the  position, orientation,
-and length. Each sum is weighted by the volumetric flow rate (which can be
-analogously thought of as the charge or mass in Coulombic or gravitational
-$N$-body dynamics), so that the average position, orientation, and length is
-produced by dividing by the total volumetric flow rate,
+and weighted sums for the  position, orientation, and length. Each sum is
+weighted by the volumetric flow rate (which can be analogously thought of as
+the charge or mass in Coulombic or gravitational $N$-body dynamics), so that
+the average position, orientation, and length is produced by dividing by the
+total volumetric flow rate,
 \begin{align}\label{eq-octree-avg-values}
   \overline{\va{x}_{c,i}} &= \zeta_j^{-1}
   \sum_{j=0}^{n_i} \va{x}_{c,j} \sigma_j \\
@@ -282,7 +313,8 @@ where $i$ in this context refers to the node index within the octree lists and
 $j$ refers to the index of each swimmer stored within this node. This
 architecture was chosen due to its traversal efficiency when sorted according
 to a space-filling curve, as this would keep physically close nodes close
-together in memory, which maximizes cache locality.
+together in memory, which maximizes cache locality \cite{yin_et_al_1991,
+  vinambrea_et_al_2026}.
 
 Construction of the Linear Octree begins by taking a system of swimmers $\va{X}$
 and computing vectors containing minimum and maximum values along each dimension
@@ -319,8 +351,8 @@ integer and a Morton number corresponding to this position is produced by
 interleaving the binary coordinate values using bit-shifting operations. Note
 that this operation implicitly assumes that the three numbers going in are each
 a maximum of 21 bits such that the output Morton number is 64-bit, and this
-integer-sizing has significant consequences which will be discussed in the
-limitations section.
+integer-sizing has significant consequences (see section
+\ref{section-limitations}).
 
 Then, a position-local array of swimmer indices is produced by first building
 an in-order list of indices $(0, 1, \dots, N)$ corresponding to the indices
@@ -409,9 +441,10 @@ d_{ab_i} = \norm{\va{x}_{c,a} - \overline{\va{x}_{c,b_i}}}.
 \end{equation}
 Then, if $\phi_i < \theta$, then the composite swimmer $b_i$ is said to be
 \textit{close} to swimmer $a$, and the velocity contributions are computed
-immediately via equation \ref{eq-feature-velocity} and the recursion ends. If
-$\phi_i \ge \theta$, then composite swimmer $b_i$ is said to be \textit{far}
-from swimmer $a$, and we recurse into each of the child nodes of node $i$.
+immediately via equation \ref{eq-feature-velocity} and the recursion ends
+\cite{barnes_hut_1986}. If $\phi_i \ge \theta$, then composite swimmer $b_i$
+is said to be \textit{far} from swimmer $a$, and we recurse into each of the
+child nodes of node $i$ \cite{barnes_hut_1986}.
 
 \subsection{The Fast Multipole Method (FMM)}
 \label{subsection-fmm}
@@ -420,20 +453,21 @@ As described by Greengard and Rokhlin, the fast multipole method similarly uses
 tree construction to compute the velocity field as the gradient of the potential
 field approximated via a multipole expansion of order $p(\epsilon)$ where
 $\epsilon$ (not to be confused with $\varepsilon$ defined above) is the
-user-defined floating-point precision for the calculation. As stated previously,
-the implementation of the fast multipole method is not a part of FINDS. Rather,
-the library FMM3D by Greengard et al. is used to compute the Laplacian gradient,
+user-defined floating-point precision for the calculation
+\cite{greengard_rokhlin_1987}. As stated previously, the implementation of the
+fast multipole method is not a part of FINDS, but rather, the library FMM3D by
+Greengard et al. is used to compute the Laplacian gradient,
 \begin{equation}\label{eq-fmm3d-evaluation}
   \va{u}(\va{x}) \approx \grad \left( \sum_{j=1}^N
   \frac{\sigma_j}{4\pi \norm{\va{x} - \va{x}_j}} \right)
 \end{equation}
-for each source/sink using the function \verb|lfmm3d_t_c_g|. In essence, this
-computation is based on treating the source and sink for each dipole as
-independent particles rather than members of a dipole, so to compute only the
-external interaction, each source/sink has to have its velocity corrected for
-double-counting the interaction with its pair. However, this is negligible
-compared to the overall calculation, as this is computed in $\O(1)$ time for
-each swimmer or $\O(N)$ time overall.
+for each source/sink using the function \verb|lfmm3d_t_c_g| \cite{fmm3d_2026}.
+In essence, this computation is based on treating the source and sink for each
+dipole as independent particles rather than members of a dipole, so to compute
+only the external interaction, each source/sink has to have its velocity
+corrected for double-counting the interaction with its pair. However, this is
+negligible compared to the overall calculation, as this is computed in $\O(N)$
+time overall, so the overall runtime is still $\O(N)$.
 
 \subsection{Derivative Calculation Performance Evaluation}
 \label{subsection-benchmark}
@@ -441,7 +475,8 @@ each swimmer or $\O(N)$ time overall.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.75\linewidth]{benchmark.pdf}
-    \caption{A runtime comparison plot for each derivative computation method.}
+    \caption{A logarithmic-scale runtime comparison plot for each derivative
+      computation method when parallelized using an eight-core CPU.}
     \label{fig-benchmark}
 \end{figure}
 
@@ -449,10 +484,49 @@ As shown through table \ref{tbl-derivative-methods}, the three derivative
 calculation methods employed in FINDS each have a distinct runtime complexity
 as a function of $N$, and therefore, have specific ranges of $N$ for which they
 are the most effective due to their individual scaling orders and
-proportionality constants. These relationships can be seen in figure
-\ref{fig-benchmark}.
+proportionality constants. These relationships (with eight-core parallelization)
+can be seen in figure \ref{fig-benchmark}, which displays the following
+conclusions regarding their runtime relationships:
+\begin{enumerate}
+\item The fast multipole method has a much higher proportionality coefficient
+  $k$ on average than Brute-Force calculation and the Barnes-Hut approximation,
+  making it far slower than both methods at low $N$ (roughly $N << 10^4$).
+\item Despite requiring the construction of an octree, the Barnes-Hut
+  approximation maintains an incredibly low proportionality constant $k$ (even
+  less than that of brute force in some cases) due to the incredible efficiency
+  of the Morton-sorted linear octree data structure.
+\end{enumerate}
 
-\textbf{TODO FINISH THIS}
+\subsubsection{Recommended Use-Cases for Each Computation Method}
+
+Thus, combined with the accuracy limitation of the Barnes-Hut algorithm
+discussed in section \ref{section-limitations} and the inherent strengths and
+weaknesses of each method previously discussed throughout section
+\ref{section-derivative-computation}, we can determine ideal use-cases for each
+derivative computation method.
+
+First, the brute force computation is ideal for very low $N$ ($N << 10^3$) that
+are highly volatile (i.e., with many near-field interactions) or require high
+accuracy over long time periods. Brute-force computation is the gold-standard
+for accuracy and reasonably fast for low $N$, and as such, this scenario has
+been the main focus of prior fish-dipole simulations
+\cite{mabrouk_floryan_2024, mabrouk_floryan_2025, tchieu_et_al_2012}.
+
+Second, the Barnes-Hut approximation is ideal for fairly large $N$ (roughly
+$10^2 << N << 10^8$) in non-volatile systems (i.e., with predominantly far-field
+interactions) and over smaller time scales, assuming the use of an approximation
+within $0.1 < \theta \le 1.0$. Within this range of $N$ and $\theta$, the
+Barnes-Hut approximation is incredibly fast, but due to the added approximation
+error from Barnes-Hut, volatile systems will produce non-negligible error
+quickly and long time-scales will cause this error to compound greatly.
+
+Third, the fast multipole method is ideal for very large $N$ (roughly
+$10^5 << N$) regardless of volatility and for any large $N$ (roughly
+$10^3 << N$) for volatile systems due to its high accuracy and fastest scaling
+law $\O(N)$. The leading drawback of the fast multipole method is its
+proportionality coefficient $k$ leading to a much higher runtime at low $N$,
+where a direct calculation through brute force would be much more efficient and
+equally (if not more) accurate.
 
 \section{Numerical Integration}
 \label{section-integration}
@@ -462,7 +536,22 @@ As stated above, equations \ref{eq-translational-dynamics} and
 differential equations, and as such, these can be integrated using convential
 first-order integration schemes like Runge-Kutta methods. As such, FINDS
 implements a variety of variable-order adaptive and non-adaptive methods of
-various order (as seen in table \ref{tbl-integrators}).
+various order (as seen in table \ref{tbl-integrators}). The intent in using both
+adaptive and non-adaptive integrators is to provide end-users with a more exact,
+dynamic choice in computing each subsequent integration step based on the
+specifics of their initial system.
+
+For example, highly volatile initial states likely require incredibly precise
+calculations (and thus, very small time steps), so users interested in
+observing the system at a much larger evaluation time-step can use an adaptive
+integrator which would separate the evaluation time step and the computation
+time-step such that the computation is done at very small time-scales
+$\delta t_i ~ 0$ and the saved frames are those at the evaluation time-steps.
+
+Alternatively, highly stable systems likely don't require sensitive integration,
+and as such, non-adaptive integrators are ideal as they keep the computation
+time step constant at the evaluation time step, so the only time-frames that are
+computed are the time-frames saved to disk.
 
 \begin{table}[htbp]
   \centering
@@ -510,7 +599,7 @@ respectively, and $E_i$ is the error of time-step $i$, computed as
 \end{equation}
 where $p$ is the computation order and $q$ is the error order (for example, for
 RK5(4), $p=5$ and $q=4$) and $\va{X}_{p,i}$ refers to the $p$-th order solution
-for step $i$.
+for step $i$ \cite{sundnes_2024}.
 
 \section{Database Management}
 \label{section-database-management}
@@ -520,7 +609,7 @@ corresponding system states $\{ \va{X}_1, \va{X}_2, \dots \va{X}_{T_f} \}$
 are written out to an HDF5 file using the format specified in table
 \ref{tbl-hdf5-database}. HDF5 format was chosen over unstructured formats like
 raw binary due to its simplicity and portability and over common plaintext
-formats due to its efficiency and compactness.
+formats due to its efficiency and compactness \cite{hdf5_2025}.
 
 \begin{table}[htbp]
 \centering
@@ -586,7 +675,7 @@ which determines $\sigma_i$ and $\ell_i$.
 Cube          & Side Length, Spacing & Cubic Lattice        \\
 Sphere        & Radius, Spacing      & Fibonacci Sphere     \\
 Ball          & Radius, Spacing      & Ball Lattice         \\
-Random        & $N$, Absolute Bound  & Random Distribution 
+Random        & $N$, Absolute Bound  & Random Distribution
 \end{tabular}
 \caption{The distribution options in FINDS and their associated parameters.
   Note that the ``random'' distribution produces $N$ random points within a
@@ -667,7 +756,8 @@ this is what is used for computations.
 For simple simulations (i.e., those that do not require specific, complex
 starting systems as would need to be created manually as described under
 section \ref{section-initial-system-creation}), the \texttt{simulate} program
-can be used for performing simulations from TOML configuration files. However,
+can be used for performing simulations from TOML configuration files (which are
+processed using the TOMLC17 library) \cite{toml_2026, tomlc17_2026}. However,
 these files don't allow for the creation of complex compound systems using any
 transformations or combinations. These files simplify the process of performing
 simulations and storing or sharing the initial conditions of a simulation.
@@ -743,14 +833,14 @@ In particular, FINDS was validated in two dimensions by reproducing figure 8 of
 Mabrouk and Floryan 2025, which contains four scenarios of the trajectory
 evolution for two coplanar ($z=0$) swimmers based on the distances from their
 centers of mass on the $x$ and $y$ axes and the angle between their orientations
-$\Delta \theta$, and this can be observed in figure \ref{fig-validation-2025-8}.
-Visually, these plots match, and as such, numerical validation (by directly
-computing the difference between the expected calculation and the observed
-calculation from FINDS) alongside validation for a greater $N$ and
-three-dimensional system is needed, and this is done using the validation
-observed in figure \ref{fig-validation-numerical}. This numerical computation
-is produced by calculating an error score between the expected state $\va{X}_t$
-and the produced state $\va{X}_t'$ for each time $t$ as
+$\Delta \theta$, and this can be observed in figure \ref{fig-validation-2025-8}
+\cite{mabrouk_floryan_2025}. Visually, these plots match, and as such, numerical
+validation (by directly computing the difference between the expected
+calculation and the observed calculation from FINDS) alongside validation for a
+greater $N$ and three-dimensional system is needed, and this is done using the
+validation observed in figure \ref{fig-validation-numerical}. This numerical
+computation is produced by calculating an error score between the expected state
+$\va{X}_t$ and the produced state $\va{X}_t'$ for each time $t$ as
 \begin{equation}\label{eq-validation-err}
   E_t = \sqrt{\sum_{i=1}^{N} \left( \norm{\va{x}_{c,i} - \va{x}_{c,i}'}^2 +
     \norm{\va{n}_i - \va{n}_i'}^2 \right)}
@@ -759,17 +849,20 @@ where $\va{x}_{c,i}$ and $\va{x}_{c,i}'$ are the expected and computed center
 of mass position and $\va{n}_i$ and $\va{n}_i'$ are the expected and computed
 orientation for each swimmer $i$ at time $t$.
 
-As can be seen in this
-figure, the error for the three coplanar cases is entirely zero, showing that
-for two-dimensional, two-swimmer simulations, the results of FINDS are entirely
-identical to that of previous implementations.
-
-\textbf{TODO FINISH THIS AND REMAKE FIGURES}
+As can be seen in figure \ref{fig-validation-numerical}, the error for the
+three coplanar cases is entirely zero, showing that for two-dimensional,
+two-swimmer simulations, the results of FINDS are entirely identical to that of
+previous implementations. However, in the 13-swimmer, three-dimensional case,
+only the brute-force and fast multipole method calculations produce negligible
+error, and the Barnes-Hut approximation produces non-negligible error that
+compounds over the course of the simulation due to the inherent approximation
+error in using a weighted average dipole (see section
+\ref{section-limitations}).
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.9\linewidth]{figures/mabrouk-floryan-2025-8.jpg}
-  \includegraphics[width=0.9\linewidth]{figures/validation/validation-2025-8.png}
+  \includegraphics[width=0.9\linewidth]{figures/validation/validation-2025-8.pdf}
   \caption{The coplanar, two-swimmer trajectory plots shown in figure 8 of
     Mabrouk and Floryan 2025 (top) and its reproduction with FINDS (bottom).
     Note that the two simulations need not exactly match in time as the observed
@@ -782,10 +875,13 @@ identical to that of previous implementations.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\linewidth]{figures/validation/validation-comparison.png}
+  \includegraphics[width=0.9\linewidth]{figures/validation/validation-comparison.pdf}
   \caption{The numerical validation comparison plots of the error in the
-    simulation versus the time, where the first three plots are 2-dimensional,
-    2-swimmer coplanar comparisons.}
+    simulation versus the time. The top left, top right, and bottom left
+    plots are two-swimmer, coplanar simulations. The bottom right plot is
+    a 13-swimmer trajectory from Figure 9(b) of Mabrouk and Floryan 2025
+    \cite{mabrouk_floryan_2025}.
+  }
   \label{fig-validation-numerical}
 \end{figure}
 
@@ -840,15 +936,23 @@ violently ejected, and this can be observed in figure
 FINDS has several critical limitations, and it is key to understand these
 limitations when performing simulations. The first key limitation lies in our
 implementation of the Barnes-Hut approximation as described in section
-\ref{subsection-barnes-hut}. The Barnes-Hut approximation implements a monopole
-representation rather than a dipole representation, and this approximation
-introduces a small amount of error (assuming short fish lengths and far-field
-interactions only). A potential solution to this problem would be to switch to a
-higher-order (dipole) implementation of the Barnes-Hut approximation, but we
-have chosen to forego this as the main cases where the monopole expansion's
-error is non-negligible is in close-field interactions (where the far-field
-model is already incorrect unless heavily regularized) and for very large fish
-lengths (which is patently unrealistic).
+\ref{subsection-barnes-hut}. The Barnes-Hut approximation performs averages at
+the dipole level despite interactions being computed at the monopole level, so
+this approximation introduces a small amount of error (assuming short fish
+lengths and far-field interactions only) that compounds considerably over time
+(as was observed in figure \ref{fig-validation-numerical}). A potential
+solution to this problem would be to switch to a higher-order (dipole)
+implementation of the Barnes-Hut approximation such as that of Marchevsky et al.
+2023 \cite{marchevsky_ryatina_kolganova_2023}, but we have chosen to forego this
+as the main cases where the the expansion's error is non-negligible is in
+close-field interactions (where the far-field model is already incorrect unless
+heavily regularized) and for very large fish lengths (which is patently
+unrealistic). Additionally, more importantly, the fundamental solution to this
+issue is to simply use a higher-order multipole expansion to perform the
+approximation, and this can simply be done by using the fast multipole method
+instead of the Barnes-Hut approximation (thus why the fast multipole method
+produces much less error than the Barnes-Hut approximation in figure
+\ref{fig-validation-numerical}).
 
 Additionally, each Morton number is stored as a 64-bit unsigned integer. These
 numbers are intended to simultaneously encode the $x$, $y$, and $z$ positions
@@ -885,10 +989,10 @@ to be localized to simple scripts or Jupyter notebooks while still taking
 advantage of the immense speed of the underlying C code.
 
 Another major potential inclusion into FINDS would be the implementation of a
-vortex-based dipole model (like that of Kanso et al.) rather than a
+vortex-based dipole model (like that of Tchieu et al. 2012) rather than a
 Coulombic-based dipole model to widen the range of simulation options for users
 as-needed and to allow for the rigorous comparison of the two models at large
-$N$.
+$N$ \cite{tchieu_et_al_2012}.
 
 Additionally, small alternative improvements could be made in various places
 throughout the FINDS codebase. An option to utilize a normal distribution
@@ -903,11 +1007,11 @@ implemented.
 \section{Acknowledgements}
 \label{section-acknowledgements}
 
-In the development of FINDS, Alvin Ng's \verb|grav_sim| was used extensively
-as a reference for implementing a fast $N$-body simulator in C, particularly
-in implementing of the Barnes-Hut algorithm. In addition, the direct advice of
-Alvin Ng was instrumental to the implementation of linear octrees and
-parallelization.
+In the development of FINDS, Alvin (Ching-Yin) Ng's \verb|grav_sim| was used
+extensively as a reference for implementing a fast $N$-body simulator in C,
+particularly in implementing of the Barnes-Hut algorithm \cite{grav_sim_2025}.
+In addition, the direct advice of Alvin Ng was instrumental to the
+implementation of linear octrees and CPU parallelization with OpenMP.
 
 Furthermore, generative artificial intelligence (Anthropic's Sonnet 5 Claude,
 OpenAI's ChatGPT-5.5 and Google's Gemini 3.3) were used heavily for initial

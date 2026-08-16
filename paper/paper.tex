@@ -16,8 +16,7 @@
 
 \renewcommand{\O}{\mathcal{O}}
 
-\title{FINDS: An N-Body Simulator for Computing the Far-Field Passive
-  Hydrodynamic Evolution of Large Schools of Fish}
+\title{FINDS: An N-Body Simulator for Large Schools of Fish}
 
 \author{
   Mufaro Machaya\textsuperscript{1}
@@ -30,35 +29,33 @@
 
 \date{
   August 2026 \vspace{1em} \\
-  \footnotesize\textsuperscript{1}University of British Columbia \\
-  \footnotesize\textsuperscript{2}University of Houston
+  \footnotesize\textsuperscript{1}Department of Physics and Astronomy, University of British Columbia \\
+  \footnotesize\textsuperscript{2}Department of Mechanical and Aerospace Engineering, University of Houston
 }
 
 \renewcommand{\maketitlehookd}{
   \begin{abstract}
     \noindent
-    Animals travelling in cohesive groups yields many collective and individual
-    benefits, such as security against predators and energy efficiency. The
-    replication of such benefits for analogous, biology-inspired technologies
-    like autonomous drone systems requires keen understanding of the cohesion
-    and evolution of systems of these groups, but these investigations are
-    fundamentally limited to small sizes due to the high computational
-    complexity in computing pairwise dynamics at order $N^2$.
-    As real schools of fish have been recorded to contain millions of members,
-    FINDS, or Fish INteraction and Dynamics Simulator, was created to
-    efficiently simulate the dynamics of very large schools of fish using
-    common computational techniques employed in $N$-body simulation. FINDS is
-    implemented as a containerized, modular software suite written
-    predominantly in C (with Python for post-processing) that handles three
-    core simulation processes in order. First, FINDS contains routines for
-    computing the time-derivative of a school, which is a function of the sum
-    of the pairwise interactions for each member of the school. As such, FINDS
-    contains implementations of Brute Force computation, the Barnes-Hut
-    algorithm, and the Fast Multipole Method. Second, FINDS contains custom
-    routines for numerically integrating these systems using adaptive and
-    non-adaptive Runge-Kutta schemes for adaptive time-stepping. Third,
-    FINDS contains a small library of post-processing modules written in Python
-    for stream-lining the analysis of generated data.
+    Animals traveling in groups yield many benefits, such as security against
+    predators and energy efficiency, and understanding this behavior could have
+    key applications to fields like robotics. To model all realistic schools of
+    fish, computational models must accommodate hundreds of millions of fish,
+    but current simulations are limited to very small group sizes because the
+    passive hydrodynamic model of fish is an $N$-body problem. Thus, FINDS, or
+    the Fish INteraction and Dynamics Simulator, was developed from the
+    source/sink-dipole model developed by Mabrouk and Floryan to streamline
+    simulations using standard $N$-body algorithms. First, FINDS contains
+    routines for computing the time-derivative of a school through brute force
+    computation, the Barnes-Hut approximation, and the fast multipole method;
+    several adaptive and non-adaptive Runge-Kutta numerical integration methods
+    from first to sixth order; a small library of post-processing modules for
+    reading, writing, and analyzing the simulation datasets; and simple yet
+    powerful interfaces for defining precise initial conditions for a wide
+    variety of simulations using direct calculations or configuration files.
+    FINDS is validated graphically and numerically against past simulations
+    performed by Mabrouk and Floryan, proving that it is computationally
+    equivalent (within the expected error of the Barnes-Hut and fast multipole
+    methods) while being considerably more efficient.
   \end{abstract}
 }
 
@@ -68,7 +65,7 @@
 
 \section{Introduction}
 
-Synchronous mass movement is a common patten throughout nature, observed
+Synchronous mass movement is a common pattern throughout nature, observed
 most commonly in the movement of smaller animals or prey animals such as birds,
 fish, bugs, oxen, deer, etc. due to the multitude of benefits that members of
 such groups gain \cite{parrish_hamner_prewitt_1997, vicsek_zafeiris_2012}.
@@ -94,7 +91,7 @@ vortex-dipole models
 
 However, the larger issue with modeling groups of interacting swimmers is
 computational rather than theoretical, because models containing
-non-heirarchical interactions where every member of the system affects every
+non-hierarchical interactions where every member of the system affects every
 other member (i.e., models that are not simply ``following the leader'' with
 a central member or a set of central members that determine the entirety of the
 group's motion) form an $N$-body problem. In particular, dipole models compute
@@ -140,14 +137,14 @@ time forms the state vector $\va{X}$.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.75\linewidth]{swimmer-model.jpg}
-    \caption{The model for a given swimmer visualized. Taken from Mabrouk and
+    \includegraphics[width=0.8\columnwidth]{swimmer-model.jpg}
+    \caption{Visualization of the model for a given swimmer. Taken from Mabrouk and
       Floryan 2024 \cite{mabrouk_floryan_2024}.}
     \label{fig-swimmer-model}
 \end{figure}
 
 In particular, $\va{x}_{c,i}$ and $\vu{n}_{i}$ are dynamic and $\ell_i$ and
-$\sigma_i$ are constant for each fish $i$. This formulism leaves the
+$\sigma_i$ are constant for each fish $i$. This formalism leaves the
 translational and rotational dynamics for each fish as the system of two
 coupled first-order differential equations concerning $\va{x}_{c,i}$ and
 $\vu{n}_{i}$ respectively. With this, the derivatives of each are defined as
@@ -176,7 +173,7 @@ is a Lagrange multiplier to ensure that $\ell_i$ is kept constant, and
 
 With this, the translational and rotational dynamics for each fish are variably
 dependent on the translational derivatives of the source and sink for each fish,
-and this reduces the problem of modelling fish to an analogous problem of simple
+and this reduces the problem of modeling fish to an analogous problem of simple
 Laplacian particle dynamics based on treating the sources and sinks as
 individual particles with charge $\sigma_i$. Under this lens, the
 potential function resulting from a particle is the charge multiplied by
@@ -256,7 +253,7 @@ Brute Force     & $\O(N^2)$           & None               \\
 Barnes-Hut      & $\O(N \log N)$      & $\theta$           \\
 FMM             & $\O(N)$             & $\epsilon$
 \end{tabular}
-\caption{A table summarizing of each of the derivative computation methods.
+\caption{A table summarizing each of the derivative computation methods.
   $\theta$ is similarly referred to as the ``approximation ratio'' and
   $\epsilon$ is the numerical precision, and both parameters determine the
   precision with which each derivative is calculated (with lower values
@@ -291,7 +288,7 @@ FINDS implements a linear octree, or aligned arrays for each node
 parameter where each array index corresponds to a node in the tree. In
 particular, each node stores information on both the node itself and the data
 stored within this node \cite{yin_et_al_1991, vinambrea_et_al_2026}. With
-regard to the node overall, it stores stores its center position, $\va{x}_i$,
+regard to the node overall, it stores its center position, $\va{x}_i$,
 the side length of the node, $s_i$, and indices to its child nodes. With regard
 to the data stored within this node, the node stores the number of swimmers that
 are being averaged out in this node $n_{i}$, the total volumetric flow rate,
@@ -362,7 +359,7 @@ linear octree is constructed recursively by defining each node region with the
 center position $\va{x}_j$, side length $s_j$, tree depth $d_j$, and the
 corresponding index range of the swimmer array encompassing all of the swimmers
 that fall within this node. For example, for the root node, the center position
-is $\va{x}_0$, the side length is $s_0$, and the range is of enclosed swimmers
+is $\va{x}_0$, the side length is $s_0$, and the range of enclosed swimmers
 is $[0,N]$. Then, for each swimmer contained within this range, the
 center-of-mass position $\va{x}_{c,j}$, orientation $\vu{n}_j$, length $\ell_j$,
 and volumetric flow rate $\sigma_j$ are added accordingly to the corresponding
@@ -474,7 +471,7 @@ time overall, so the overall runtime is still $\O(N)$.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.75\linewidth]{benchmark.pdf}
+    \includegraphics[width=\columnwidth]{benchmark.pdf}
     \caption{A logarithmic-scale runtime comparison plot for each derivative
       computation method when parallelized using an eight-core CPU.}
     \label{fig-benchmark}
@@ -623,7 +620,7 @@ formats due to its efficiency and compactness \cite{hdf5_2025}.
 \end{tabular}
 \caption{The HDF5 layout for the FINDS databases. As defined above, $T$ is the
   number of time-steps for a given simulation and $N$ is the number of swimmers
-  in the system of fish. The four bottom rows represents all of the unique data
+  in the system of fish. The four bottom rows represent all of the unique data
   for an evolution trajectory of a system, or $\va{X}(t)$.
 }
 \label{tbl-hdf5-database}
@@ -633,7 +630,7 @@ This is achieved using FINDS' internal ``datastream'' object, which serves as
 a wrapper around the HDF5 API. The intent of this simplistic layout is for FINDS
 databases to be easily read using any valid HDF5 parser across any language
 after performing a simulation, and this is employed within FINDS to allow users
-to perform calculations quickly in C with FINDS, store their calculations
+to perform calculations quickly in C with FINDS, store their calculation
 results efficiently with HDF5, then open the data for analysis in C (using the
 datastream module), Python, and more (see section
 \ref{section-post-processing}).
@@ -642,7 +639,7 @@ datastream module), Python, and more (see section
 \label{section-initial-system-creation}
 
 The goal of FINDS is to evolve an initial fish system state $\va{X}_0$ to
-produce a trajectory, $\va{X}(t)$. Altough the numerical calculation, data
+produce a trajectory, $\va{X}(t)$. Although the numerical calculation, data
 storage, and post-processing routines as described above are certainly important
 for studying school behavior, the precise creation of specific starting states
 $\va{X}_0$ is undoubtedly the most important task for producing effective
@@ -664,9 +661,9 @@ transformations, and combinations.
 \label{subsection-initial-conditions}
 
 The initial conditions that describe a system are best understood under three
-main categories: the distribution options, which determines $\va{x}_{c,i}$, the
-orientation options, which determines $\vu{n}_i$, and the constant options,
-which determines $\sigma_i$ and $\ell_i$.
+main categories: the distribution options, which determine $\va{x}_{c,i}$, the
+orientation options, which determine $\vu{n}_i$, and the constant options,
+which determine $\sigma_i$ and $\ell_i$.
 
 \begin{table}[htbp]
 \centering
@@ -685,7 +682,7 @@ Random        & $N$, Absolute Bound  & Random Distribution
 \label{tbl-distribution-options}
 \end{table}
 
-Next, the orientation options determines how the orientation of each fish are
+Next, the orientation options determines how the orientation of each fish is
 determined, and this is generated after the distribution as many of the
 orientations are dependent on the position of each swimmer. After generating
 the starting orientations based on the position of the swimmer as outlined in
@@ -694,7 +691,13 @@ perturbed by some maximum angle $\phi$ defined by the user to introduce some
 random instability in the system. This perturbation is done by randomly
 selecting a roll $\phi_x \in [-\phi, \phi]$, pitch $\phi_y \in [-\phi, \phi]$,
 and yaw $\phi_z \in [-\phi, \phi]$, then rotates the orientations using the
-3-dimensional rotation matrix $R_\phi = R_z(\phi_z) R_y(\phi_y) R_x(\phi_x)$.
+3-dimensional rotation matrix
+\begin{equation}\label{eq:rotation-matrix}
+  \mathbf{R}(\phi_x, \phi_y, \phi_z) =
+  \mathbf{R}_z(\phi_z) \mathbf{R}_y(\phi_y) \mathbf{R}_x(\phi_x)
+\end{equation}
+where $\mathbf{R}_i(\theta)$ is the associated rotation matrix for a a rotation
+around axis $i$ by angle $\theta$.
 
 \begin{table}[htbp]
 \centering
@@ -710,7 +713,7 @@ Aligned        & $\vu{x}$
 \end{tabular}
 \caption{The orientation options. Each equation describes the un-normalized
   orientation of each swimmer, which is later normalized
-  $\theta_i = \atan2(y_i/x_i)$ and $\va{r}_i$
+  $\theta_i = \atan(y_i/x_i)$ and $\va{r}_i$
   is the position of swimmer $i$, $\va{r}_i = \langle x_i, y_i, z_i \rangle$.
 }
 \label{tbl-orientation-options}
@@ -735,16 +738,16 @@ all of the swimmers in the simulation (so potentially multiple schools).
 Two transformations are available in FINDS for systems: rotation and
 translation. Given a system, users can rotate a system given a roll $\phi_x$,
 pitch $\phi_y$, and yaw $\phi_z$ using the 3-dimensional rotation matrix
-$R_\phi = R_z(\phi_z) R_y(\phi_y) R_x(\phi_x)$, and users can translate a
-system using a translation vector $\Delta \va{r} = \langle \Delta x, \Delta y$
-$\Delta z \rangle$.
+$\mathbf{R}(\phi_x, \phi_y, \phi_z)$ of equation \ref{eq:rotation-matrix},
+and users can translate a system using a translation vector
+$\Delta \va{r} = \langle \Delta x, \Delta y, \Delta z \rangle$.
 
 With these transformations, fish systems can also be copied and combined to
 produce greater systems. For example, a system of two colliding ball-shaped
 schools was produced in the ``collision'' example (see section
-\ref{section-examples}). To setup this initial system: first, a ball of an
+\ref{section-examples}). To set up this initial system: first, a ball of an
 arbitrary radius $r$ and spacing is produced with an aligned orientation, and
-this can be denoted $\va{X}_a$. Then, this is copied to produced a second school
+this can be denoted $\va{X}_a$. Then, this is copied to produce a second school
 $\va{X}_b$, and then $\va{X}_a$ is translated by $1.5r \vu{x}$ and $\va{X}_b$ is
 translated by $-1.5r \vu{x}$. Lastly, $\va{X}_b$ is rotated by $\phi_z = \pi$,
 and the two systems are combined into one overall initial system $\va{X}_0$, and
@@ -775,7 +778,7 @@ under \texttt{output/simulations/sim-.../data.h5} (where \texttt{...} is the
 date and time of when the simulation was run). As stated in section
 \ref{section-database-management}, users can directly read their HDF5 database
 in the language of their choosing if they so wish, but alternatively, to
-simplify the post-processing of simluation data files, FINDS includes a simple
+simplify the post-processing of simulation data files, FINDS includes a simple
 framework for performing post-processing data analysis in Python. This is done
 using the \texttt{process\_data.py} script. This script works as the central
 module for post-processing by controlling and executing ``Processing Modules,''
@@ -851,7 +854,7 @@ orientation for each swimmer $i$ at time $t$.
 
 As can be seen in figure \ref{fig-validation-numerical}, the error for the
 three coplanar cases is entirely zero, showing that for two-dimensional,
-two-swimmer simulations, the results of FINDS are entirely identical to that of
+two-swimmer simulations, the results of FINDS are entirely identical to those of
 previous implementations. However, in the 13-swimmer, three-dimensional case,
 only the brute-force and fast multipole method calculations produce negligible
 error, and the Barnes-Hut approximation produces non-negligible error that
@@ -861,8 +864,8 @@ error in using a weighted average dipole (see section
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\linewidth]{figures/mabrouk-floryan-2025-8.jpg}
-  \includegraphics[width=0.9\linewidth]{figures/validation/validation-2025-8.pdf}
+  \includegraphics[width=\columnwidth]{figures/mabrouk-floryan-2025-8.jpg}
+  \includegraphics[width=\columnwidth]{figures/validation/validation-2025-8.pdf}
   \caption{The coplanar, two-swimmer trajectory plots shown in figure 8 of
     Mabrouk and Floryan 2025 (top) and its reproduction with FINDS (bottom).
     Note that the two simulations need not exactly match in time as the observed
@@ -875,7 +878,7 @@ error in using a weighted average dipole (see section
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.9\linewidth]{figures/validation/validation-comparison.pdf}
+  \includegraphics[width=\columnwidth]{figures/validation/validation-comparison.pdf}
   \caption{The numerical validation comparison plots of the error in the
     simulation versus the time. The top left, top right, and bottom left
     plots are two-swimmer, coplanar simulations. The bottom right plot is
@@ -919,14 +922,14 @@ $T_f = 100$ seconds.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.75\linewidth]{figures/implosion-example/mean-radial-distance.pdf}
-  \caption{The mean and standard devaiation of radial distance as a
+  \caption{The mean and standard deviation of radial distance as a
     function of time for the implosion example.}
   \label{fig-implosion-radial-distance}
 \end{figure}
 
 After running the simulation and processing the produced dataset using the
 modules described in section \ref{section-post-processing}, the mean radial
-distance plot reflects the movement of swimmers twoards the origin before being
+distance plot reflects the movement of swimmers towards the origin before being
 violently ejected, and this can be observed in figure
 \ref{fig-implosion-radial-distance}.
 
@@ -944,7 +947,7 @@ lengths and far-field interactions only) that compounds considerably over time
 solution to this problem would be to switch to a higher-order (dipole)
 implementation of the Barnes-Hut approximation such as that of Marchevsky et al.
 2023 \cite{marchevsky_ryatina_kolganova_2023}, but we have chosen to forego this
-as the main cases where the the expansion's error is non-negligible is in
+as the main cases where the expansion's error is non-negligible is in
 close-field interactions (where the far-field model is already incorrect unless
 heavily regularized) and for very large fish lengths (which is patently
 unrealistic). Additionally, more importantly, the fundamental solution to this
@@ -1004,6 +1007,26 @@ realistic. Furthermore, as stated in section \ref{section-limitations}, a
 dipole-order implementation of the Barnes-Hut approximation could be
 implemented.
 
+\section{Conclusion}
+\label{section-conclusion}
+
+Altogether, we present FINDS, a simple yet powerful $N$-body simulator for
+simulating the evolution of schools of fish due to passive hydrodynamics. This
+software enables the simulation of massive group sizes, potentially millions or
+hundreds of millions, by implementing two standard $N$-body interaction
+algorithms: the Barnes-Hut approximation and the fast multipole method, and
+these methods reduce the computational complexity from $\O(N^2)$ to $\O(N \log N)$
+or $\O(N)$. Furthermore, FINDS is a complete, modular, and simple software suite
+for performing and analyzing simulations, containing several miniature libraries
+for defining the initial conditions in C and analyzing the produced data in
+Python. A simple utility for performing simulations using pre-defined simulation
+files is also included. Given that the benchmark test proves that FINDS produces
+the increase in efficiency that was intended through implementing the Barnes-Hut
+and fast multipole method algorithms and that the validation test proves that
+FINDS is accurate and precise within the range of expected error, we introduce
+FINDS as a capable and robust simulation system to aid research into massive
+schools of fish.
+
 \section{Acknowledgements}
 \label{section-acknowledgements}
 
@@ -1016,9 +1039,10 @@ implementation of linear octrees and CPU parallelization with OpenMP.
 Furthermore, generative artificial intelligence (Anthropic's Sonnet 5 Claude,
 OpenAI's ChatGPT-5.5 and Google's Gemini 3.3) were used heavily for initial
 code generation before being thoroughly tested and validated to ensure
-correctness. Artificial intelligence was not used in developing the content of
-this report whatsoever, including the abstract, section text, figures, and
-captions.
+correctness. Generative artificial intelligence was not used in developing the
+content of this report whatsoever, including the abstract, section text,
+figures, or captions, but artificial intelligence tools ``checkmymanuscript''
+and Grammarly were used for proofreading spelling and grammar mistakes.
 
 \printbibliography
 

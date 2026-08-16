@@ -53,14 +53,22 @@ def process_data(
       for inclusion in PDF documents, like reports). False by default.
     :type  use_pdf: bool
     """
-    fontconfig = {
-        'family': 'serif',
-        'serif': ['Computer Modern'],
-        'size': 14
-    }
-    rc('font', **fontconfig)
-    rc('text', usetex=True)
-    rc('svg', fonttype='none')
+
+    # use this for half-width figures
+    if False:
+        fontconfig = {
+            'family': 'serif',
+            'serif': ['Computer Modern'],
+            'size': 10
+        }
+        rc('font', **fontconfig)
+        rc('text', usetex=True)
+        rc('svg', fonttype='none')
+        rc('axes', labelsize=9)
+        rc('xtick', labelsize=8)
+        rc('ytick', labelsize=8)
+        rc('legend', fontsize=8)
+        rc('lines', linewidth=1.0)
 
     with h5py.File(data_file, "r") as h5:
         time_dataset = h5["/time"]

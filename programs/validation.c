@@ -38,10 +38,10 @@
 #ifdef PDF
 
 #define OUTPUT_MODE "pdf"
-#define LINEWIDTH 5
-#define FIGURE_WIDTH  20
-#define FIGURE_HEIGHT 12
-#define FONT "Nimbus Roman,40"
+#define LINEWIDTH 1
+#define FIGURE_WIDTH  3.5
+#define FIGURE_HEIGHT 4
+#define FONT "Nimbus Roman,11"
 
 #else /* png */
 
@@ -267,8 +267,8 @@ static error_e reproduce_2025_fig_8()
     gnuplot_ctrl *fig = gnuplot_init();
     char setcmd[100];
     snprintf(setcmd, sizeof(setcmd),
-        "set terminal %scairo size %d,%d font '%s'",
-        OUTPUT_MODE, FIGURE_WIDTH, FIGURE_HEIGHT, FONT);
+        "set terminal %scairo size %f,%f font '%s'",
+        OUTPUT_MODE, (double) FIGURE_WIDTH, (double) FIGURE_HEIGHT, FONT);
     gnuplot_cmd(fig, setcmd);
     gnuplot_cmd(fig, "set output '" VALIDATION_OUTPUT_FOLDER
         "/validation-2025-8." OUTPUT_MODE "'");
@@ -390,9 +390,10 @@ static error_e reproduce_2024_fig_16()
     gnuplot_ctrl *fig = gnuplot_init();
     char setcmd[100];
     snprintf(setcmd, sizeof(setcmd),
-        "set terminal %scairo size %d,%d font '%s'",
-        OUTPUT_MODE, FIGURE_WIDTH, FIGURE_HEIGHT, FONT);
+        "set terminal %scairo size %f,%f font '%s'",
+        OUTPUT_MODE, (double) FIGURE_WIDTH, (double) FIGURE_HEIGHT, FONT);
     gnuplot_cmd(fig, setcmd);
+
     gnuplot_cmd(fig, "set output '" VALIDATION_OUTPUT_FOLDER
         "/validation-2024-16." OUTPUT_MODE "'");
     gnuplot_cmd(fig, "set title '3-D Swirl Plot'");
@@ -416,6 +417,8 @@ static error_e reproduce_2024_fig_16()
             x, y, z, LINEWIDTH,
             i == initial_state->size - 1 ? "\n" : ", \\\n");
     }
+
+    puts("plotted data");
 
     gnuplot_cmd(fig, "set output");
     gnuplot_close(fig);
@@ -442,10 +445,8 @@ static size_t count_lines(FILE *fptr)
     rewind(fptr);
 
     while ((c = fgetc(fptr)) != EOF)
-    {
         if (c == '\n')
             lines++;
-    }
 
     rewind(fptr);
 
@@ -661,23 +662,29 @@ static error_e produce_error_comparison_plots()
     puts("Producing Error Calculation Plot");
 
     gnuplot_ctrl *fig = gnuplot_init();
+    fig->gnucmd=fopen("validation-plot.txt","w");
     char setcmd[100];
     snprintf(setcmd, sizeof(setcmd),
-        "set terminal %scairo size %d,%d font '%s'",
-        OUTPUT_MODE, FIGURE_WIDTH, FIGURE_HEIGHT, FONT);
+        "set terminal %scairo size %f,%f font '%s'",
+        OUTPUT_MODE, (double) FIGURE_WIDTH, (double) FIGURE_HEIGHT, FONT);
     gnuplot_cmd(fig, setcmd);
     gnuplot_cmd(fig, "set output '" VALIDATION_OUTPUT_FOLDER
         "/validation-comparison." OUTPUT_MODE "'");
 
     gnuplot_cmd(fig,
         "set multiplot layout 2,2 "
-        "margins 0.07,0.75,0.10,0.92 "
-        "spacing 0.10,0.12 "
+        "margins 0.15,0.90,0.20,0.95 "
+        "spacing 0.15,0.15 "
         "title 'Error vs. Time Validation Plots'");
 
     gnuplot_set_axislabel(fig, "x", "Simulation Time (s)");
     gnuplot_set_axislabel(fig, "y", "Combined Error (unitless)");
-    gnuplot_cmd(fig, "set key at screen 0.98,0.5 right center");
+
+    gnuplot_cmd(fig,
+        "set key at screen 0.50,0.06 "
+        "center center "
+        "maxrows 2 maxcols 3"
+        "vertical");
 
     WRAP_CHECK(errcode, jmp_err,
         produce_error_comparison_plot(fig, "validation-data/case1.csv", 2));
@@ -707,8 +714,8 @@ int main(void)
 
     mkdir_p(VALIDATION_OUTPUT_FOLDER, MODE_RW_USERONLY);
 
-    __WRAP_ERR(errcode, reproduce_2025_fig_8());
-    __WRAP_ERR(errcode, reproduce_2024_fig_16());
+    // __WRAP_ERR(errcode, reproduce_2025_fig_8());
+    // __WRAP_ERR(errcode, reproduce_2024_fig_16());
     __WRAP_ERR(errcode, produce_error_comparison_plots());
 
     return EXIT_SUCCESS;

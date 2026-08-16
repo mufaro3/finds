@@ -29,9 +29,9 @@
 
 #ifdef PDF
 #define OUTPUT_MODE "pdf"
-#define FIGURE_WIDTH  8
-#define FIGURE_HEIGHT 6
-#define FONT "Nimbus Roman,15"
+#define FIGURE_WIDTH  3.5
+#define FIGURE_HEIGHT 2.9
+#define FONT "Nimbus Roman,11"
 #else
 #define OUTPUT_MODE "png"
 #define FIGURE_WIDTH  1200
@@ -40,6 +40,7 @@
 #endif
 
 #define SERIES_LABEL_SIZE 200
+#define SHOW_LEGEND_EXTENDED_DETAILS
 
 #define BRUTE_MAX_LOG_N 4
 #define BH_MAX_LOG_N    7
@@ -108,23 +109,27 @@ static void write_series_label(
     char method_buf[100] = {0};
     switch (dc_opts.method) {
         case BRUTE_FORCE:
-            snprintf(method_buf, sizeof(method_buf), "Brute Force, ");
+            snprintf(method_buf, sizeof(method_buf), "Brute Force");
             break;
         case BARNES_HUT:
             snprintf(method_buf, sizeof(method_buf),
-                "Barnes-Hut, {/Symbol q}=%.2f, ",
+                "Barnes-Hut, {/Symbol q}=%.2f",
                 dc_opts.approximation_threshold);
             break;
         case FAST_MULTIPOLE_METHOD:
             snprintf(method_buf, sizeof(method_buf),
-                "FMM, {/Symbol e}=%.0e, ", dc_opts.precision);
+                "FMM, {/Symbol e}=%.0e", dc_opts.precision);
             break;
         default:
             break;
     }
 
+#ifndef SHOW_LEGEND_EXTENDED_DETAILS
     snprintf(series_label_buf, label_buf_size,
-        "%s %s", method_buf, statistics_buf);
+        "%s, %s", method_buf, statistics_buf);
+#else
+    snprintf(series_label_buf, label_buf_size, "%s", method_buf);
+#endif
 }
 
 static bool method_runs_at_size(
@@ -294,7 +299,7 @@ int main(void)
         FIGURE_WIDTH, FIGURE_HEIGHT);
     char setcmd[100];
     snprintf(setcmd, sizeof(setcmd),
-        "set terminal %scairo size %d,%d font '%s'",
+        "set terminal %scairo size %f,%f font '%s'",
         OUTPUT_MODE, FIGURE_WIDTH, FIGURE_HEIGHT, FONT);
     gnuplot_cmd(fig_handle, setcmd);
     gnuplot_cmd(fig_handle, "set output '" ROOT_OUTPUT_PATH "/benchmark."

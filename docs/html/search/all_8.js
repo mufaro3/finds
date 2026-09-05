@@ -1,0 +1,14 @@
+var searchData=
+[
+  ['linear_5foctree_5fbuild_0',['linear_octree_build',['../barneshut_8h.html#a698f4ef6ec7a7a569132fbd868724a8e',1,'linear_octree_build(const fish_system_t *restrict system):&#160;barneshut.c'],['../barneshut_8c.html#a698f4ef6ec7a7a569132fbd868724a8e',1,'linear_octree_build(const fish_system_t *restrict system):&#160;barneshut.c']]],
+  ['linear_5foctree_5fbuilder_5ft_1',['linear_octree_builder_t',['../structlinear__octree__builder__t.html',1,'']]],
+  ['linear_5foctree_5fcheck_5fnan_2',['linear_octree_check_nan',['../barneshut_8h.html#a3ce5127d6cf076305a07c086477623bd',1,'linear_octree_check_nan(const linear_octree_t *restrict tree, bool verbose):&#160;barneshut.c'],['../barneshut_8c.html#a3ce5127d6cf076305a07c086477623bd',1,'linear_octree_check_nan(const linear_octree_t *restrict tree, bool verbose):&#160;barneshut.c']]],
+  ['linear_5foctree_5fcompute_5fvel_5fcontrib_3',['linear_octree_compute_vel_contrib',['../barneshut_8h.html#ad406b18577c6ea957038fe904d6b6236',1,'linear_octree_compute_vel_contrib(const linear_octree_t *restrict tree, const size_t swimmer_i_index, const double_3d_t swimmer_i_pos, const swimmer_features_t features_i, const double approx_ratio, const bool regularize, const double epsilon, double_3d_t *restrict external_source, double_3d_t *restrict external_sink):&#160;barneshut.c'],['../barneshut_8c.html#ae1dcac120dc98edc8291459fad3f25f5',1,'linear_octree_compute_vel_contrib(const linear_octree_t *restrict tree, const size_t swimmer_i_index, const double_3d_t swimmer_i_pos, const swimmer_features_t features_i, const double approx_ratio, const bool regularize, const double eps, double_3d_t *restrict external_source, double_3d_t *restrict external_sink):&#160;barneshut.c']]],
+  ['linear_5foctree_5fdestroy_4',['linear_octree_destroy',['../barneshut_8h.html#a8ff98e6da1889d9c273f0d678ec65b05',1,'linear_octree_destroy(linear_octree_t **octree_ptr):&#160;barneshut.c'],['../barneshut_8c.html#a8ff98e6da1889d9c273f0d678ec65b05',1,'linear_octree_destroy(linear_octree_t **octree_ptr):&#160;barneshut.c']]],
+  ['linear_5foctree_5fprint_5',['linear_octree_print',['../barneshut_8h.html#ac051531d481bae14e3822cba02560f84',1,'linear_octree_print(const linear_octree_t *restrict tree):&#160;barneshut.c'],['../barneshut_8c.html#ac051531d481bae14e3822cba02560f84',1,'linear_octree_print(const linear_octree_t *restrict tree):&#160;barneshut.c']]],
+  ['linear_5foctree_5frealloc_6',['LINEAR_OCTREE_REALLOC',['../barneshut_8c.html#a802638a814d7385fbc6f3bc7f0f184ef',1,'barneshut.c']]],
+  ['linear_5foctree_5ft_7',['linear_octree_t',['../structlinear__octree__t.html',1,'']]],
+  ['linker_5ftest_2ec_8',['linker_test.c',['../linker__test_8c.html',1,'']]],
+  ['linux_9',['Docker - Linux',['../index.html#autotoc_md4',1,'']]],
+  ['linux_20and_20macos_10',['GNU Make - Linux and MacOS',['../index.html#autotoc_md7',1,'']]]
+];

@@ -1,0 +1,68 @@
+\doxysubsection{include/finds/vector.h File Reference}
+\hypertarget{vector_8h}{}\label{vector_8h}\index{include/finds/vector.h@{include/finds/vector.h}}
+
+
+Basic vector and matrix computations.  
+
+
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include "{}util.\+h"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+union \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em 3-\/dimensional cartesian vector implementation \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structmat3__t}{mat3\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em 3x3 matrix implementation \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{vector_8h_ae6d63b0b94a910ff22fbad200747180b}\label{vector_8h_ae6d63b0b94a910ff22fbad200747180b} 
+\#define {\bfseries D3}(x,  y,  z)~((\mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}}) \{x,y,z\})
+\begin{DoxyCompactList}\small\item\em Shorthand for making D3 vectors. \end{DoxyCompactList}\item 
+\Hypertarget{vector_8h_aaf0f042349106dc4eb14f2b5104ed03f}\label{vector_8h_aaf0f042349106dc4eb14f2b5104ed03f} 
+\#define {\bfseries D3\+\_\+\+FILL}(a)~\mbox{\hyperlink{vector_8h_ae6d63b0b94a910ff22fbad200747180b}{D3}}(a,a,a)
+\begin{DoxyCompactList}\small\item\em Fills a D3 with one value on each dimension. \end{DoxyCompactList}\item 
+\Hypertarget{vector_8h_ae7a5c125a1cefde76b667a27203b86bc}\label{vector_8h_ae7a5c125a1cefde76b667a27203b86bc} 
+\#define {\bfseries D3\+\_\+\+ONE}~\mbox{\hyperlink{vector_8h_aaf0f042349106dc4eb14f2b5104ed03f}{D3\+\_\+\+FILL}}(1)
+\begin{DoxyCompactList}\small\item\em A D3 of only 1s (1,1,1). \end{DoxyCompactList}\item 
+\Hypertarget{vector_8h_ab5295d4134775b309bc552792602685a}\label{vector_8h_ab5295d4134775b309bc552792602685a} 
+\#define {\bfseries D3\+\_\+\+ZERO}~\mbox{\hyperlink{vector_8h_aaf0f042349106dc4eb14f2b5104ed03f}{D3\+\_\+\+FILL}}(0)
+\begin{DoxyCompactList}\small\item\em A D3 of only 0s (0,0,0) \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{vector_8h_a62fd5ccc6f42e525441201ee71b36c9f}{MAT3}}(m11,  m12,  m13,  m21,  m22,  m23,  m31,  m32,  m33)
+\begin{DoxyCompactList}\small\item\em Shorthand for creating 3x3 matrices. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Basic vector and matrix computations. 
+
+This file contains routines for operating on 3-\/dimensional vectors and 3-\/by-\/3 matrices. It\textquotesingle{}s focused mostly on speed, and as such, is incredibly small.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{vector_8h_a62fd5ccc6f42e525441201ee71b36c9f}\label{vector_8h_a62fd5ccc6f42e525441201ee71b36c9f} 
+\index{vector.h@{vector.h}!MAT3@{MAT3}}
+\index{MAT3@{MAT3}!vector.h@{vector.h}}
+\doxyparagraph{\texorpdfstring{MAT3}{MAT3}}
+{\footnotesize\ttfamily \#define MAT3(\begin{DoxyParamCaption}\item[{}]{m11,  }\item[{}]{m12,  }\item[{}]{m13,  }\item[{}]{m21,  }\item[{}]{m22,  }\item[{}]{m23,  }\item[{}]{m31,  }\item[{}]{m32,  }\item[{}]{m33 }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ ((\mbox{\hyperlink{structmat3__t}{mat3\_t}})\{\ .data\ =\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \{m11,\ m12,\ m13\},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \{m21,\ m22,\ m23\},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \{m31,\ m32,\ m33\}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}\})}
+
+\end{DoxyCode}
+
+
+Shorthand for creating 3x3 matrices. 
+

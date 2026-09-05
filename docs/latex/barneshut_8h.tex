@@ -1,0 +1,153 @@
+\doxysubsection{include/finds/barneshut.h File Reference}
+\hypertarget{barneshut_8h}{}\label{barneshut_8h}\index{include/finds/barneshut.h@{include/finds/barneshut.h}}
+
+
+External velocity contribution calculation through Barnes-\/\+Hut.  
+
+
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include "{}system.\+h"{}}\newline
+{\ttfamily \#include "{}vector.\+h"{}}\newline
+{\ttfamily \#include "{}error.\+h"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Linear octree implementation for swimmer data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{barneshut_8h_ad3225d19879833e8f6140e28d024337d}\label{barneshut_8h_ad3225d19879833e8f6140e28d024337d} 
+\#define {\bfseries OCTREE\+\_\+\+NO\+\_\+\+CHILD}~UINT64\+\_\+\+MAX
+\begin{DoxyCompactList}\small\item\em Sentinel value for "{}no child in this octant"{}. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{barneshut_8h_a1d1f52cf9a9069f5cc3cc1fa494efe2b}\label{barneshut_8h_a1d1f52cf9a9069f5cc3cc1fa494efe2b} 
+typedef uint64\+\_\+t {\bfseries child\+\_\+indices\+\_\+t}\mbox{[}8\mbox{]}
+\begin{DoxyCompactList}\small\item\em Typedef for size-\/8 indices. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{barneshut_8h_a3ce5127d6cf076305a07c086477623bd}{linear\+\_\+octree\+\_\+check\+\_\+nan}} (const \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict tree, bool verbose)
+\begin{DoxyCompactList}\small\item\em Checks if a linear octree has any NaN values. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{barneshut_8h_ac051531d481bae14e3822cba02560f84}{linear\+\_\+octree\+\_\+print}} (const \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict tree)
+\begin{DoxyCompactList}\small\item\em Prints a full octree to STDOUT (for debugging). \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{barneshut_8h_a698f4ef6ec7a7a569132fbd868724a8e}{linear\+\_\+octree\+\_\+build}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict system)
+\begin{DoxyCompactList}\small\item\em Builds a linear octree from a fish system. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{barneshut_8h_a8ff98e6da1889d9c273f0d678ec65b05}{linear\+\_\+octree\+\_\+destroy}} (\mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}octree\+\_\+ptr)
+\begin{DoxyCompactList}\small\item\em De-\/allocates a linear octree. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{barneshut_8h_ad406b18577c6ea957038fe904d6b6236}{linear\+\_\+octree\+\_\+compute\+\_\+vel\+\_\+contrib}} (const \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict tree, const size\+\_\+t swimmer\+\_\+i\+\_\+index, const \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} swimmer\+\_\+i\+\_\+pos, const \mbox{\hyperlink{structswimmer__features__t}{swimmer\+\_\+features\+\_\+t}} features\+\_\+i, const double approx\+\_\+ratio, const bool regularize, const double epsilon, \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict external\+\_\+source, \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict external\+\_\+sink)
+\begin{DoxyCompactList}\small\item\em Computes the velocity contribution on a swimmer by all of the non-\/self swimmers in the system. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+External velocity contribution calculation through Barnes-\/\+Hut. 
+
+This file contains an implementation of the Barnes-\/\+Hut algorithm for external velocity contribution using linear octrees as a backend.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{barneshut_8h_a698f4ef6ec7a7a569132fbd868724a8e}\label{barneshut_8h_a698f4ef6ec7a7a569132fbd868724a8e} 
+\index{barneshut.h@{barneshut.h}!linear\_octree\_build@{linear\_octree\_build}}
+\index{linear\_octree\_build@{linear\_octree\_build}!barneshut.h@{barneshut.h}}
+\doxyparagraph{\texorpdfstring{linear\_octree\_build()}{linear\_octree\_build()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*} linear\+\_\+octree\+\_\+build (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict}]{system }\end{DoxyParamCaption})}
+
+
+
+Builds a linear octree from a fish system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The fish system to construct from. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The constructed linear octree. 
+\end{DoxyReturn}
+\Hypertarget{barneshut_8h_a3ce5127d6cf076305a07c086477623bd}\label{barneshut_8h_a3ce5127d6cf076305a07c086477623bd} 
+\index{barneshut.h@{barneshut.h}!linear\_octree\_check\_nan@{linear\_octree\_check\_nan}}
+\index{linear\_octree\_check\_nan@{linear\_octree\_check\_nan}!barneshut.h@{barneshut.h}}
+\doxyparagraph{\texorpdfstring{linear\_octree\_check\_nan()}{linear\_octree\_check\_nan()}}
+{\footnotesize\ttfamily bool linear\+\_\+octree\+\_\+check\+\_\+nan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict}]{tree,  }\item[{bool}]{verbose }\end{DoxyParamCaption})}
+
+
+
+Checks if a linear octree has any NaN values. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em tree} & The octree. \\
+\hline
+\mbox{\texttt{ in}}  & {\em verbose} & Whether to print the exact value which contains NaN. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Whether or not any NaN values were found inside the tree. 
+\end{DoxyReturn}
+\Hypertarget{barneshut_8h_ad406b18577c6ea957038fe904d6b6236}\label{barneshut_8h_ad406b18577c6ea957038fe904d6b6236} 
+\index{barneshut.h@{barneshut.h}!linear\_octree\_compute\_vel\_contrib@{linear\_octree\_compute\_vel\_contrib}}
+\index{linear\_octree\_compute\_vel\_contrib@{linear\_octree\_compute\_vel\_contrib}!barneshut.h@{barneshut.h}}
+\doxyparagraph{\texorpdfstring{linear\_octree\_compute\_vel\_contrib()}{linear\_octree\_compute\_vel\_contrib()}}
+{\footnotesize\ttfamily void linear\+\_\+octree\+\_\+compute\+\_\+vel\+\_\+contrib (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict}]{tree,  }\item[{const size\+\_\+t}]{swimmer\+\_\+i\+\_\+index,  }\item[{const \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}}}]{swimmer\+\_\+i\+\_\+pos,  }\item[{const \mbox{\hyperlink{structswimmer__features__t}{swimmer\+\_\+features\+\_\+t}}}]{features\+\_\+i,  }\item[{const double}]{approx\+\_\+ratio,  }\item[{const bool}]{regularize,  }\item[{const double}]{eps,  }\item[{\mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict}]{external\+\_\+source,  }\item[{\mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict}]{external\+\_\+sink }\end{DoxyParamCaption})}
+
+
+
+Computes the velocity contribution on a swimmer by all of the non-\/self swimmers in the system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em tree} & The linear octree. \\
+\hline
+\mbox{\texttt{ in}}  & {\em swimmer\+\_\+i\+\_\+index} & The swimmer index for swimmer i. \\
+\hline
+\mbox{\texttt{ in}}  & {\em swimmer\+\_\+i\+\_\+pos} & The position of swimmer i. \\
+\hline
+\mbox{\texttt{ in}}  & {\em features\+\_\+i} & The feature positions of swimmer i. \\
+\hline
+\mbox{\texttt{ in}}  & {\em approx\+\_\+ratio} & The Barnes-\/\+Hut approximation ratio. \\
+\hline
+\mbox{\texttt{ in}}  & {\em regularize} & Whether or not to use regularized interaction. \\
+\hline
+\mbox{\texttt{ in}}  & {\em eps} & Regularization Epsilon \\
+\hline
+\mbox{\texttt{ out}}  & {\em external\+\_\+source} & The output vec. for external source contrib. \\
+\hline
+\mbox{\texttt{ out}}  & {\em external\+\_\+sink} & The output vec. for external sink contrib. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{barneshut_8h_a8ff98e6da1889d9c273f0d678ec65b05}\label{barneshut_8h_a8ff98e6da1889d9c273f0d678ec65b05} 
+\index{barneshut.h@{barneshut.h}!linear\_octree\_destroy@{linear\_octree\_destroy}}
+\index{linear\_octree\_destroy@{linear\_octree\_destroy}!barneshut.h@{barneshut.h}}
+\doxyparagraph{\texorpdfstring{linear\_octree\_destroy()}{linear\_octree\_destroy()}}
+{\footnotesize\ttfamily void linear\+\_\+octree\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{octree\+\_\+ptr }\end{DoxyParamCaption})}
+
+
+
+De-\/allocates a linear octree. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em octree\+\_\+ptr} & The point to the octree to destroy. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{barneshut_8h_ac051531d481bae14e3822cba02560f84}\label{barneshut_8h_ac051531d481bae14e3822cba02560f84} 
+\index{barneshut.h@{barneshut.h}!linear\_octree\_print@{linear\_octree\_print}}
+\index{linear\_octree\_print@{linear\_octree\_print}!barneshut.h@{barneshut.h}}
+\doxyparagraph{\texorpdfstring{linear\_octree\_print()}{linear\_octree\_print()}}
+{\footnotesize\ttfamily void linear\+\_\+octree\+\_\+print (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structlinear__octree__t}{linear\+\_\+octree\+\_\+t}} \texorpdfstring{$\ast$}{*}restrict}]{tree }\end{DoxyParamCaption})}
+
+
+
+Prints a full octree to STDOUT (for debugging). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em tree} & The octree to print. \\
+\hline
+\end{DoxyParams}

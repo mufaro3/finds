@@ -1,0 +1,114 @@
+\doxysubsection{include/finds/integration.h File Reference}
+\hypertarget{integration_8h}{}\label{integration_8h}\index{include/finds/integration.h@{include/finds/integration.h}}
+
+
+Implementation of various adaptive and non-\/adaptive Runge-\/\+Kutta integrators.  
+
+
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include "{}system.\+h"{}}\newline
+{\ttfamily \#include "{}derivative.\+h"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structintegration__opts__t}{integration\+\_\+opts\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Struct for integration options. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{integration_8h_a7717ee98e71ebc46312f127d6f94ac51}{DECLARE\+\_\+\+INTEGRATOR}}(name)
+\begin{DoxyCompactList}\small\item\em Simple macro for declaring integrators (as all use the same args) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{integration_8h_accaa3db9b11fd86f3b27b39fd8f2f33d}\label{integration_8h_accaa3db9b11fd86f3b27b39fd8f2f33d} 
+typedef \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}(\texorpdfstring{$\ast$}{*} {\bfseries integration\+\_\+step\+\_\+fn}) (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{integration_8h_a8ebf15739460fd397470ad491a0b9591}\label{integration_8h_a8ebf15739460fd397470ad491a0b9591} 
+enum \mbox{\hyperlink{integration_8h_a8ebf15739460fd397470ad491a0b9591}{integration\+\_\+method\+\_\+e}} \{ \newline
+{\bfseries EULER}
+, {\bfseries RUNGE\+\_\+\+KUTTA\+\_\+2}
+, {\bfseries RUNGE\+\_\+\+KUTTA\+\_\+4}
+, {\bfseries RUNGE\+\_\+\+KUTTA\+\_\+5}
+, \newline
+{\bfseries RUNGE\+\_\+\+KUTTA\+\_\+6}
+, {\bfseries RUNGE\+\_\+\+KUTTA\+\_\+32}
+, {\bfseries RUNGE\+\_\+\+KUTTA\+\_\+54}
+, {\bfseries INTEGRATION\+\_\+\+METHODS\+\_\+\+COUNT}
+ \}
+\begin{DoxyCompactList}\small\item\em Enum for integration methods. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{integration_8h_a04189c60b5d4b0a48bbeb25c4e33a1e7}\label{integration_8h_a04189c60b5d4b0a48bbeb25c4e33a1e7} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_ae9511b7e5e34138e67e2098c8094b52f}{step\+\_\+euler}})
+\item 
+\Hypertarget{integration_8h_a3c0120281aea01e24750f766f20fa8eb}\label{integration_8h_a3c0120281aea01e24750f766f20fa8eb} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_a66a982c655c151c77a2fcd280ce4a092}{step\+\_\+rk2}})
+\item 
+\Hypertarget{integration_8h_a70ab0830c1959bc4908383294c298d36}\label{integration_8h_a70ab0830c1959bc4908383294c298d36} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_a2dcf9c285792853b1fc1b859b710446d}{step\+\_\+rk4}})
+\item 
+\Hypertarget{integration_8h_a05ffe71be96b1115fc918cac26f98f18}\label{integration_8h_a05ffe71be96b1115fc918cac26f98f18} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_a9047ad6b07be3a703923662e0464fc51}{step\+\_\+rk5}})
+\item 
+\Hypertarget{integration_8h_a304bc2a11c70033c6e6098b871f6e42f}\label{integration_8h_a304bc2a11c70033c6e6098b871f6e42f} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_a524b212118e2e28e3882d6c055076aab}{step\+\_\+rk6}})
+\item 
+\Hypertarget{integration_8h_a3e3f0c607c616570b4b68483cbdf66cd}\label{integration_8h_a3e3f0c607c616570b4b68483cbdf66cd} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_a5763eb97830e35384483dcda78ff3ea9}{step\+\_\+rk32}})
+\item 
+\Hypertarget{integration_8h_a95007d1e3965d7f41017c9d101f0d118}\label{integration_8h_a95007d1e3965d7f41017c9d101f0d118} 
+{\bfseries DECLARE\+\_\+\+INTEGRATOR} (\mbox{\hyperlink{integration_8c_aa9252a20640316cf28a5489b7793981c}{step\+\_\+rk54}})
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} \mbox{\hyperlink{integration_8h_a505d5b00fc20218bba702ae1a1278dc6}{INTEGRATION\+\_\+\+METHODS\+\_\+\+TABLE}} \mbox{[}INTEGRATION\+\_\+\+METHODS\+\_\+\+COUNT\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Implementation of various adaptive and non-\/adaptive Runge-\/\+Kutta integrators. 
+
+This file contains the core routine for computing a singular integral time-\/step of the fish system (including optional error estimation).
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{integration_8h_a7717ee98e71ebc46312f127d6f94ac51}\label{integration_8h_a7717ee98e71ebc46312f127d6f94ac51} 
+\index{integration.h@{integration.h}!DECLARE\_INTEGRATOR@{DECLARE\_INTEGRATOR}}
+\index{DECLARE\_INTEGRATOR@{DECLARE\_INTEGRATOR}!integration.h@{integration.h}}
+\doxyparagraph{\texorpdfstring{DECLARE\_INTEGRATOR}{DECLARE\_INTEGRATOR}}
+{\footnotesize\ttfamily \#define DECLARE\+\_\+\+INTEGRATOR(\begin{DoxyParamCaption}\item[{}]{name }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \mbox{\hyperlink{structfish__system__t}{fish\_system\_t}}\ *name(\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structfish__system__t}{fish\_system\_t}}\ *state,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ time\_step,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\_computation\_opts\_t}}\ dc\_opts,\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ *error\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ )}
+
+\end{DoxyCode}
+
+
+Simple macro for declaring integrators (as all use the same args) 
+
+
+
+\doxysubsubsection{Variable Documentation}
+\Hypertarget{integration_8h_a505d5b00fc20218bba702ae1a1278dc6}\label{integration_8h_a505d5b00fc20218bba702ae1a1278dc6} 
+\index{integration.h@{integration.h}!INTEGRATION\_METHODS\_TABLE@{INTEGRATION\_METHODS\_TABLE}}
+\index{INTEGRATION\_METHODS\_TABLE@{INTEGRATION\_METHODS\_TABLE}!integration.h@{integration.h}}
+\doxyparagraph{\texorpdfstring{INTEGRATION\_METHODS\_TABLE}{INTEGRATION\_METHODS\_TABLE}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} INTEGRATION\+\_\+\+METHODS\+\_\+\+TABLE\mbox{[}INTEGRATION\+\_\+\+METHODS\+\_\+\+COUNT\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+Named lookup table for integration methods 

@@ -1,0 +1,49 @@
+\doxysubsection{src/evaluation.c File Reference}
+\hypertarget{evaluation_8c}{}\label{evaluation_8c}\index{src/evaluation.c@{src/evaluation.c}}
+
+
+Performance evaluation.  
+
+
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include $<$finds/system.\+h$>$}\newline
+{\ttfamily \#include $<$finds/derivative.\+h$>$}\newline
+{\ttfamily \#include $<$finds/util.\+h$>$}\newline
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{evaluation_8c_a2741b8a476783c129748c67cd60f4296}{time\+\_\+derivative\+\_\+computation}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts)
+\begin{DoxyCompactList}\small\item\em Times the computation of a single derivative. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Performance evaluation. 
+
+This file contains the function implementation for timing the computation of a single derivative.
+
+\begin{DoxyAuthor}{Author}
+Mufaro J. Machaya
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{evaluation_8c_a2741b8a476783c129748c67cd60f4296}\label{evaluation_8c_a2741b8a476783c129748c67cd60f4296} 
+\index{evaluation.c@{evaluation.c}!time\_derivative\_computation@{time\_derivative\_computation}}
+\index{time\_derivative\_computation@{time\_derivative\_computation}!evaluation.c@{evaluation.c}}
+\doxyparagraph{\texorpdfstring{time\_derivative\_computation()}{time\_derivative\_computation()}}
+{\footnotesize\ttfamily double time\+\_\+derivative\+\_\+computation (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts }\end{DoxyParamCaption})}
+
+
+
+Times the computation of a single derivative. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The system to compute the derivative of. \\
+\hline
+\mbox{\texttt{ in}}  & {\em dc\+\_\+opts} & The derivative computation options.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The runtime required to compute the derivative. 
+\end{DoxyReturn}

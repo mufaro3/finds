@@ -1,0 +1,105 @@
+\doxysubsection{programs/validation.c File Reference}
+\hypertarget{validation_8c}{}\label{validation_8c}\index{programs/validation.c@{programs/validation.c}}
+
+
+Produces the validation plots for FINDS.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$float.\+h$>$}\newline
+{\ttfamily \#include $<$gnuplot\+\_\+i/gnuplot\+\_\+i.\+h$>$}\newline
+{\ttfamily \#include $<$finds/constants.\+h$>$}\newline
+{\ttfamily \#include $<$finds/system.\+h$>$}\newline
+{\ttfamily \#include $<$finds/simulation.\+h$>$}\newline
+{\ttfamily \#include $<$finds/error.\+h$>$}\newline
+{\ttfamily \#include $<$finds/datastream.\+h$>$}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structsystem__trajectory__t}{system\+\_\+trajectory\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Swimmer trajectory object for simplifying the coplanar cases. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{validation_8c_a754410d1e5afd704af988e0b671f20b3}\label{validation_8c_a754410d1e5afd704af988e0b671f20b3} 
+\#define {\bfseries VALIDATION\+\_\+\+OUTPUT\+\_\+\+FOLDER}~ROOT\+\_\+\+OUTPUT\+\_\+\+PATH "{}/validation"{}
+\item 
+\Hypertarget{validation_8c_a2abb355ea4d912384e4e59fabb801eff}\label{validation_8c_a2abb355ea4d912384e4e59fabb801eff} 
+\#define {\bfseries TEMP\+\_\+\+OUTPUT\+\_\+\+FILE}~VALIDATION\+\_\+\+OUTPUT\+\_\+\+FOLDER "{}/validation-\/circle-\/output.\+dat"{}
+\item 
+\Hypertarget{validation_8c_a30362161c93e3f1a4ee4c673f535b5a8}\label{validation_8c_a30362161c93e3f1a4ee4c673f535b5a8} 
+\#define {\bfseries LENGTH}~1
+\item 
+\Hypertarget{validation_8c_a86fc4e72a4057b010caafd89e5c3f915}\label{validation_8c_a86fc4e72a4057b010caafd89e5c3f915} 
+\#define {\bfseries VOLUMETRIC\+\_\+\+FLOW\+\_\+\+RATE}~(4 \texorpdfstring{$\ast$}{*} M\+\_\+\+PI)
+\item 
+\Hypertarget{validation_8c_acb946ce6a84a9cc2f9375c38cc7f443f}\label{validation_8c_acb946ce6a84a9cc2f9375c38cc7f443f} 
+\#define {\bfseries SP\+\_\+\+SPEED}~(VOLUMETRIC\+\_\+\+FLOW\+\_\+\+RATE / (4 \texorpdfstring{$\ast$}{*} M\+\_\+\+PI \texorpdfstring{$\ast$}{*} LENGTH \texorpdfstring{$\ast$}{*} LENGTH))
+\item 
+\Hypertarget{validation_8c_a6b20d41d6252e9871430c242cb1a56e7}\label{validation_8c_a6b20d41d6252e9871430c242cb1a56e7} 
+\#define {\bfseries BUFFER\+\_\+\+SIZE}~1024
+\item 
+\Hypertarget{validation_8c_aae4c72f7772af6ac8396ca7ca1259af0}\label{validation_8c_aae4c72f7772af6ac8396ca7ca1259af0} 
+\#define {\bfseries DOUBLE\+\_\+\+BUFFER\+\_\+\+SIZE}~(2 \texorpdfstring{$\ast$}{*} BUFFER\+\_\+\+SIZE)
+\item 
+\Hypertarget{validation_8c_a50a6a866f6648822f5f99cba121bbd35}\label{validation_8c_a50a6a866f6648822f5f99cba121bbd35} 
+\#define {\bfseries PDF}
+\item 
+\Hypertarget{validation_8c_a64de47239f7056b19b66e6a0a4519874}\label{validation_8c_a64de47239f7056b19b66e6a0a4519874} 
+\#define {\bfseries OUTPUT\+\_\+\+MODE}~"{}pdf"{}
+\item 
+\Hypertarget{validation_8c_ab7b854108e641434d8aba356ecde94ce}\label{validation_8c_ab7b854108e641434d8aba356ecde94ce} 
+\#define {\bfseries LINEWIDTH}~1
+\item 
+\Hypertarget{validation_8c_af1771121e73cca5eaa26af1ff6a0acb9}\label{validation_8c_af1771121e73cca5eaa26af1ff6a0acb9} 
+\#define {\bfseries FIGURE\+\_\+\+WIDTH}~3.\+5
+\item 
+\Hypertarget{validation_8c_af3f4c9cb10d2df82bbdd62b25ef5bc43}\label{validation_8c_af3f4c9cb10d2df82bbdd62b25ef5bc43} 
+\#define {\bfseries FIGURE\+\_\+\+HEIGHT}~4
+\item 
+\Hypertarget{validation_8c_adda1b1c264e2f9b66d594d98e4ed7ff6}\label{validation_8c_adda1b1c264e2f9b66d594d98e4ed7ff6} 
+\#define {\bfseries FONT}~"{}Nimbus Roman,11"{}
+\item 
+\Hypertarget{validation_8c_af594a63a94cb092fbb5eed2b9e1cb200}\label{validation_8c_af594a63a94cb092fbb5eed2b9e1cb200} 
+\#define {\bfseries N\+\_\+\+DC\+\_\+\+METHODS}~5
+\item 
+\#define \mbox{\hyperlink{validation_8c_ac1d3139da5914237b131fde5971b7e71}{\+\_\+\+\_\+\+WRAP\+\_\+\+ERR}}(errcode,  fn)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{validation_8c_ab6cd42a26364b04f0d48aa8065d96410}\label{validation_8c_ab6cd42a26364b04f0d48aa8065d96410} 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} {\bfseries comparison\+\_\+plot\+\_\+load\+\_\+initial\+\_\+conditions} (FILE \texorpdfstring{$\ast$}{*}restrict fptr, const size\+\_\+t N)
+\item 
+\Hypertarget{validation_8c_a840291bc02cba5474a4cb46a9b9566fe}\label{validation_8c_a840291bc02cba5474a4cb46a9b9566fe} 
+int {\bfseries main} (void)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Produces the validation plots for FINDS. 
+
+Reproduces figures 8 and 16 of Mabrouk and Floryan 2025 and 2024 respectively using FINDS and GNUPlot.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{validation_8c_ac1d3139da5914237b131fde5971b7e71}\label{validation_8c_ac1d3139da5914237b131fde5971b7e71} 
+\index{validation.c@{validation.c}!\_\_WRAP\_ERR@{\_\_WRAP\_ERR}}
+\index{\_\_WRAP\_ERR@{\_\_WRAP\_ERR}!validation.c@{validation.c}}
+\doxyparagraph{\texorpdfstring{\_\_WRAP\_ERR}{\_\_WRAP\_ERR}}
+{\footnotesize\ttfamily \#define \+\_\+\+\_\+\+WRAP\+\_\+\+ERR(\begin{DoxyParamCaption}\item[{}]{errcode,  }\item[{}]{fn }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ errcode\ =\ fn;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ if\ (errcode\ !=\ ERR\_OK)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ EXIT\_FAILURE;}
+
+\end{DoxyCode}

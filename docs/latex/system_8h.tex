@@ -1,0 +1,474 @@
+\doxysubsection{include/finds/system.h File Reference}
+\hypertarget{system_8h}{}\label{system_8h}\index{include/finds/system.h@{include/finds/system.h}}
+
+
+Core particle system data structures and operations.  
+
+
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include "{}vector.\+h"{}}\newline
+{\ttfamily \#include "{}util.\+h"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structdistribution__options__t}{distribution\+\_\+options\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Distribution generation options struct. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structorientation__options__t}{orientation\+\_\+options\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Orientation generation options struct. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structconstant__options__t}{constant\+\_\+options\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Constant generation options struct. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structswimmer__t}{swimmer\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Structure representing an individual swimmer. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Struct for a system of swimmers (i.\+e., a vector of swimmers). \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structswimmer__features__t}{swimmer\+\_\+features\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Structure of feature (source and sink) positions. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Vector of feature positions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{system_8h_ace1842a491ee670245d04a301e57c432}\label{system_8h_ace1842a491ee670245d04a301e57c432} 
+enum \mbox{\hyperlink{system_8h_ace1842a491ee670245d04a301e57c432}{distribution\+\_\+type\+\_\+e}} \{ \newline
+{\bfseries DISTRIBUTION\+\_\+\+CUBE}
+, {\bfseries DISTRIBUTION\+\_\+\+SPHERE}
+, {\bfseries DISTRIBUTION\+\_\+\+BALL}
+, {\bfseries DISTRIBUTION\+\_\+\+RANDOM}
+, \newline
+{\bfseries DISTRIBUTION\+\_\+\+TYPE\+\_\+\+COUNT}
+ \}
+\begin{DoxyCompactList}\small\item\em Enum for distribution generation types. \end{DoxyCompactList}\item 
+\Hypertarget{system_8h_a6bd978dcfd462215f119660cfcfe7666}\label{system_8h_a6bd978dcfd462215f119660cfcfe7666} 
+enum \mbox{\hyperlink{system_8h_a6bd978dcfd462215f119660cfcfe7666}{orientation\+\_\+type\+\_\+e}} \{ \newline
+{\bfseries ORIENTATION\+\_\+\+RANDOM}
+, {\bfseries ORIENTATION\+\_\+\+RADIAL\+\_\+\+INWARD}
+, {\bfseries ORIENTATION\+\_\+\+RADIAL\+\_\+\+OUTWARD}
+, {\bfseries ORIENTATION\+\_\+\+SWIRL\+\_\+\+INWARD}
+, \newline
+{\bfseries ORIENTATION\+\_\+\+SWIRL\+\_\+\+OUTWARD}
+, {\bfseries ORIENTATION\+\_\+\+SADDLE}
+, {\bfseries ORIENTATION\+\_\+\+ALIGNED}
+, {\bfseries ORIENTATION\+\_\+\+TYPE\+\_\+\+COUNT}
+ \}
+\begin{DoxyCompactList}\small\item\em Enum for orientation generation types. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_ae9d4bff2c389b527f805689eb48b2dde}{fish\+\_\+system\+\_\+generate}} (const \mbox{\hyperlink{structdistribution__options__t}{distribution\+\_\+options\+\_\+t}} dist\+\_\+opts, const \mbox{\hyperlink{structorientation__options__t}{orientation\+\_\+options\+\_\+t}} ori\+\_\+opts, const \mbox{\hyperlink{structconstant__options__t}{constant\+\_\+options\+\_\+t}} const\+\_\+opts, const bool print\+\_\+debug)
+\begin{DoxyCompactList}\small\item\em Generates a system of fish (positions and orientations). \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_a48e52ce19554e747bf02841a5ff38d43}{fish\+\_\+system\+\_\+combine}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}a, const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}b)
+\begin{DoxyCompactList}\small\item\em Copies two systems to a greater system containing both. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_a435fbb98e9a70acc3c92d9df2af08fe6}{fish\+\_\+system\+\_\+combine\+\_\+destroy}} (\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}a, \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}b)
+\begin{DoxyCompactList}\small\item\em Combines two fish systems and then destroys the previous systems. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_a478b2950e54292851164a551f1f4f3f4}{fish\+\_\+system\+\_\+difference}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}a, const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}b)
+\begin{DoxyCompactList}\small\item\em Computes a fish-\/system representation of the difference. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{system_8h_a17082db42c841312340b04d3f2a4b101}{fish\+\_\+system\+\_\+norm}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Computes the norm of a fish system. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_a1c513444f5dafdb14847dd7603357999}{fish\+\_\+system\+\_\+normalize\+\_\+orientation}} (\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Normalizes the orientations for the fish system. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{system_8h_adc1cd88b0444608b6d1ffdb244e88caa}{fish\+\_\+system\+\_\+has\+\_\+nan}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Determines whether a system constains a NaN value (for debugging). \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_ab93d42c9a284f5fa4fe92458caf4b55e}{fish\+\_\+system\+\_\+generate\+\_\+random}} (const size\+\_\+t N, const bool print\+\_\+debug)
+\begin{DoxyCompactList}\small\item\em Generates a random system with predefined distribution and orientation options (both random) as a function of N, the number of swimmers in the system. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_aa3403a7e2a70d052da6f68cb4841f2ad}{fish\+\_\+system\+\_\+copy}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Produces a fresh copy of a fish system. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_a57ac26a2800c8e08a0874faa6ebdd91a}{fish\+\_\+system\+\_\+allocate}} (const size\+\_\+t N)
+\begin{DoxyCompactList}\small\item\em Allocates all of the arrays for a fish system to size N. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_a0a4c6366ff20d599c35e409fb8724663}{fish\+\_\+system\+\_\+print}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Prints the system to stdout (for debugging). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_a3afa3d0ce9d2c04db1ee81ccb6e0b451}{fish\+\_\+system\+\_\+destroy}} (\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Destroys the fish system (deallocates all pointers then redirects to NULL). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_adba6ff7f7879588271eafce507977351}{fish\+\_\+system\+\_\+translate}} (\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system, const double delta\+\_\+x, const double delta\+\_\+y, const double delta\+\_\+z)
+\begin{DoxyCompactList}\small\item\em Translates all of the positions in a fish system. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_ab7539dc2f79777fd639816d381601200}{fish\+\_\+system\+\_\+rotate}} (\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system, const double roll, const double pitch, const double yaw)
+\begin{DoxyCompactList}\small\item\em Rotates all of the positions in a fish system. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_a3c28f57ef739b52bcc3d903894d926df}{calculate\+\_\+swimmer\+\_\+features}} (const \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} position, const \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} orientation, const double length, \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}source\+\_\+position\+\_\+ptr, \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}sink\+\_\+position\+\_\+ptr)
+\begin{DoxyCompactList}\small\item\em Computes the feature positions for a singular swimmer. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_a53c7712145858bbc7a6a5f02390e73c5}{calculate\+\_\+feature\+\_\+positions}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system)
+\begin{DoxyCompactList}\small\item\em Calculates the feature positions for a fish system. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_ac02f27a9523d7e8a2b504d3524b9316d}{feature\+\_\+positions\+\_\+print}} (const \mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*}feat\+\_\+pos)
+\begin{DoxyCompactList}\small\item\em Prints the feature positions to stdout. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{system_8h_a4084810bdc3e2683be7c096a68c0bdfe}{feature\+\_\+positions\+\_\+allocate}} (const size\+\_\+t N)
+\begin{DoxyCompactList}\small\item\em Allocates the feature positions array. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{system_8h_a80fea8ce8d3b3046c449e805c84eb1a3}{feature\+\_\+positions\+\_\+destroy}} (\mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}feat\+\_\+pos)
+\begin{DoxyCompactList}\small\item\em De-\/allocates the feature positions structure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{system_8h_a1c053985938ecc77b331f10ad0e1621e}\label{system_8h_a1c053985938ecc77b331f10ad0e1621e} 
+const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} {\bfseries DISTRIBUTION\+\_\+\+TYPE\+\_\+\+TABLE} \mbox{[}DISTRIBUTION\+\_\+\+TYPE\+\_\+\+COUNT\mbox{]}
+\begin{DoxyCompactList}\small\item\em Enum naming table for distribution generation types. \end{DoxyCompactList}\item 
+\Hypertarget{system_8h_abc584f26683797b1d5d3213dfb5a6407}\label{system_8h_abc584f26683797b1d5d3213dfb5a6407} 
+const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} {\bfseries ORIENTATION\+\_\+\+TYPE\+\_\+\+TABLE} \mbox{[}ORIENTATION\+\_\+\+TYPE\+\_\+\+COUNT\mbox{]}
+\begin{DoxyCompactList}\small\item\em Enum naming table for orientation generation types. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Core particle system data structures and operations. 
+
+This file contains routines for creating, initializing, updating, and destroying static systems of fish-\/particles.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{system_8h_a53c7712145858bbc7a6a5f02390e73c5}\label{system_8h_a53c7712145858bbc7a6a5f02390e73c5} 
+\index{system.h@{system.h}!calculate\_feature\_positions@{calculate\_feature\_positions}}
+\index{calculate\_feature\_positions@{calculate\_feature\_positions}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{calculate\_feature\_positions()}{calculate\_feature\_positions()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*} calculate\+\_\+feature\+\_\+positions (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system }\end{DoxyParamCaption})}
+
+
+
+Calculates the feature positions for a fish system. 
+
+Feature positions are calculated from the position and orientation as
+
+source position = position + length / 2 \texorpdfstring{$\ast$}{*} orientation sink position = position -\/ length / 2 \texorpdfstring{$\ast$}{*} orientation
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The system to compute on.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The positions of the sources and sinks. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_a3c28f57ef739b52bcc3d903894d926df}\label{system_8h_a3c28f57ef739b52bcc3d903894d926df} 
+\index{system.h@{system.h}!calculate\_swimmer\_features@{calculate\_swimmer\_features}}
+\index{calculate\_swimmer\_features@{calculate\_swimmer\_features}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{calculate\_swimmer\_features()}{calculate\_swimmer\_features()}}
+{\footnotesize\ttfamily void calculate\+\_\+swimmer\+\_\+features (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}}}]{position,  }\item[{const \mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}}}]{orientation,  }\item[{const double}]{length,  }\item[{\mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{source\+\_\+position\+\_\+ptr,  }\item[{\mbox{\hyperlink{uniondouble__3d__t}{double\+\_\+3d\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{sink\+\_\+position\+\_\+ptr }\end{DoxyParamCaption})}
+
+
+
+Computes the feature positions for a singular swimmer. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em position} & The position of the swimmer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em orientation} & The orientation of the swimmer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em length} & The length of the swimmer.\\
+\hline
+\mbox{\texttt{ out}}  & {\em source\+\_\+position\+\_\+ptr} & The output vector for the source position. \\
+\hline
+\mbox{\texttt{ out}}  & {\em sink\+\_\+position\+\_\+ptr} & The output vector for the sink position. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_a4084810bdc3e2683be7c096a68c0bdfe}\label{system_8h_a4084810bdc3e2683be7c096a68c0bdfe} 
+\index{system.h@{system.h}!feature\_positions\_allocate@{feature\_positions\_allocate}}
+\index{feature\_positions\_allocate@{feature\_positions\_allocate}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{feature\_positions\_allocate()}{feature\_positions\_allocate()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*} feature\+\_\+positions\+\_\+allocate (\begin{DoxyParamCaption}\item[{const size\+\_\+t}]{N }\end{DoxyParamCaption})}
+
+
+
+Allocates the feature positions array. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em The} & size of the system. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_a80fea8ce8d3b3046c449e805c84eb1a3}\label{system_8h_a80fea8ce8d3b3046c449e805c84eb1a3} 
+\index{system.h@{system.h}!feature\_positions\_destroy@{feature\_positions\_destroy}}
+\index{feature\_positions\_destroy@{feature\_positions\_destroy}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{feature\_positions\_destroy()}{feature\_positions\_destroy()}}
+{\footnotesize\ttfamily void feature\+\_\+positions\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{feat\+\_\+pos\+\_\+ptr }\end{DoxyParamCaption})}
+
+
+
+De-\/allocates the feature positions structure. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em feat\+\_\+pos\+\_\+ptr} & The feature positions pointer. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_ac02f27a9523d7e8a2b504d3524b9316d}\label{system_8h_ac02f27a9523d7e8a2b504d3524b9316d} 
+\index{system.h@{system.h}!feature\_positions\_print@{feature\_positions\_print}}
+\index{feature\_positions\_print@{feature\_positions\_print}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{feature\_positions\_print()}{feature\_positions\_print()}}
+{\footnotesize\ttfamily void feature\+\_\+positions\+\_\+print (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfeature__positions__t}{feature\+\_\+positions\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{feat\+\_\+pos }\end{DoxyParamCaption})}
+
+
+
+Prints the feature positions to stdout. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em feat\+\_\+pos} & The feature positions. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_a57ac26a2800c8e08a0874faa6ebdd91a}\label{system_8h_a57ac26a2800c8e08a0874faa6ebdd91a} 
+\index{system.h@{system.h}!fish\_system\_allocate@{fish\_system\_allocate}}
+\index{fish\_system\_allocate@{fish\_system\_allocate}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_allocate()}{fish\_system\_allocate()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+allocate (\begin{DoxyParamCaption}\item[{const size\+\_\+t}]{N }\end{DoxyParamCaption})}
+
+
+
+Allocates all of the arrays for a fish system to size N. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em N} & The size of the fish system.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The new allocated system. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_a48e52ce19554e747bf02841a5ff38d43}\label{system_8h_a48e52ce19554e747bf02841a5ff38d43} 
+\index{system.h@{system.h}!fish\_system\_combine@{fish\_system\_combine}}
+\index{fish\_system\_combine@{fish\_system\_combine}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_combine()}{fish\_system\_combine()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+combine (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{a,  }\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{b }\end{DoxyParamCaption})}
+
+
+
+Copies two systems to a greater system containing both. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em a} & The first fish system. \\
+\hline
+\mbox{\texttt{ in}}  & {\em b} & The second fish system.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The combined system. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_a435fbb98e9a70acc3c92d9df2af08fe6}\label{system_8h_a435fbb98e9a70acc3c92d9df2af08fe6} 
+\index{system.h@{system.h}!fish\_system\_combine\_destroy@{fish\_system\_combine\_destroy}}
+\index{fish\_system\_combine\_destroy@{fish\_system\_combine\_destroy}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_combine\_destroy()}{fish\_system\_combine\_destroy()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+combine\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{a,  }\item[{\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{b }\end{DoxyParamCaption})}
+
+
+
+Combines two fish systems and then destroys the previous systems. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em a} & The first fish system. \\
+\hline
+\mbox{\texttt{ in}}  & {\em b} & The second fish system.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The combined system. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_aa3403a7e2a70d052da6f68cb4841f2ad}\label{system_8h_aa3403a7e2a70d052da6f68cb4841f2ad} 
+\index{system.h@{system.h}!fish\_system\_copy@{fish\_system\_copy}}
+\index{fish\_system\_copy@{fish\_system\_copy}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_copy()}{fish\_system\_copy()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+copy (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system }\end{DoxyParamCaption})}
+
+
+
+Produces a fresh copy of a fish system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The fish system to copy.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The copied system. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_a3afa3d0ce9d2c04db1ee81ccb6e0b451}\label{system_8h_a3afa3d0ce9d2c04db1ee81ccb6e0b451} 
+\index{system.h@{system.h}!fish\_system\_destroy@{fish\_system\_destroy}}
+\index{fish\_system\_destroy@{fish\_system\_destroy}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_destroy()}{fish\_system\_destroy()}}
+{\footnotesize\ttfamily void fish\+\_\+system\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{system\+\_\+ptr }\end{DoxyParamCaption})}
+
+
+
+Destroys the fish system (deallocates all pointers then redirects to NULL). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em system\+\_\+ptr} & The system pointer to destroy. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_a478b2950e54292851164a551f1f4f3f4}\label{system_8h_a478b2950e54292851164a551f1f4f3f4} 
+\index{system.h@{system.h}!fish\_system\_difference@{fish\_system\_difference}}
+\index{fish\_system\_difference@{fish\_system\_difference}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_difference()}{fish\_system\_difference()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+difference (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{a,  }\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{b }\end{DoxyParamCaption})}
+
+
+
+Computes a fish-\/system representation of the difference. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em a} & The first system. \\
+\hline
+\mbox{\texttt{ in}}  & {\em b} & The second system.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The difference. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_ae9d4bff2c389b527f805689eb48b2dde}\label{system_8h_ae9d4bff2c389b527f805689eb48b2dde} 
+\index{system.h@{system.h}!fish\_system\_generate@{fish\_system\_generate}}
+\index{fish\_system\_generate@{fish\_system\_generate}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_generate()}{fish\_system\_generate()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+generate (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structdistribution__options__t}{distribution\+\_\+options\+\_\+t}}}]{dist\+\_\+opts,  }\item[{const \mbox{\hyperlink{structorientation__options__t}{orientation\+\_\+options\+\_\+t}}}]{ori\+\_\+opts,  }\item[{const \mbox{\hyperlink{structconstant__options__t}{constant\+\_\+options\+\_\+t}}}]{const\+\_\+opts,  }\item[{const bool}]{print\+\_\+debug }\end{DoxyParamCaption})}
+
+
+
+Generates a system of fish (positions and orientations). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em dist\+\_\+opts} & Distribution options. \\
+\hline
+\mbox{\texttt{ in}}  & {\em ori\+\_\+opts} & Orientation options. \\
+\hline
+\mbox{\texttt{ in}}  & {\em const\+\_\+opts} & Constant generation options. \\
+\hline
+\mbox{\texttt{ in}}  & {\em print\+\_\+debug} & Whether to print out that this system was generated.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The system. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_ab93d42c9a284f5fa4fe92458caf4b55e}\label{system_8h_ab93d42c9a284f5fa4fe92458caf4b55e} 
+\index{system.h@{system.h}!fish\_system\_generate\_random@{fish\_system\_generate\_random}}
+\index{fish\_system\_generate\_random@{fish\_system\_generate\_random}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_generate\_random()}{fish\_system\_generate\_random()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} fish\+\_\+system\+\_\+generate\+\_\+random (\begin{DoxyParamCaption}\item[{const size\+\_\+t}]{N,  }\item[{const bool}]{print\+\_\+debug }\end{DoxyParamCaption})}
+
+
+
+Generates a random system with predefined distribution and orientation options (both random) as a function of N, the number of swimmers in the system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em N} & The number of swimmers to generate. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_adc1cd88b0444608b6d1ffdb244e88caa}\label{system_8h_adc1cd88b0444608b6d1ffdb244e88caa} 
+\index{system.h@{system.h}!fish\_system\_has\_nan@{fish\_system\_has\_nan}}
+\index{fish\_system\_has\_nan@{fish\_system\_has\_nan}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_has\_nan()}{fish\_system\_has\_nan()}}
+{\footnotesize\ttfamily bool fish\+\_\+system\+\_\+has\+\_\+nan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system }\end{DoxyParamCaption})}
+
+
+
+Determines whether a system constains a NaN value (for debugging). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The system. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Whether the system contains NaN. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_a17082db42c841312340b04d3f2a4b101}\label{system_8h_a17082db42c841312340b04d3f2a4b101} 
+\index{system.h@{system.h}!fish\_system\_norm@{fish\_system\_norm}}
+\index{fish\_system\_norm@{fish\_system\_norm}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_norm()}{fish\_system\_norm()}}
+{\footnotesize\ttfamily double fish\+\_\+system\+\_\+norm (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system }\end{DoxyParamCaption})}
+
+
+
+Computes the norm of a fish system. 
+
+The norm of a fish system is defined as the square root of the sums of the squared-\/norms of the positions and orientations for all of the fish in the system,
+
+\[
+    | \mathbf{X} |^2 = \sum_{i=1}^N \left( | \mathbf{x}_{c,i} |^2 +
+    | \mathbf{n}_{i} |^2 \right).
+\]
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The system to compute the norm of.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The norm of the system. 
+\end{DoxyReturn}
+\Hypertarget{system_8h_a1c513444f5dafdb14847dd7603357999}\label{system_8h_a1c513444f5dafdb14847dd7603357999} 
+\index{system.h@{system.h}!fish\_system\_normalize\_orientation@{fish\_system\_normalize\_orientation}}
+\index{fish\_system\_normalize\_orientation@{fish\_system\_normalize\_orientation}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_normalize\_orientation()}{fish\_system\_normalize\_orientation()}}
+{\footnotesize\ttfamily void fish\+\_\+system\+\_\+normalize\+\_\+orientation (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system }\end{DoxyParamCaption})}
+
+
+
+Normalizes the orientations for the fish system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em system} & The fish system to normalize. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_a0a4c6366ff20d599c35e409fb8724663}\label{system_8h_a0a4c6366ff20d599c35e409fb8724663} 
+\index{system.h@{system.h}!fish\_system\_print@{fish\_system\_print}}
+\index{fish\_system\_print@{fish\_system\_print}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_print()}{fish\_system\_print()}}
+{\footnotesize\ttfamily void fish\+\_\+system\+\_\+print (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system }\end{DoxyParamCaption})}
+
+
+
+Prints the system to stdout (for debugging). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The fish system to print. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_ab7539dc2f79777fd639816d381601200}\label{system_8h_ab7539dc2f79777fd639816d381601200} 
+\index{system.h@{system.h}!fish\_system\_rotate@{fish\_system\_rotate}}
+\index{fish\_system\_rotate@{fish\_system\_rotate}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_rotate()}{fish\_system\_rotate()}}
+{\footnotesize\ttfamily void fish\+\_\+system\+\_\+rotate (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system,  }\item[{const double}]{roll,  }\item[{const double}]{pitch,  }\item[{const double}]{yaw }\end{DoxyParamCaption})}
+
+
+
+Rotates all of the positions in a fish system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em system} & The system to rotate. \\
+\hline
+\mbox{\texttt{ in}}  & {\em roll} & The x-\/axis rotation angle. \\
+\hline
+\mbox{\texttt{ in}}  & {\em pitch} & The y-\/axis rotation angle. \\
+\hline
+\mbox{\texttt{ in}}  & {\em yaw} & The z-\/axis rotation angle. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{system_8h_adba6ff7f7879588271eafce507977351}\label{system_8h_adba6ff7f7879588271eafce507977351} 
+\index{system.h@{system.h}!fish\_system\_translate@{fish\_system\_translate}}
+\index{fish\_system\_translate@{fish\_system\_translate}!system.h@{system.h}}
+\doxyparagraph{\texorpdfstring{fish\_system\_translate()}{fish\_system\_translate()}}
+{\footnotesize\ttfamily void fish\+\_\+system\+\_\+translate (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system,  }\item[{const double}]{delta\+\_\+x,  }\item[{const double}]{delta\+\_\+y,  }\item[{const double}]{delta\+\_\+z }\end{DoxyParamCaption})}
+
+
+
+Translates all of the positions in a fish system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em system} & The system to translate. \\
+\hline
+\mbox{\texttt{ in}}  & {\em delta\+\_\+x} & The x-\/displacement. \\
+\hline
+\mbox{\texttt{ in}}  & {\em delta\+\_\+y} & The y-\/displacement. \\
+\hline
+\mbox{\texttt{ in}}  & {\em delta\+\_\+z} & The z-\/displacement. \\
+\hline
+\end{DoxyParams}

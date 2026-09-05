@@ -1,0 +1,1 @@
+/usr/bin/cc -rdynamic CMakeFiles/demo.dir/demo.c.o -o demo  ../lib/libprogressbar.a ../lib/libstatusbar.a -lcurses -lform 

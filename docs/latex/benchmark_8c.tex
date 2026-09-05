@@ -1,0 +1,77 @@
+\doxysubsection{programs/benchmark.c File Reference}
+\hypertarget{benchmark_8c}{}\label{benchmark_8c}\index{programs/benchmark.c@{programs/benchmark.c}}
+
+
+Produces a benchmarking-\/plot for the entirety of FINDS.  
+
+
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$gsl/gsl\+\_\+fit.\+h$>$}\newline
+{\ttfamily \#include $<$gnuplot\+\_\+i/gnuplot\+\_\+i.\+h$>$}\newline
+{\ttfamily \#include $<$finds/system.\+h$>$}\newline
+{\ttfamily \#include $<$finds/datastream.\+h$>$}\newline
+{\ttfamily \#include $<$finds/constants.\+h$>$}\newline
+{\ttfamily \#include $<$finds/derivative.\+h$>$}\newline
+{\ttfamily \#include $<$finds/util.\+h$>$}\newline
+{\ttfamily \#include $<$finds/evaluation.\+h$>$}\newline
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{benchmark_8c_a50a6a866f6648822f5f99cba121bbd35}\label{benchmark_8c_a50a6a866f6648822f5f99cba121bbd35} 
+\#define {\bfseries PDF}
+\item 
+\Hypertarget{benchmark_8c_a64de47239f7056b19b66e6a0a4519874}\label{benchmark_8c_a64de47239f7056b19b66e6a0a4519874} 
+\#define {\bfseries OUTPUT\+\_\+\+MODE}~"{}pdf"{}
+\item 
+\Hypertarget{benchmark_8c_af1771121e73cca5eaa26af1ff6a0acb9}\label{benchmark_8c_af1771121e73cca5eaa26af1ff6a0acb9} 
+\#define {\bfseries FIGURE\+\_\+\+WIDTH}~3.\+5
+\item 
+\Hypertarget{benchmark_8c_af3f4c9cb10d2df82bbdd62b25ef5bc43}\label{benchmark_8c_af3f4c9cb10d2df82bbdd62b25ef5bc43} 
+\#define {\bfseries FIGURE\+\_\+\+HEIGHT}~2.\+9
+\item 
+\Hypertarget{benchmark_8c_adda1b1c264e2f9b66d594d98e4ed7ff6}\label{benchmark_8c_adda1b1c264e2f9b66d594d98e4ed7ff6} 
+\#define {\bfseries FONT}~"{}Nimbus Roman,11"{}
+\item 
+\Hypertarget{benchmark_8c_afe8e22a5947f0365868ea251dcddf1f5}\label{benchmark_8c_afe8e22a5947f0365868ea251dcddf1f5} 
+\#define {\bfseries SERIES\+\_\+\+LABEL\+\_\+\+SIZE}~200
+\item 
+\Hypertarget{benchmark_8c_aa8aaaf478f13bdd80f0769d7e055ed80}\label{benchmark_8c_aa8aaaf478f13bdd80f0769d7e055ed80} 
+\#define {\bfseries SHOW\+\_\+\+LEGEND\+\_\+\+EXTENDED\+\_\+\+DETAILS}
+\item 
+\Hypertarget{benchmark_8c_a432082bba443ad01f461c28e4603eae8}\label{benchmark_8c_a432082bba443ad01f461c28e4603eae8} 
+\#define {\bfseries BRUTE\+\_\+\+MAX\+\_\+\+LOG\+\_\+N}~4
+\item 
+\Hypertarget{benchmark_8c_a85ba9f96d8e203a81aee35546ea3a961}\label{benchmark_8c_a85ba9f96d8e203a81aee35546ea3a961} 
+\#define {\bfseries BH\+\_\+\+MAX\+\_\+\+LOG\+\_\+N}~7
+\item 
+\Hypertarget{benchmark_8c_aae503a627ddbc796b5523771cfb2925d}\label{benchmark_8c_aae503a627ddbc796b5523771cfb2925d} 
+\#define {\bfseries FMM\+\_\+\+MAX\+\_\+\+LOG\+\_\+N}~8
+\item 
+\Hypertarget{benchmark_8c_a7f415265e2161dd39c97106debff5429}\label{benchmark_8c_a7f415265e2161dd39c97106debff5429} 
+\#define {\bfseries MIN\+\_\+\+LOG\+\_\+N}~1
+\item 
+\Hypertarget{benchmark_8c_a2130d5cf6943788baefb76a85eac2e7c}\label{benchmark_8c_a2130d5cf6943788baefb76a85eac2e7c} 
+\#define {\bfseries MAX\+\_\+\+LOG\+\_\+N}~6
+\item 
+\Hypertarget{benchmark_8c_aa89b4385c9f4b16519ae8dc4b4439b4b}\label{benchmark_8c_aa89b4385c9f4b16519ae8dc4b4439b4b} 
+\#define {\bfseries N\+\_\+\+METHODS}~9
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{benchmark_8c_a840291bc02cba5474a4cb46a9b9566fe}\label{benchmark_8c_a840291bc02cba5474a4cb46a9b9566fe} 
+int {\bfseries main} (void)
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Produces a benchmarking-\/plot for the entirety of FINDS. 
+
+Times the computation of a derivative for variable-\/N systems for each type of interaction computation method (brute force, Barnes-\/\+Hut at increasing theta, and the Fast-\/\+Multipole-\/\+Method at increasing order).
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya
+\end{DoxyAuthor}
+License\+: MIT 

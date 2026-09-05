@@ -1,0 +1,149 @@
+\doxysubsection{include/finds/datastream.h File Reference}
+\hypertarget{datastream_8h}{}\label{datastream_8h}\index{include/finds/datastream.h@{include/finds/datastream.h}}
+
+
+I/O routines.  
+
+
+{\ttfamily \#include $<$hdf5.\+h$>$}\newline
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include "{}system.\+h"{}}\newline
+{\ttfamily \#include "{}error.\+h"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em File I/O structure for HDF5 output. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \mbox{\hyperlink{datastream_8h_a0756915e26c580e2d02a8bea69bd51a4}{mkdir\+\_\+p}} (const char \texorpdfstring{$\ast$}{*}path, const mode\+\_\+t mode)
+\begin{DoxyCompactList}\small\item\em C implementation of "{}mkdir -\/p"{} command. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \mbox{\hyperlink{datastream_8h_aee394fb7de3753eb16c936d56869803b}{datastream\+\_\+open\+\_\+file}} (\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}stream, const char \texorpdfstring{$\ast$}{*}filename)
+\begin{DoxyCompactList}\small\item\em Opens a dataset file for reading. \end{DoxyCompactList}\item 
+\Hypertarget{datastream_8h_a6e013ff7be583a572bb464d2a4427eb4}\label{datastream_8h_a6e013ff7be583a572bb464d2a4427eb4} 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} {\bfseries datastream\+\_\+read\+\_\+frame} (\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}stream, const size\+\_\+t frame, \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}dest\+\_\+ptr, double \texorpdfstring{$\ast$}{*}time)
+\item 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \mbox{\hyperlink{datastream_8h_a7a4be55042f418cca65af921e87c5739}{datastream\+\_\+create\+\_\+file}} (\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}stream, const char \texorpdfstring{$\ast$}{*}filename, const size\+\_\+t N)
+\begin{DoxyCompactList}\small\item\em Creates the root file for the datastream and marks it as open. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \mbox{\hyperlink{datastream_8h_a5e695e3c02dbf15ae923054b71df6d92}{datastream\+\_\+close}} (\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}stream)
+\begin{DoxyCompactList}\small\item\em Closes this datastream. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \mbox{\hyperlink{datastream_8h_a7a17410543b90f6cbb02cddaa6656df3}{datastream\+\_\+write\+\_\+system}} (\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}stream, const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system, const double time)
+\begin{DoxyCompactList}\small\item\em Writes the state of a single system out to the datastream. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+I/O routines. 
+
+This contains the implementation of the datastream object, which is used for creating and writing to simulation data files.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{datastream_8h_a5e695e3c02dbf15ae923054b71df6d92}\label{datastream_8h_a5e695e3c02dbf15ae923054b71df6d92} 
+\index{datastream.h@{datastream.h}!datastream\_close@{datastream\_close}}
+\index{datastream\_close@{datastream\_close}!datastream.h@{datastream.h}}
+\doxyparagraph{\texorpdfstring{datastream\_close()}{datastream\_close()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} datastream\+\_\+close (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{stream }\end{DoxyParamCaption})}
+
+
+
+Closes this datastream. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em stream} & The stream to close.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error code for this process. 
+\end{DoxyReturn}
+\Hypertarget{datastream_8h_a7a4be55042f418cca65af921e87c5739}\label{datastream_8h_a7a4be55042f418cca65af921e87c5739} 
+\index{datastream.h@{datastream.h}!datastream\_create\_file@{datastream\_create\_file}}
+\index{datastream\_create\_file@{datastream\_create\_file}!datastream.h@{datastream.h}}
+\doxyparagraph{\texorpdfstring{datastream\_create\_file()}{datastream\_create\_file()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} datastream\+\_\+create\+\_\+file (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{stream,  }\item[{const char \texorpdfstring{$\ast$}{*}}]{filename,  }\item[{const size\+\_\+t}]{N }\end{DoxyParamCaption})}
+
+
+
+Creates the root file for the datastream and marks it as open. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em stream} & The datastream to open. \\
+\hline
+\mbox{\texttt{ in}}  & {\em filename} & The output filename for the dataset. \\
+\hline
+\mbox{\texttt{ in}}  & {\em N} & The number of swimmers to track in this dataset.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error code for this process. 
+\end{DoxyReturn}
+\Hypertarget{datastream_8h_aee394fb7de3753eb16c936d56869803b}\label{datastream_8h_aee394fb7de3753eb16c936d56869803b} 
+\index{datastream.h@{datastream.h}!datastream\_open\_file@{datastream\_open\_file}}
+\index{datastream\_open\_file@{datastream\_open\_file}!datastream.h@{datastream.h}}
+\doxyparagraph{\texorpdfstring{datastream\_open\_file()}{datastream\_open\_file()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} datastream\+\_\+open\+\_\+file (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{stream,  }\item[{const char \texorpdfstring{$\ast$}{*}}]{filename }\end{DoxyParamCaption})}
+
+
+
+Opens a dataset file for reading. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em stream} & The datastream to read to. \\
+\hline
+\mbox{\texttt{ in}}  & {\em filename} & The file to open.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error code. 
+\end{DoxyReturn}
+\Hypertarget{datastream_8h_a7a17410543b90f6cbb02cddaa6656df3}\label{datastream_8h_a7a17410543b90f6cbb02cddaa6656df3} 
+\index{datastream.h@{datastream.h}!datastream\_write\_system@{datastream\_write\_system}}
+\index{datastream\_write\_system@{datastream\_write\_system}!datastream.h@{datastream.h}}
+\doxyparagraph{\texorpdfstring{datastream\_write\_system()}{datastream\_write\_system()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} datastream\+\_\+write\+\_\+system (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structdatastream__t}{datastream\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{stream,  }\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system,  }\item[{const double}]{time }\end{DoxyParamCaption})}
+
+
+
+Writes the state of a single system out to the datastream. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em stream} & The datastream to write to. \\
+\hline
+\mbox{\texttt{ in}}  & {\em system} & The system state to write. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time} & The time marker to write.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error code for this operation. 
+\end{DoxyReturn}
+\Hypertarget{datastream_8h_a0756915e26c580e2d02a8bea69bd51a4}\label{datastream_8h_a0756915e26c580e2d02a8bea69bd51a4} 
+\index{datastream.h@{datastream.h}!mkdir\_p@{mkdir\_p}}
+\index{mkdir\_p@{mkdir\_p}!datastream.h@{datastream.h}}
+\doxyparagraph{\texorpdfstring{mkdir\_p()}{mkdir\_p()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} mkdir\+\_\+p (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{path,  }\item[{const mode\+\_\+t}]{mode }\end{DoxyParamCaption})}
+
+
+
+C implementation of "{}mkdir -\/p"{} command. 
+
+Note\+: I\textquotesingle{}ll be honest, I just stole this from generative AI. It works quite okay, though. Another possible implementation could just directly use mkdir -\/p via a system call (as this code doesn\textquotesingle{}t need to be portable due to running in a virtual machine).
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em path} & The folder path to create. \\
+\hline
+\mbox{\texttt{ in}}  & {\em mode} & The mkdir creation mode.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error code for this process. 
+\end{DoxyReturn}

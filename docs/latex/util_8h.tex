@@ -1,0 +1,98 @@
+\doxysubsection{include/finds/util.h File Reference}
+\hypertarget{util_8h}{}\label{util_8h}\index{include/finds/util.h@{include/finds/util.h}}
+
+
+Utility functions.  
+
+
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$time.\+h$>$}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Enum to name string mapping struct. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{util_8h_afa99ec4acc4ecb2dc3c2d05da15d0e3f}\label{util_8h_afa99ec4acc4ecb2dc3c2d05da15d0e3f} 
+\#define {\bfseries MAX}(a,  b)~((a) $>$ (b) ? (a) \+: (b))
+\begin{DoxyCompactList}\small\item\em Returns the max of a and b. \end{DoxyCompactList}\item 
+\Hypertarget{util_8h_a3acffbd305ee72dcd4593c0d8af64a4f}\label{util_8h_a3acffbd305ee72dcd4593c0d8af64a4f} 
+\#define {\bfseries MIN}(a,  b)~((a) $<$ (b) ? (a) \+: (b))
+\begin{DoxyCompactList}\small\item\em Returns the min of a and b. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{util_8h_aa46c464f8003d6bc85ccb0d97e7fa481}{CLAMP}}(val,  min,  max)~(\mbox{\hyperlink{util_8h_afa99ec4acc4ecb2dc3c2d05da15d0e3f}{MAX}}((min), \mbox{\hyperlink{util_8h_a3acffbd305ee72dcd4593c0d8af64a4f}{MIN}}((val), (max))))
+\begin{DoxyCompactList}\small\item\em Clamps a value between \mbox{[}min,max\mbox{]}. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{util_8h_a43a992a7f2c42180a0ee867cdab17783}{ABOUT\+\_\+\+ZERO}}~1E-\/20
+\item 
+\Hypertarget{util_8h_ae2f08dc603ae93c402abd918ba4e23e1}\label{util_8h_ae2f08dc603ae93c402abd918ba4e23e1} 
+\#define {\bfseries ABS}(a)~((a) $>$ 0 ? (a) \+: -\/(a))
+\begin{DoxyCompactList}\small\item\em Absolute value macro. \end{DoxyCompactList}\item 
+\Hypertarget{util_8h_a4a3d9680ef857b272301eaa31293a98d}\label{util_8h_a4a3d9680ef857b272301eaa31293a98d} 
+\#define {\bfseries IS\+\_\+\+CLOSE}(a,  b)~(\mbox{\hyperlink{util_8h_ae2f08dc603ae93c402abd918ba4e23e1}{ABS}}((a) -\/ (b)) $<$ \mbox{\hyperlink{util_8h_a43a992a7f2c42180a0ee867cdab17783}{ABOUT\+\_\+\+ZERO}})
+\begin{DoxyCompactList}\small\item\em Comparison macro for comparing floating-\/point doubles. \end{DoxyCompactList}\item 
+\Hypertarget{util_8h_addf5ec070e9499d36b7f2009ce736076}\label{util_8h_addf5ec070e9499d36b7f2009ce736076} 
+\#define {\bfseries UNUSED}~\+\_\+\+\_\+attribute\+\_\+\+\_\+((unused))
+\begin{DoxyCompactList}\small\item\em Shortened alias for unused parameters. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{util_8h_a455c8f2daaa8d60e7f541f413c86e90d}{NOT\+\_\+\+IMPLEMENTED}}()
+\begin{DoxyCompactList}\small\item\em Macro for flagging functions that have not been implemented yet. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Utility functions. 
+
+This file contains routines misc. routines for various computations.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{util_8h_a43a992a7f2c42180a0ee867cdab17783}\label{util_8h_a43a992a7f2c42180a0ee867cdab17783} 
+\index{util.h@{util.h}!ABOUT\_ZERO@{ABOUT\_ZERO}}
+\index{ABOUT\_ZERO@{ABOUT\_ZERO}!util.h@{util.h}}
+\doxyparagraph{\texorpdfstring{ABOUT\_ZERO}{ABOUT\_ZERO}}
+{\footnotesize\ttfamily \#define ABOUT\+\_\+\+ZERO~1E-\/20}
+
+About zero (with regard to the precision of this system). \Hypertarget{util_8h_aa46c464f8003d6bc85ccb0d97e7fa481}\label{util_8h_aa46c464f8003d6bc85ccb0d97e7fa481} 
+\index{util.h@{util.h}!CLAMP@{CLAMP}}
+\index{CLAMP@{CLAMP}!util.h@{util.h}}
+\doxyparagraph{\texorpdfstring{CLAMP}{CLAMP}}
+{\footnotesize\ttfamily \#define CLAMP(\begin{DoxyParamCaption}\item[{}]{val,  }\item[{}]{min,  }\item[{}]{max }\end{DoxyParamCaption})~(\mbox{\hyperlink{util_8h_afa99ec4acc4ecb2dc3c2d05da15d0e3f}{MAX}}((min), \mbox{\hyperlink{util_8h_a3acffbd305ee72dcd4593c0d8af64a4f}{MIN}}((val), (max))))}
+
+
+
+Clamps a value between \mbox{[}min,max\mbox{]}. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em val} & The value to clamp. \\
+\hline
+\mbox{\texttt{ in}}  & {\em min} & The minimum value. \\
+\hline
+\mbox{\texttt{ in}}  & {\em max} & The maximum value. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+If min \texorpdfstring{$<$}{<} val \texorpdfstring{$<$}{<} min, then val. If val \texorpdfstring{$<$}{<} min, then min. If val \texorpdfstring{$>$}{>} max, then max. 
+\end{DoxyReturn}
+\Hypertarget{util_8h_a455c8f2daaa8d60e7f541f413c86e90d}\label{util_8h_a455c8f2daaa8d60e7f541f413c86e90d} 
+\index{util.h@{util.h}!NOT\_IMPLEMENTED@{NOT\_IMPLEMENTED}}
+\index{NOT\_IMPLEMENTED@{NOT\_IMPLEMENTED}!util.h@{util.h}}
+\doxyparagraph{\texorpdfstring{NOT\_IMPLEMENTED}{NOT\_IMPLEMENTED}}
+{\footnotesize\ttfamily \#define NOT\+\_\+\+IMPLEMENTED(\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{do}\ \{\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}Function\ not\ implemented:\ \%s\(\backslash\)n"{}},\ \_\_func\_\_);\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ abort();\ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \}\ \textcolor{keywordflow}{while}\ (0)}
+
+\end{DoxyCode}
+
+
+Macro for flagging functions that have not been implemented yet. 
+

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libprogressbar.a CMakeFiles/progressbar.dir/progressbar.c.o
+/usr/bin/ranlib libprogressbar.a

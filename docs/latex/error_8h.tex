@@ -1,0 +1,130 @@
+\doxysubsection{include/finds/error.h File Reference}
+\hypertarget{error_8h}{}\label{error_8h}\index{include/finds/error.h@{include/finds/error.h}}
+
+
+Basic error handling module.  
+
+
+{\ttfamily \#include $<$errno.\+h$>$}\newline
+\doxysubsubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{error_8h_a27932085c49aace9556aad37fcd09dfe}{WRAP\+\_\+\+HDF5\+\_\+\+CHECK}}(errcode,  jmpto,  result)
+\item 
+\#define \mbox{\hyperlink{error_8h_aca540fd5fcb3619ec84b8dbe81f72127}{WRAP\+\_\+\+CHECK}}(errcode,  jmpto,  prev\+\_\+errcode)
+\item 
+\#define \mbox{\hyperlink{error_8h_af597ae1281030ff71643dec2154f409b}{RAISE\+\_\+\+ERROR}}(errtype,  errmsg)
+\item 
+\#define \mbox{\hyperlink{error_8h_a1e587581e1b3db32b69c110987d737ad}{RAISE\+\_\+\+ERROR\+\_\+\+ERRNO}}(errtype,  errmsg)
+\item 
+\#define \mbox{\hyperlink{error_8h_a0210c4a19718b04e2c3cb8ebc0f9f4fd}{GOTO\+\_\+\+IF\+\_\+\+NULL}}(errcode,  jmpto,  ptr)
+\item 
+\Hypertarget{error_8h_a108d6c5c51dd46e82a62b262394f0242}\label{error_8h_a108d6c5c51dd46e82a62b262394f0242} 
+\#define {\bfseries WARN}(msg)~    fprintf(stderr, "{}WARNING\+: \%s\textbackslash{}n"{}, msg)
+\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{error_8h_a09c25ad25f326a930ae42ace60b70232}\label{error_8h_a09c25ad25f326a930ae42ace60b70232} 
+enum \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \{ \newline
+{\bfseries ERR\+\_\+\+DATASTREAM\+\_\+\+OPEN}
+, {\bfseries ERR\+\_\+\+DATASTREAM\+\_\+\+CLOSED}
+, {\bfseries ERR\+\_\+\+DATASTREAM\+\_\+\+WRITE}
+, {\bfseries ERR\+\_\+\+INVALID\+\_\+\+ARG}
+, \newline
+{\bfseries ERR\+\_\+\+ALLOC}
+, {\bfseries ERR\+\_\+\+STATE\+\_\+\+CHANGE}
+, {\bfseries ERR\+\_\+\+INVALID\+\_\+\+STATE}
+, {\bfseries ERR\+\_\+\+FAILURE}
+, \newline
+{\bfseries ERR\+\_\+\+OK}
+, {\bfseries ERR\+\_\+\+TYPE\+\_\+\+COUNT}
+ \}
+\begin{DoxyCompactList}\small\item\em Enum for error types. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Basic error handling module. 
+
+This file contains some simple macros for producing and handling errors.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Macro Definition Documentation}
+\Hypertarget{error_8h_a0210c4a19718b04e2c3cb8ebc0f9f4fd}\label{error_8h_a0210c4a19718b04e2c3cb8ebc0f9f4fd} 
+\index{error.h@{error.h}!GOTO\_IF\_NULL@{GOTO\_IF\_NULL}}
+\index{GOTO\_IF\_NULL@{GOTO\_IF\_NULL}!error.h@{error.h}}
+\doxyparagraph{\texorpdfstring{GOTO\_IF\_NULL}{GOTO\_IF\_NULL}}
+{\footnotesize\ttfamily \#define GOTO\+\_\+\+IF\+\_\+\+NULL(\begin{DoxyParamCaption}\item[{}]{errcode,  }\item[{}]{jmpto,  }\item[{}]{ptr }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \{\ \textcolor{keywordflow}{if}\ (ptr\ ==\ NULL)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ errcode\ =\ ERR\_FAILURE;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ jmpto;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}\}}
+
+\end{DoxyCode}
+\Hypertarget{error_8h_af597ae1281030ff71643dec2154f409b}\label{error_8h_af597ae1281030ff71643dec2154f409b} 
+\index{error.h@{error.h}!RAISE\_ERROR@{RAISE\_ERROR}}
+\index{RAISE\_ERROR@{RAISE\_ERROR}!error.h@{error.h}}
+\doxyparagraph{\texorpdfstring{RAISE\_ERROR}{RAISE\_ERROR}}
+{\footnotesize\ttfamily \#define RAISE\+\_\+\+ERROR(\begin{DoxyParamCaption}\item[{}]{errtype,  }\item[{}]{errmsg }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ (\{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\%s:\%d\ \%s:\ \%s\(\backslash\)n"{}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \_\_func\_\_,\ (errmsg));\ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ (errtype);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+
+\end{DoxyCode}
+\Hypertarget{error_8h_a1e587581e1b3db32b69c110987d737ad}\label{error_8h_a1e587581e1b3db32b69c110987d737ad} 
+\index{error.h@{error.h}!RAISE\_ERROR\_ERRNO@{RAISE\_ERROR\_ERRNO}}
+\index{RAISE\_ERROR\_ERRNO@{RAISE\_ERROR\_ERRNO}!error.h@{error.h}}
+\doxyparagraph{\texorpdfstring{RAISE\_ERROR\_ERRNO}{RAISE\_ERROR\_ERRNO}}
+{\footnotesize\ttfamily \#define RAISE\+\_\+\+ERROR\+\_\+\+ERRNO(\begin{DoxyParamCaption}\item[{}]{errtype,  }\item[{}]{errmsg }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ (\{\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ fprintf(stderr,\ \textcolor{stringliteral}{"{}\%s:\%d\ \%s:\ \%s\ (\%s)\(\backslash\)n"{}},\ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_FILE\_\_,\ \_\_LINE\_\_,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_func\_\_,\ (errmsg),\ strerror(errno));\ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ (errtype);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \})}
+
+\end{DoxyCode}
+\Hypertarget{error_8h_aca540fd5fcb3619ec84b8dbe81f72127}\label{error_8h_aca540fd5fcb3619ec84b8dbe81f72127} 
+\index{error.h@{error.h}!WRAP\_CHECK@{WRAP\_CHECK}}
+\index{WRAP\_CHECK@{WRAP\_CHECK}!error.h@{error.h}}
+\doxyparagraph{\texorpdfstring{WRAP\_CHECK}{WRAP\_CHECK}}
+{\footnotesize\ttfamily \#define WRAP\+\_\+\+CHECK(\begin{DoxyParamCaption}\item[{}]{errcode,  }\item[{}]{jmpto,  }\item[{}]{prev\+\_\+errcode }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ \textcolor{keywordflow}{if}\ (prev\_errcode\ !=\ ERR\_OK)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ errcode\ =\ prev\_errcode;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ jmpto;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \}}
+
+\end{DoxyCode}
+Wrapping function for native errors \Hypertarget{error_8h_a27932085c49aace9556aad37fcd09dfe}\label{error_8h_a27932085c49aace9556aad37fcd09dfe} 
+\index{error.h@{error.h}!WRAP\_HDF5\_CHECK@{WRAP\_HDF5\_CHECK}}
+\index{WRAP\_HDF5\_CHECK@{WRAP\_HDF5\_CHECK}!error.h@{error.h}}
+\doxyparagraph{\texorpdfstring{WRAP\_HDF5\_CHECK}{WRAP\_HDF5\_CHECK}}
+{\footnotesize\ttfamily \#define WRAP\+\_\+\+HDF5\+\_\+\+CHECK(\begin{DoxyParamCaption}\item[{}]{errcode,  }\item[{}]{jmpto,  }\item[{}]{result }\end{DoxyParamCaption})}
+
+{\bfseries Value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \ \ \ (\{\ \textcolor{keywordflow}{if}\ (result\ <\ 0)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ errcode\ =\ ERR\_DATASTREAM\_WRITE;\ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{goto}\ jmpto;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \}\ (result);\ \})}
+
+\end{DoxyCode}
+Wrapping function for HDF5 errors 

@@ -1,0 +1,225 @@
+\doxysubsection{src/integration.c File Reference}
+\hypertarget{integration_8c}{}\label{integration_8c}\index{src/integration.c@{src/integration.c}}
+
+
+Integrator implementations.  
+
+
+{\ttfamily \#include $<$finds/system.\+h$>$}\newline
+{\ttfamily \#include $<$finds/derivative.\+h$>$}\newline
+{\ttfamily \#include $<$finds/integration.\+h$>$}\newline
+{\ttfamily \#include $<$finds/error.\+h$>$}\newline
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_ae9511b7e5e34138e67e2098c8094b52f}{step\+\_\+euler}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em Naive Euler-\/\+Stepping without Error Estimation. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_a66a982c655c151c77a2fcd280ce4a092}{step\+\_\+rk2}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em Naive 2nd-\/order Runge-\/\+Kutta. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_a2dcf9c285792853b1fc1b859b710446d}{step\+\_\+rk4}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em Naive 4th-\/order Runge-\/\+Kutta. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_a9047ad6b07be3a703923662e0464fc51}{step\+\_\+rk5}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em Naive 5th-\/order Runge-\/\+Kutta. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_a524b212118e2e28e3882d6c055076aab}{step\+\_\+rk6}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em Naive 6th-\/order Runge-\/\+Kutta. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_a5763eb97830e35384483dcda78ff3ea9}{step\+\_\+rk32}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em 3rd-\/order Runge-\/\+Kutta (Bogacki-\/\+Shampine) with 2nd order error estimation. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{integration_8c_aa9252a20640316cf28a5489b7793981c}{step\+\_\+rk54}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}state, const double time\+\_\+step, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, double \texorpdfstring{$\ast$}{*}error)
+\begin{DoxyCompactList}\small\item\em 5th-\/order Runge-\/\+Kutta (Dormand-\/\+Prince) with 4th order error estimation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} \mbox{\hyperlink{integration_8c_a505d5b00fc20218bba702ae1a1278dc6}{INTEGRATION\+\_\+\+METHODS\+\_\+\+TABLE}} \mbox{[}INTEGRATION\+\_\+\+METHODS\+\_\+\+COUNT\mbox{]}
+\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Integrator implementations. 
+
+This file contains the numerical integration schemes to be used in performing a simulation over some time domain, including forward Euler and embedded Runge-\/\+Kutta of variable order.
+
+\begin{DoxyAuthor}{Author}
+Mufaro J. Machaya
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{integration_8c_ae9511b7e5e34138e67e2098c8094b52f}\label{integration_8c_ae9511b7e5e34138e67e2098c8094b52f} 
+\index{integration.c@{integration.c}!step\_euler@{step\_euler}}
+\index{step\_euler@{step\_euler}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_euler()}{step\_euler()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+euler (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+Naive Euler-\/\+Stepping without Error Estimation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state $y(t + \delta t)$. 
+\end{DoxyReturn}
+\Hypertarget{integration_8c_a66a982c655c151c77a2fcd280ce4a092}\label{integration_8c_a66a982c655c151c77a2fcd280ce4a092} 
+\index{integration.c@{integration.c}!step\_rk2@{step\_rk2}}
+\index{step\_rk2@{step\_rk2}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_rk2()}{step\_rk2()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+rk2 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+Naive 2nd-\/order Runge-\/\+Kutta. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state $y(t + \delta t)$. 
+\end{DoxyReturn}
+\Hypertarget{integration_8c_a5763eb97830e35384483dcda78ff3ea9}\label{integration_8c_a5763eb97830e35384483dcda78ff3ea9} 
+\index{integration.c@{integration.c}!step\_rk32@{step\_rk32}}
+\index{step\_rk32@{step\_rk32}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_rk32()}{step\_rk32()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+rk32 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+3rd-\/order Runge-\/\+Kutta (Bogacki-\/\+Shampine) with 2nd order error estimation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state y(t + delta t). 
+\end{DoxyReturn}
+\Hypertarget{integration_8c_a2dcf9c285792853b1fc1b859b710446d}\label{integration_8c_a2dcf9c285792853b1fc1b859b710446d} 
+\index{integration.c@{integration.c}!step\_rk4@{step\_rk4}}
+\index{step\_rk4@{step\_rk4}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_rk4()}{step\_rk4()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+rk4 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+Naive 4th-\/order Runge-\/\+Kutta. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state $y(t + \delta t)$. 
+\end{DoxyReturn}
+\Hypertarget{integration_8c_a9047ad6b07be3a703923662e0464fc51}\label{integration_8c_a9047ad6b07be3a703923662e0464fc51} 
+\index{integration.c@{integration.c}!step\_rk5@{step\_rk5}}
+\index{step\_rk5@{step\_rk5}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_rk5()}{step\_rk5()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+rk5 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+Naive 5th-\/order Runge-\/\+Kutta. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state $y(t + \delta t)$. 
+\end{DoxyReturn}
+\Hypertarget{integration_8c_aa9252a20640316cf28a5489b7793981c}\label{integration_8c_aa9252a20640316cf28a5489b7793981c} 
+\index{integration.c@{integration.c}!step\_rk54@{step\_rk54}}
+\index{step\_rk54@{step\_rk54}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_rk54()}{step\_rk54()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+rk54 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+5th-\/order Runge-\/\+Kutta (Dormand-\/\+Prince) with 4th order error estimation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state y(t + delta t). 
+\end{DoxyReturn}
+\Hypertarget{integration_8c_a524b212118e2e28e3882d6c055076aab}\label{integration_8c_a524b212118e2e28e3882d6c055076aab} 
+\index{integration.c@{integration.c}!step\_rk6@{step\_rk6}}
+\index{step\_rk6@{step\_rk6}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{step\_rk6()}{step\_rk6()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*} step\+\_\+rk6 (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{state,  }\item[{const double}]{time\+\_\+step,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{double \texorpdfstring{$\ast$}{*}}]{error }\end{DoxyParamCaption})}
+
+
+
+Naive 6th-\/order Runge-\/\+Kutta. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em state} & The system state for this time. \\
+\hline
+\mbox{\texttt{ in}}  & {\em time\+\_\+step} & The time-\/step to advance to. \\
+\hline
+\mbox{\texttt{ out}}  & {\em error} & The RMS error-\/norm for this state.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The advanced state $y(t + \delta t)$. 
+\end{DoxyReturn}
+
+
+\doxysubsubsection{Variable Documentation}
+\Hypertarget{integration_8c_a505d5b00fc20218bba702ae1a1278dc6}\label{integration_8c_a505d5b00fc20218bba702ae1a1278dc6} 
+\index{integration.c@{integration.c}!INTEGRATION\_METHODS\_TABLE@{INTEGRATION\_METHODS\_TABLE}}
+\index{INTEGRATION\_METHODS\_TABLE@{INTEGRATION\_METHODS\_TABLE}!integration.c@{integration.c}}
+\doxyparagraph{\texorpdfstring{INTEGRATION\_METHODS\_TABLE}{INTEGRATION\_METHODS\_TABLE}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} INTEGRATION\+\_\+\+METHODS\+\_\+\+TABLE\mbox{[}INTEGRATION\+\_\+\+METHODS\+\_\+\+COUNT\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=\ \{}
+\DoxyCodeLine{\ \ \ \ \{\ EULER,\ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}euler"{}}\ \},}
+\DoxyCodeLine{\ \ \ \ \{\ RUNGE\_KUTTA\_2,\ \ \textcolor{stringliteral}{"{}RK2"{}}\ \ \ \},}
+\DoxyCodeLine{\ \ \ \ \{\ RUNGE\_KUTTA\_4,\ \ \textcolor{stringliteral}{"{}RK4"{}}\ \ \ \},}
+\DoxyCodeLine{\ \ \ \ \{\ RUNGE\_KUTTA\_5,\ \ \textcolor{stringliteral}{"{}RK5"{}}\ \ \ \},}
+\DoxyCodeLine{\ \ \ \ \{\ RUNGE\_KUTTA\_6,\ \ \textcolor{stringliteral}{"{}RK6"{}}\ \ \ \},}
+\DoxyCodeLine{}
+\DoxyCodeLine{\ \ \ \ }
+\DoxyCodeLine{\ \ \ \ \{\ RUNGE\_KUTTA\_32,\ \textcolor{stringliteral}{"{}RK32"{}}\ \ \},}
+\DoxyCodeLine{\ \ \ \ \{\ RUNGE\_KUTTA\_54,\ \textcolor{stringliteral}{"{}RK54"{}}\ \ \}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+Named lookup table for integration methods 

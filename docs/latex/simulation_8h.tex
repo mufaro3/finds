@@ -1,0 +1,62 @@
+\doxysubsection{include/finds/simulation.h File Reference}
+\hypertarget{simulation_8h}{}\label{simulation_8h}\index{include/finds/simulation.h@{include/finds/simulation.h}}
+
+
+Core simulation function.  
+
+
+{\ttfamily \#include $<$stdbool.\+h$>$}\newline
+{\ttfamily \#include "{}integration.\+h"{}}\newline
+{\ttfamily \#include "{}error.\+h"{}}\newline
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} \mbox{\hyperlink{simulation_8h_a759e189e27df919f901716e038fe50b0}{perform\+\_\+simulation}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}initial\+\_\+state, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts, const \mbox{\hyperlink{structintegration__opts__t}{integration\+\_\+opts\+\_\+t}} int\+\_\+opts, char \texorpdfstring{$\ast$}{*}output\+\_\+filename, char \texorpdfstring{$\ast$}{*}output\+\_\+folder\+\_\+name, const size\+\_\+t output\+\_\+filename\+\_\+size, const size\+\_\+t output\+\_\+folder\+\_\+size, const bool print\+\_\+file\+\_\+output)
+\begin{DoxyCompactList}\small\item\em Performs a simulation using the given initial conditions. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Core simulation function. 
+
+This file contains the routine for performing a simulation over a specified integration time domain.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{simulation_8h_a759e189e27df919f901716e038fe50b0}\label{simulation_8h_a759e189e27df919f901716e038fe50b0} 
+\index{simulation.h@{simulation.h}!perform\_simulation@{perform\_simulation}}
+\index{perform\_simulation@{perform\_simulation}!simulation.h@{simulation.h}}
+\doxyparagraph{\texorpdfstring{perform\_simulation()}{perform\_simulation()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{error_8h_a09c25ad25f326a930ae42ace60b70232}{error\+\_\+e}} perform\+\_\+simulation (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{initial\+\_\+state,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts,  }\item[{const \mbox{\hyperlink{structintegration__opts__t}{integration\+\_\+opts\+\_\+t}}}]{int\+\_\+opts,  }\item[{char \texorpdfstring{$\ast$}{*}}]{output\+\_\+filename,  }\item[{char \texorpdfstring{$\ast$}{*}}]{output\+\_\+folder\+\_\+name,  }\item[{const size\+\_\+t}]{output\+\_\+filename\+\_\+size,  }\item[{const size\+\_\+t}]{output\+\_\+folder\+\_\+size,  }\item[{const bool}]{print\+\_\+file\+\_\+output }\end{DoxyParamCaption})}
+
+
+
+Performs a simulation using the given initial conditions. 
+
+Runs the simulation based on the initial conditions and calculation parameters. Outputs to a file and produces both the filepath and the parent folder filepath.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em initial\+\_\+state} & The initial state of the system. \\
+\hline
+\mbox{\texttt{ in}}  & {\em dc\+\_\+opts} & The derivative computation options. \\
+\hline
+\mbox{\texttt{ in}}  & {\em int\+\_\+opts} & The integral computation options. \\
+\hline
+\mbox{\texttt{ out}}  & {\em output\+\_\+filename} & The output filename buffer for the dataset. \\
+\hline
+\mbox{\texttt{ out}}  & {\em output\+\_\+folder\+\_\+name} & The output folder buffer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em output\+\_\+filename\+\_\+size} & The size of the output filename buffer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em otuput\+\_\+folder\+\_\+size} & The size of the output folder buffer. \\
+\hline
+\mbox{\texttt{ in}}  & {\em print\+\_\+file\+\_\+output} & Whether to print the output filename.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The error code for the simulation. 
+\end{DoxyReturn}

@@ -1,0 +1,148 @@
+\doxysubsection{include/finds/derivative.h File Reference}
+\hypertarget{derivative_8h}{}\label{derivative_8h}\index{include/finds/derivative.h@{include/finds/derivative.h}}
+
+
+Derivative calculation.  
+
+
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include "{}vector.\+h"{}}\newline
+{\ttfamily \#include "{}system.\+h"{}}\newline
+{\ttfamily \#include "{}util.\+h"{}}\newline
+\doxysubsubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em System derivative (translational and rotational derivatives). \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Derivative computation options struct. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structderivative__weight__t}{derivative\+\_\+weight\+\_\+t}}
+\begin{DoxyCompactList}\small\item\em Weight structure for computing weighted averages of derivatives. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{derivative_8h_ae24d9d33b826be2c1b8318f6b1d9cbb3}\label{derivative_8h_ae24d9d33b826be2c1b8318f6b1d9cbb3} 
+enum \mbox{\hyperlink{derivative_8h_ae24d9d33b826be2c1b8318f6b1d9cbb3}{interaction\+\_\+computation\+\_\+methods\+\_\+e}} \{ {\bfseries BRUTE\+\_\+\+FORCE}
+, {\bfseries BARNES\+\_\+\+HUT}
+, {\bfseries FAST\+\_\+\+MULTIPOLE\+\_\+\+METHOD}
+, {\bfseries INTER\+\_\+\+COMP\+\_\+\+METHODS\+\_\+\+COUNT}
+ \}
+\begin{DoxyCompactList}\small\item\em Interaction computation methods list. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{derivative_8h_a6ac627d2331631d34f394b28a0798409}{compute\+\_\+system\+\_\+derivative}} (const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}system, const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}} dc\+\_\+opts)
+\begin{DoxyCompactList}\small\item\em Computes the derivative for a fish system. \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{derivative_8h_a38be48e72ae23859cc92e95f7548820e}{derivative\+\_\+has\+\_\+nan}} (const \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*}derivative)
+\begin{DoxyCompactList}\small\item\em Determines whether a system derivative contains a NaN or Inf value (for debugging). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{derivative_8h_a9953570716c136b951314d783e55a2e8}{derivative\+\_\+destroy}} (\mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}derivative)
+\begin{DoxyCompactList}\small\item\em De-\/allocates a derivative object. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{derivative_8h_a192a64e9dc576efd83d7d578a2fe4a29}{derivative\+\_\+print}} (const \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*}derivative)
+\begin{DoxyCompactList}\small\item\em Prints a derivative (for debugging). \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{derivative_8h_ae3ab0ef49db89314395cd1bcb885818d}{derivative\+\_\+average}} (const \mbox{\hyperlink{structderivative__weight__t}{derivative\+\_\+weight\+\_\+t}} terms\mbox{[}$\,$\mbox{]}, const size\+\_\+t N, const size\+\_\+t len)
+\begin{DoxyCompactList}\small\item\em Computes the weighted average of a derivative. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{derivative_8h_adea150e79221dabfb32e92befbcb9470}\label{derivative_8h_adea150e79221dabfb32e92befbcb9470} 
+const \mbox{\hyperlink{structnamed__enum__t}{named\+\_\+enum\+\_\+t}} {\bfseries INTER\+\_\+\+COMP\+\_\+\+METHODS\+\_\+\+TABLE} \mbox{[}INTER\+\_\+\+COMP\+\_\+\+METHODS\+\_\+\+COUNT\mbox{]}
+\begin{DoxyCompactList}\small\item\em Lookup table for the interaction computation methods. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsubsection{Detailed Description}
+Derivative calculation. 
+
+This file contains the core routine for computing the derivative of the fish system.
+
+\begin{DoxyAuthor}{Author}
+Mufaro Machaya \href{mailto:mufaro2@student.ubc.ca}{\texttt{ mufaro2@student.\+ubc.\+ca}}
+\end{DoxyAuthor}
+License\+: MIT 
+
+\doxysubsubsection{Function Documentation}
+\Hypertarget{derivative_8h_a6ac627d2331631d34f394b28a0798409}\label{derivative_8h_a6ac627d2331631d34f394b28a0798409} 
+\index{derivative.h@{derivative.h}!compute\_system\_derivative@{compute\_system\_derivative}}
+\index{compute\_system\_derivative@{compute\_system\_derivative}!derivative.h@{derivative.h}}
+\doxyparagraph{\texorpdfstring{compute\_system\_derivative()}{compute\_system\_derivative()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*} compute\+\_\+system\+\_\+derivative (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structfish__system__t}{fish\+\_\+system\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{system,  }\item[{const \mbox{\hyperlink{structderivative__computation__opts__t}{derivative\+\_\+computation\+\_\+opts\+\_\+t}}}]{dc\+\_\+opts }\end{DoxyParamCaption})}
+
+
+
+Computes the derivative for a fish system. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em system} & The system to compute the derivative of. \\
+\hline
+\mbox{\texttt{ in}}  & {\em dc\+\_\+opts} & The derivative computation options. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{derivative_8h_ae3ab0ef49db89314395cd1bcb885818d}\label{derivative_8h_ae3ab0ef49db89314395cd1bcb885818d} 
+\index{derivative.h@{derivative.h}!derivative\_average@{derivative\_average}}
+\index{derivative\_average@{derivative\_average}!derivative.h@{derivative.h}}
+\doxyparagraph{\texorpdfstring{derivative\_average()}{derivative\_average()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*} derivative\+\_\+average (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structderivative__weight__t}{derivative\+\_\+weight\+\_\+t}}}]{terms\mbox{[}$\,$\mbox{]},  }\item[{const size\+\_\+t}]{N,  }\item[{const size\+\_\+t}]{len }\end{DoxyParamCaption})}
+
+
+
+Computes the weighted average of a derivative. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em terms} & The terms to compute on. \\
+\hline
+\mbox{\texttt{ in}}  & {\em N} & The size of the outupt derivative.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The weighted average derivative. 
+\end{DoxyReturn}
+\Hypertarget{derivative_8h_a9953570716c136b951314d783e55a2e8}\label{derivative_8h_a9953570716c136b951314d783e55a2e8} 
+\index{derivative.h@{derivative.h}!derivative\_destroy@{derivative\_destroy}}
+\index{derivative\_destroy@{derivative\_destroy}!derivative.h@{derivative.h}}
+\doxyparagraph{\texorpdfstring{derivative\_destroy()}{derivative\_destroy()}}
+{\footnotesize\ttfamily void derivative\+\_\+destroy (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*}\texorpdfstring{$\ast$}{*}}]{derivative\+\_\+ptr }\end{DoxyParamCaption})}
+
+
+
+De-\/allocates a derivative object. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ out}}  & {\em derivative\+\_\+ptr} & The pointer to the derivative object. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{derivative_8h_a38be48e72ae23859cc92e95f7548820e}\label{derivative_8h_a38be48e72ae23859cc92e95f7548820e} 
+\index{derivative.h@{derivative.h}!derivative\_has\_nan@{derivative\_has\_nan}}
+\index{derivative\_has\_nan@{derivative\_has\_nan}!derivative.h@{derivative.h}}
+\doxyparagraph{\texorpdfstring{derivative\_has\_nan()}{derivative\_has\_nan()}}
+{\footnotesize\ttfamily bool derivative\+\_\+has\+\_\+nan (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{derivative }\end{DoxyParamCaption})}
+
+
+
+Determines whether a system derivative contains a NaN or Inf value (for debugging). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em derivative} & The system derivative. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Whether the system derivative contains a non-\/finite value. 
+\end{DoxyReturn}
+\Hypertarget{derivative_8h_a192a64e9dc576efd83d7d578a2fe4a29}\label{derivative_8h_a192a64e9dc576efd83d7d578a2fe4a29} 
+\index{derivative.h@{derivative.h}!derivative\_print@{derivative\_print}}
+\index{derivative\_print@{derivative\_print}!derivative.h@{derivative.h}}
+\doxyparagraph{\texorpdfstring{derivative\_print()}{derivative\_print()}}
+{\footnotesize\ttfamily void derivative\+\_\+print (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structsystem__derivative__t}{system\+\_\+derivative\+\_\+t}} \texorpdfstring{$\ast$}{*}}]{derivative }\end{DoxyParamCaption})}
+
+
+
+Prints a derivative (for debugging). 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em derivative} & The system derivative. \\
+\hline
+\end{DoxyParams}

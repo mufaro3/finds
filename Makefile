@@ -56,7 +56,7 @@ build: update-docker configure compile
 
 clean:
 	@$(COMPOSE) down
-	@$rm -rf build output paper/output
+	@rm -rf build docs output paper/output
 
 shell:
 	@$(DOCKER-SHELL)
@@ -79,9 +79,11 @@ analyze:
 test:
 	@$(DOCKER-SHELL) ctest --test-dir build --output-on-failure -V
 
-docs:
+docs: build
 	@$(DOCKER-SHELL) cmake --build build --target docs_pdf
-	@$(DOCKER-SHELL) mv build/latex/refman.pdf build/finds.pdf
+	@$(DOCKER-SHELL) mkdir -p docs
+	@$(DOCKER-SHELL) mv build/html docs/html
+	@$(DOCKER-SHELL) mv build/latex/refman.pdf docs/finds.pdf
 
 # paper
 paper:

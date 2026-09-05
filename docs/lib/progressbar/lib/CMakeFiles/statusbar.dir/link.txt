@@ -1,2 +1,0 @@
-/usr/bin/ar qc libstatusbar.a CMakeFiles/statusbar.dir/statusbar.c.o
-/usr/bin/ranlib libstatusbar.a

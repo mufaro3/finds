@@ -1,2 +1,0 @@
-/usr/bin/ar qc libfinds.a CMakeFiles/finds.dir/src/barneshut.c.o CMakeFiles/finds.dir/src/datastream.c.o CMakeFiles/finds.dir/src/derivative.c.o CMakeFiles/finds.dir/src/evaluation.c.o CMakeFiles/finds.dir/src/integration.c.o CMakeFiles/finds.dir/src/simulation.c.o CMakeFiles/finds.dir/src/system.c.o
-/usr/bin/ranlib libfinds.a

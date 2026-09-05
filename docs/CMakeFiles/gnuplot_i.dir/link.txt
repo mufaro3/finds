@@ -1,2 +1,0 @@
-/usr/bin/ar qc libgnuplot_i.a CMakeFiles/gnuplot_i.dir/lib/gnuplot_i/gnuplot_i.c.o
-/usr/bin/ranlib libgnuplot_i.a

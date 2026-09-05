@@ -1,2 +1,0 @@
-/usr/bin/ar qc libtomlc17.a CMakeFiles/tomlc17.dir/lib/tomlc17/src/tomlc17.c.o
-/usr/bin/ranlib libtomlc17.a

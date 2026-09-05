@@ -79,10 +79,11 @@ analyze:
 test:
 	@$(DOCKER-SHELL) ctest --test-dir build --output-on-failure -V
 
-docs:
-	@$(DOCKER-SHELL) cmake -S . -B docs
-	@$(DOCKER-SHELL) cmake --build docs --target docs_pdf
-	@$(DOCKER-SHELL) mv docs/latex/refman.pdf docs/finds.pdf
+docs: build
+	@$(DOCKER-SHELL) cmake --build build --target docs_pdf
+	@$(DOCKER-SHELL) mkdir -p docs
+	@$(DOCKER-SHELL) mv build/html docs/html
+	@$(DOCKER-SHELL) mv build/latex/refman.pdf docs/finds.pdf
 
 # paper
 paper:

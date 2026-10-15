@@ -36,26 +36,26 @@
 \renewcommand{\maketitlehookd}{
   \begin{abstract}
     \noindent
-    Animals traveling in groups yield many benefits, such as security against
-    predators and energy efficiency, and understanding this behavior could have
-    key applications to fields like robotics. To model all realistic schools of
+    Synchronous group travel is very rewarding in nature, yielding member
+    animals benefits such as security against predators and energy efficiency,
+    and understanding this behavior could have key applications to fields like
+    robotics. To model all realistic schools of
     fish, computational models must accommodate hundreds of millions of fish,
     but current simulations are limited to very small group sizes because the
     passive hydrodynamic model of fish is an $N$-body problem. Thus, FINDS, or
-    the Fish INteraction and Dynamics Simulator, was developed from the
-    source/sink-dipole model developed by Mabrouk and Floryan to streamline
-    simulations using standard $N$-body algorithms. First, FINDS contains
-    routines for computing the time-derivative of a school through brute force
+    the Fish INteraction and Dynamics Simulator, was developed from a
+    source/sink-dipole model for linear swimmers to streamline
+    simulations using standard $N$-body algorithms. FINDS contains
+    routines for computing the dynamics of a school through brute force
     computation, the Barnes-Hut approximation, and the fast multipole method;
     several adaptive and non-adaptive Runge-Kutta numerical integration methods
     from first to sixth order; a small library of post-processing modules for
     reading, writing, and analyzing the simulation datasets; and simple yet
     powerful interfaces for defining precise initial conditions for a wide
     variety of simulations using direct calculations or configuration files.
-    FINDS is validated graphically and numerically against past simulations
-    performed by Mabrouk and Floryan, proving that it is computationally
-    equivalent (within the expected error of the Barnes-Hut and fast multipole
-    methods) while being considerably more efficient.
+    Lastly, FINDS is then validated against past simulations for accuracy, its
+    speed is benchmarked, and a brief tutorial on using FINDS is provided in the
+    form of an example.
   \end{abstract}
 }
 
@@ -69,39 +69,43 @@ Synchronous mass movement is a common pattern throughout nature, observed
 most commonly in the movement of smaller animals or prey animals such as birds,
 fish, bugs, oxen, deer, etc. due to the multitude of benefits that members of
 such groups gain \cite{parrish_hamner_prewitt_1997, vicsek_zafeiris_2012}.
-As summarized by Mabrouk and Floryan 2024 and 2025, members of
-schools of fish gain major advantages in individual fitness due to various
-effects resulting from existing in a group rather than as an individual,
-including (but not limited to) stronger shielding from predators, improved
-navigation, eased access to reproduction, and most importantly, a greater energy
-efficiency during travel \cite{mabrouk_floryan_2024, mabrouk_floryan_2025}. As
-such, scientists and engineers developing analogous technologies like drones are
-keenly interested in understanding this behavior so that it can be replicated in
-swarming robots for purposes such as agriculture, infrastructure development and
-maintenance, and military operations \cite{dorigo_theraulaz_trianni_2020}.
+Through existing as a member of a group rather than a lone individual, fish
+gain major advantages in overall fitness, including (but not limited to)
+shielding from predators \cite{major_1978, shaw_1978, landeau_terborgh_1986},
+improved navigation and foraging \cite{colvert_chen_kanso_2017, pitcher_1982},
+stronger reproductive success \cite{barnes_hughes_2009}, and a greater energy
+efficiency during travel \cite{weihs_1973}. As such, scientists and engineers
+developing analogous technologies like drones are keenly interested in
+understanding this behavior so that it can be replicated in swarming robots for
+purposes such as agriculture, infrastructure development and maintenance, and
+military operations \cite{dorigo_theraulaz_trianni_2020}.
 
 In the case of schools of fish, prior models have largely focused on behavioral
 causes of group cohesion, but these models typically fail to explain the effect
-of passive hydrodynamics in maintaining the flow of these systems
+of passive hydrodynamics on maintaining group cohesion
 \cite{boids_reynolds_1987, couzin_2005}. For this reason, models of swimmers as
 dipoles in free space have been developed to model this passive hydrodynamic
-interaction, such as Mabrouk and Floryan's source/sink-dipole Tchieu et al.'s
-vortex-dipole models
-\cite{mabrouk_floryan_2024, mabrouk_floryan_2025, tchieu_et_al_2012}.
+interaction \cite{mabrouk_floryan_2024, mabrouk_floryan_2025, tchieu_et_al_2012}.
+Higher fidelity models, such as full computational fluid dynamics (CFD) models,
+can be used for modeling schools of fish over particle or dipole-style models,
+but higher-fidelity models are considerably more computationally costly and, 
+as a result, do not scale to very large schools of fish
+\cite{verma_et_al_2018,ligman_lund_furth_2024}.
 
 However, the larger issue with modeling groups of interacting swimmers is
 computational rather than theoretical, because models containing
 non-hierarchical interactions where every member of the system affects every
 other member (i.e., models that are not simply ``following the leader'' with
 a central member or a set of central members that determine the entirety of the
-group's motion) form an $N$-body problem. In particular, dipole models compute
+group's motion) form an $N$-body problem using particle-based models (unlike the
+higher-fidelity CFD models). In particular, dipole models compute
 interactions from each of the poles of each swimmer to each of the poles of each
 other swimmer individually, and thus, a simulation of $N$ swimmers becomes
 analogous to a particle simulation problem for $2N$ particles with $4N^2$
 interactions on every differential time-step. This severely limits the size of
-schools that can be studied computationally, and as such, most if not all of the
-past research utilizing dipole models of swimmers has focused on systems at or
-below 100,000 swimmers.
+schools that can be studied computationally, and as such, computational research
+involving swimmers typically focuses on only few swimmers
+\cite{ligman_lund_furth_2024}.
 
 Given that real schools of fish have been estimated to contain upwards of 250
 million swimmers, an approximation method to reduce the computational complexity
@@ -113,21 +117,19 @@ fields of molecular dynamics, computational electromagnetics, gravitational
 astrophysics, and more \cite{grama_2011}, and this has yielded algorithms
 such as the Barnes-Hut algorithm and the fast multipole method that simplify
 calculations by distinguishing between close and far particles and using
-clustered approximations for far-field interactions
+clustered approximations for far-field interactions between swimmers
 \cite{grama_2011, barnes_hut_1986, greengard_rokhlin_1987}.
 
 \section{Mathematical Model of Swimmers}
 
-FINDS is developed around the Mabrouk and Floryan's source/sink dipole model
-for far-field interactions \cite{mabrouk_floryan_2024, mabrouk_floryan_2025}.
-Under this model, each fish $i$ is defined as a dipole consisting of a
-fluid source at the head of the fish $\vu{x}_{f,i}$, and a fluid sink at the
-tail $\vu{x}_{b,i}$, separated by the length of the fish $\ell_i$. The
-source and the sink of each fish are defined to have the same volumetric flow
-rate, $\sigma_i$, to ensure the conservation of fluid by making the sinks
-consume exactly the same amount of fluid as the sources. For simplicity, the
-source and sink (or ``front'' and ``back'') of each fish are called its
-``features.''
+FINDS is developed around a source/sink dipole model for far-field interactions \cite{mabrouk_floryan_2024, mabrouk_floryan_2025}, and this model is summarized
+in figure \ref{fig-swimmer-model}. Under this model, each fish $i$ is defined as
+a dipole consisting of a fluid source at the head of the fish $\vu{x}_{f,i}$, and
+a fluid sink at the tail $\vu{x}_{b,i}$, separated by the length of the fish
+$\ell_i$. The source and the sink of each fish are defined to have the same
+volumetric flow rate, $\sigma_i$, to ensure a constant zero net flux of mass.
+For simplicity, the source and sink (or ``front'' and ``back'') of each fish are
+called its ``features.''
 
 Each fish is defined as an eight-dimensional vector consisting of four
 variables: $\va{x}_{c,i}$, the three-dimensional center-of-mass position vector,
@@ -138,8 +140,8 @@ time forms the state vector $\va{X}$.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\columnwidth]{swimmer-model.jpg}
-    \caption{Visualization of the model for a given swimmer. Taken from Mabrouk and
-      Floryan 2024 \cite{mabrouk_floryan_2024}.}
+    \caption{Visualization of the model for a given swimmer
+      \cite{mabrouk_floryan_2024}.}
     \label{fig-swimmer-model}
 \end{figure}
 
@@ -230,17 +232,20 @@ $\va{u}_{j,\varepsilon}$.
 \section{Derivative Computation} \label{section-derivative-computation}
 
 As stated previously, the modelling of fish is an $N$-body problem where the
-algorithmic complexity of computing a derivative is, through Brute-Force
+algorithmic complexity of computing a derivative (equation
+\ref{eq-feature-velocity}) is, through brute force
 calculations, of order $\O(N^2)$. To reduce this computation time,
 two tree-based approximation algorithms are implemented: the Barnes-Hut
-algorithm and the Fast Multipole Method, of orders $\O(N \log N)$ and
-$\O(N)$ respectively \cite{barnes_hut_1986, greengard_rokhlin_1987}.
+algorithm and the fast multipole method, of orders $\O(N \log N)$ and
+$\O(N)$ respectively \cite{barnes_hut_1986, greengard_rokhlin_1987}. All three
+derivative computation methods are summarized with their complexities and
+specification parameters in table \ref{tbl-derivative-methods}. 
 
 Brute force computation and the Barnes-Hut approximation are implemented
 directly into the FINDS code-base, and as such, the user has the ability to
 switch between unregularized and regularized calculations with ease. However,
-the Fast-Multipole Method is computed externally using Greengard et al.'s Fast
-Multipole Method library FMM3D, which will only compute the standard Laplacian
+the fast multipole method is computed externally using Greengard et al.'s fast
+multipole method library FMM3D, which will only compute the standard Laplacian
 gradient $\va{u}_i$, so the Fast-Multipole Method cannot be used with
 regularization \cite{fmm3d_2026}. Additionally, all three methods are
 optionally CPU-parallelized using OpenMP \cite{openmp_2024}.
@@ -481,13 +486,13 @@ As shown through table \ref{tbl-derivative-methods}, the three derivative
 calculation methods employed in FINDS each have a distinct runtime complexity
 as a function of $N$, and therefore, have specific ranges of $N$ for which they
 are the most effective due to their individual scaling orders and
-proportionality constants. These relationships (with eight-core parallelization)
+initial computational overhead. These relationships (with eight-core parallelization)
 can be seen in figure \ref{fig-benchmark}, which displays the following
 conclusions regarding their runtime relationships:
 \begin{enumerate}
-\item The fast multipole method has a much higher proportionality coefficient
-  $k$ on average than Brute-Force calculation and the Barnes-Hut approximation,
-  making it far slower than both methods at low $N$ (roughly $N << 10^4$).
+\item The fast multipole method has a much higher initial computational overhead
+  on average than brute force calculation and the Barnes-Hut approximation,
+  making it far slower than both methods at low $N$ (roughly $N \ll 10^4$).
 \item Despite requiring the construction of an octree, the Barnes-Hut
   approximation maintains an incredibly low proportionality constant $k$ (even
   less than that of brute force in some cases) due to the incredible efficiency
@@ -502,15 +507,15 @@ weaknesses of each method previously discussed throughout section
 \ref{section-derivative-computation}, we can determine ideal use-cases for each
 derivative computation method.
 
-First, the brute force computation is ideal for very low $N$ ($N << 10^3$) that
+First, the brute force computation is ideal for very low $N$ ($N \ll 10^3$) that
 are highly volatile (i.e., with many near-field interactions) or require high
-accuracy over long time periods. Brute-force computation is the gold-standard
+accuracy over long time periods. Brute force computation is the gold-standard
 for accuracy and reasonably fast for low $N$, and as such, this scenario has
 been the main focus of prior fish-dipole simulations
 \cite{mabrouk_floryan_2024, mabrouk_floryan_2025, tchieu_et_al_2012}.
 
 Second, the Barnes-Hut approximation is ideal for fairly large $N$ (roughly
-$10^2 << N << 10^8$) in non-volatile systems (i.e., with predominantly far-field
+$10^2 \ll N$) in non-volatile systems (i.e., with predominantly far-field
 interactions) and over smaller time scales, assuming the use of an approximation
 within $0.1 < \theta \le 1.0$. Within this range of $N$ and $\theta$, the
 Barnes-Hut approximation is incredibly fast, but due to the added approximation
@@ -518,12 +523,18 @@ error from Barnes-Hut, volatile systems will produce non-negligible error
 quickly and long time-scales will cause this error to compound greatly.
 
 Third, the fast multipole method is ideal for very large $N$ (roughly
-$10^5 << N$) regardless of volatility and for any large $N$ (roughly
-$10^3 << N$) for volatile systems due to its high accuracy and fastest scaling
+$10^6 \ll N$) regardless of volatility and for any large $N$ (roughly
+$10^5 \ll N$) for volatile systems due to its high accuracy and fastest scaling
 law $\O(N)$. The leading drawback of the fast multipole method is its
-proportionality coefficient $k$ leading to a much higher runtime at low $N$,
-where a direct calculation through brute force would be much more efficient and
-equally (if not more) accurate.
+immense starting computational overhead leading to a much higher runtime at low
+$N$, where a direct calculation through brute force would be much more efficient
+and equally (if not more) accurate, so we strongly recommend reserving its use
+unless the system of fish is considerably large.
+
+Lastly, it is regrettable that, for the purposes of this study, we did not benchmark to
+high enough $N$ so as to determine where the fast multipole method would
+inevitably out-scale the Barnes-Hut approximation, but we guess that this would
+likely happen at or before $10^9$ as a rough estimate.
 
 \section{Numerical Integration}
 \label{section-integration}
@@ -545,7 +556,7 @@ integrator which would separate the evaluation time step and the computation
 time-step such that the computation is done at very small time-scales
 $\delta t_i ~ 0$ and the saved frames are those at the evaluation time-steps.
 
-Alternatively, highly stable systems likely don't require sensitive integration,
+Alternatively, highly stable systems likely do not require sensitive integration,
 and as such, non-adaptive integrators are ideal as they keep the computation
 time step constant at the evaluation time step, so the only time-frames that are
 computed are the time-frames saved to disk.
@@ -833,16 +844,17 @@ behavior was validated visually and numerically against simulations produced
 using previous Python and MATLAB implementations of the dipole model.
 
 In particular, FINDS was validated in two dimensions by reproducing figure 8 of
-Mabrouk and Floryan 2025, which contains four scenarios of the trajectory
-evolution for two coplanar ($z=0$) swimmers based on the distances from their
-centers of mass on the $x$ and $y$ axes and the angle between their orientations
-$\Delta \theta$, and this can be observed in figure \ref{fig-validation-2025-8}
-\cite{mabrouk_floryan_2025}. Visually, these plots match, and as such, numerical
-validation (by directly computing the difference between the expected
-calculation and the observed calculation from FINDS) alongside validation for a
-greater $N$ and three-dimensional system is needed, and this is done using the
-validation observed in figure \ref{fig-validation-numerical}. This numerical
-computation is produced by calculating an error score between the expected state
+Mabrouk and Floryan 2025 \cite{mabrouk_floryan_2025}, which contains four
+scenarios of the trajectory evolution for two coplanar ($z=0$) swimmers based
+on the distances from their centers of mass on the $x$ and $y$ axes and the
+angle between their orientations $\Delta \theta$, and this can be observed in
+figure \ref{fig-validation-2025-8} \cite{mabrouk_floryan_2025}. Visually, these
+plots match, and as such, numerical validation (by directly computing the
+difference between the expected calculation and the observed calculation from
+FINDS) alongside validation for a greater $N$ and three-dimensional system is
+needed, and this is done using the validation observed in figure
+\ref{fig-validation-numerical}. This numerical computation is produced by
+calculating an error score between the expected state
 $\va{X}_t$ and the produced state $\va{X}_t'$ for each time $t$ as
 \begin{equation}\label{eq-validation-err}
   E_t = \sqrt{\sum_{i=1}^{N} \left( \norm{\va{x}_{c,i} - \va{x}_{c,i}'}^2 +
@@ -856,7 +868,7 @@ As can be seen in figure \ref{fig-validation-numerical}, the error for the
 three coplanar cases is entirely zero, showing that for two-dimensional,
 two-swimmer simulations, the results of FINDS are entirely identical to those of
 previous implementations. However, in the 13-swimmer, three-dimensional case,
-only the brute-force and fast multipole method calculations produce negligible
+only the brute force and fast multipole method calculations produce negligible
 error, and the Barnes-Hut approximation produces non-negligible error that
 compounds over the course of the simulation due to the inherent approximation
 error in using a weighted average dipole (see section
